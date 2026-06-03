@@ -1,8 +1,8 @@
 //! Tests for the stealth address PoC (Issue #157 – Privacy v2).
 
 use crate::{
-    errors::QuickexError, stealth, types::StealthDepositParams, EscrowStatus, QuickexContract,
-    QuickexContractClient,
+    errors:: RustAcademyError, stealth, types::StealthDepositParams, EscrowStatus,  RustAcademyContract,
+     RustAcademyContractClient,
 };
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
@@ -13,11 +13,11 @@ use soroban_sdk::{
 // Helpers
 // ---------------------------------------------------------------------------
 
-fn setup<'a>() -> (Env, QuickexContractClient<'a>) {
+fn setup<'a>() -> (Env,  RustAcademyContractClient<'a>) {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
     (env, client)
 }
 
@@ -138,7 +138,7 @@ fn test_register_wrong_stealth_address_fails() {
         .unwrap_err()
         .unwrap();
 
-    assert_eq!(err, QuickexError::StealthAddressMismatch);
+    assert_eq!(err,  RustAcademyError::StealthAddressMismatch);
 }
 
 /// Registering the same stealth address twice must fail.
@@ -180,7 +180,7 @@ fn test_register_duplicate_stealth_address_fails() {
         .unwrap_err()
         .unwrap();
 
-    assert_eq!(err, QuickexError::StealthAddressAlreadyUsed);
+    assert_eq!(err,  RustAcademyError::StealthAddressAlreadyUsed);
 }
 
 /// Withdrawing with wrong spend_pub must fail.
@@ -216,7 +216,7 @@ fn test_stealth_withdraw_wrong_spend_pub_fails() {
         .unwrap_err()
         .unwrap();
 
-    assert_eq!(err, QuickexError::StealthAddressMismatch);
+    assert_eq!(err,  RustAcademyError::StealthAddressMismatch);
 }
 
 /// Double withdrawal must fail with AlreadySpent.
@@ -252,7 +252,7 @@ fn test_stealth_double_withdraw_fails() {
         .unwrap_err()
         .unwrap();
 
-    assert_eq!(err, QuickexError::AlreadySpent);
+    assert_eq!(err,  RustAcademyError::AlreadySpent);
 }
 
 /// Withdrawal after expiry must fail with EscrowExpired.
@@ -288,7 +288,7 @@ fn test_stealth_withdraw_after_expiry_fails() {
         .unwrap_err()
         .unwrap();
 
-    assert_eq!(err, QuickexError::EscrowExpired);
+    assert_eq!(err,  RustAcademyError::EscrowExpired);
 }
 
 /// Registering with zero amount must fail.
@@ -316,7 +316,7 @@ fn test_stealth_register_zero_amount_fails() {
         .unwrap_err()
         .unwrap();
 
-    assert_eq!(err, QuickexError::InvalidAmount);
+    assert_eq!(err,  RustAcademyError::InvalidAmount);
 }
 
 /// Querying a non-existent stealth address returns None.
@@ -359,5 +359,5 @@ fn test_stealth_register_fails_when_paused() {
         .unwrap_err()
         .unwrap();
 
-    assert_eq!(err, QuickexError::ContractPaused);
+    assert_eq!(err,  RustAcademyError::ContractPaused);
 }

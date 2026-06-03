@@ -117,7 +117,7 @@ export class SendGridEmailProvider implements INotificationProvider {
       <h2>${payload.title}</h2>
       <p>${payload.body}</p>
       <hr/>
-      <p style="color:#666;font-size:12px">QuickEx · ${payload.occurredAt}</p>
+      <p style="color:#666;font-size:12px"> RustAcademy · ${payload.occurredAt}</p>
     `.trim();
   }
 }
@@ -207,14 +207,18 @@ export class WebhookProvider implements INotificationProvider {
     const startTime = Date.now();
     const webhookPayload = this.buildWebhookPayload(payload);
     const body = JSON.stringify(webhookPayload);
-    const signature = this.signPayload(body, webhookPayload.sentAt, preference.webhookSecret);
+    const signature = this.signPayload(
+      body,
+      webhookPayload.sentAt,
+      preference.webhookSecret,
+    );
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "X-QuickEx-Signature": signature,
-      "X-QuickEx-Delivery": webhookPayload.id,
-      "X-QuickEx-Event": payload.eventType,
-      "X-QuickEx-Timestamp": webhookPayload.sentAt,
+      "X- RustAcademy-Signature": signature,
+      "X- RustAcademy-Delivery": webhookPayload.id,
+      "X- RustAcademy-Event": payload.eventType,
+      "X- RustAcademy-Timestamp": webhookPayload.sentAt,
     };
 
     try {
@@ -242,7 +246,11 @@ export class WebhookProvider implements INotificationProvider {
           `Webhook returned HTTP ${response.status} for ${preference.webhookUrl}: ${responseBody ?? "no response body"}`,
         );
         if (this.metrics) {
-          this.metrics.recordWebhookDeliveryDuration(payload.eventType, "failed", duration);
+          this.metrics.recordWebhookDeliveryDuration(
+            payload.eventType,
+            "failed",
+            duration,
+          );
           this.metrics.recordError("webhook", "http_error");
         }
         throw error;
@@ -253,7 +261,11 @@ export class WebhookProvider implements INotificationProvider {
       );
 
       if (this.metrics) {
-        this.metrics.recordWebhookDeliveryDuration(payload.eventType, "success", duration);
+        this.metrics.recordWebhookDeliveryDuration(
+          payload.eventType,
+          "success",
+          duration,
+        );
       }
 
       return {
@@ -262,9 +274,14 @@ export class WebhookProvider implements INotificationProvider {
       };
     } catch (error) {
       const duration = (Date.now() - startTime) / 1000;
-      const errorType = error instanceof Error ? error.constructor.name : "UnknownError";
+      const errorType =
+        error instanceof Error ? error.constructor.name : "UnknownError";
       if (this.metrics) {
-        this.metrics.recordWebhookDeliveryDuration(payload.eventType, "error", duration);
+        this.metrics.recordWebhookDeliveryDuration(
+          payload.eventType,
+          "error",
+          duration,
+        );
         this.metrics.recordError("webhook", errorType);
       }
       throw error;
@@ -289,7 +306,11 @@ export class WebhookProvider implements INotificationProvider {
     };
   }
 
-  private signPayload(body: string, timestamp: string, secret?: string): string {
+  private signPayload(
+    body: string,
+    timestamp: string,
+    secret?: string,
+  ): string {
     if (!secret) {
       this.logger.warn(
         "Webhook secret not configured - payload will not be signed",
@@ -307,8 +328,8 @@ export class WebhookProvider implements INotificationProvider {
   /**
    * Verify an incoming webhook signature.
    * @param body Raw request body string
-   * @param signature Value of X-QuickEx-Signature header
-   * @param timestamp Value of X-QuickEx-Timestamp header
+   * @param signature Value of X- RustAcademy-Signature header
+   * @param timestamp Value of X- RustAcademy-Timestamp header
    * @param secret Shared webhook secret
    * @param toleranceMs Replay window in ms (default 5 minutes)
    */

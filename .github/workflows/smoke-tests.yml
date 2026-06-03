@@ -61,10 +61,10 @@ jobs:
 #             echo "env=${{ github.event.deployment.environment }}" >> $GITHUB_OUTPUT
 #           else
 #             if [ "${{ inputs.environment }}" == "production" ]; then
-#               echo "url=https://api.quickex.io" >> $GITHUB_OUTPUT
+#               echo "url=https://api. RustAcademy.io" >> $GITHUB_OUTPUT
 #               echo "env=production" >> $GITHUB_OUTPUT
 #             elif [ "${{ inputs.environment }}" == "staging" ]; then
-#               echo "url=https://api-staging.quickex.io" >> $GITHUB_OUTPUT
+#               echo "url=https://api-staging. RustAcademy.io" >> $GITHUB_OUTPUT
 #               echo "env=staging" >> $GITHUB_OUTPUT
 #             else
 #               echo "url=http://localhost:3000" >> $GITHUB_OUTPUT

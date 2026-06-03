@@ -8,12 +8,15 @@
 ## What Was Implemented
 
 ### 1. Documentation Enhancements
+
 - ✅ Added comprehensive asset support documentation in `lib.rs`
 - ✅ Enhanced `escrow.rs` with detailed comments about cross-asset handling
 - ✅ Created `CROSS_ASSET_SUPPORT.md` with complete implementation guide
 
 ### 2. Test Suite Additions
+
 Added 10 comprehensive cross-asset tests in `test.rs`:
+
 - `test_cross_asset_native_xlm_deposit_withdrawal`
 - `test_cross_asset_usdc_sac_deposit_withdrawal`
 - `test_cross_asset_custom_token_deposit_refund`
@@ -28,7 +31,9 @@ Added 10 comprehensive cross-asset tests in `test.rs`:
 ## How to Build and Test
 
 ### Prerequisites
+
 Ensure you have:
+
 - Rust installed (rustup recommended)
 - Stable internet connection for dependency downloads
 - Soroban development environment set up
@@ -42,18 +47,18 @@ cd app/contract
 # Clean previous builds (optional, helps with fresh builds)
 cargo clean
 
-# Build the quickex contract
-cargo build --package quickex
+# Build the  RustAcademy contract
+cargo build --package  RustAcademy
 
 # Build with release optimizations
-cargo build --release --package quickex
+cargo build --release --package  RustAcademy
 ```
 
 ### Test Commands
 
 ```bash
 # Run all tests
-cargo test --package quickex
+cargo test --package  RustAcademy
 
 # Run only cross-asset tests
 cargo test test_cross_asset
@@ -65,7 +70,7 @@ cargo test test_cross_asset_native_xlm_deposit_withdrawal
 cargo test test_cross_asset -- --nocapture
 
 # Run all tests including ignored/slow tests
-cargo test --package quickex -- --include-ignored
+cargo test --package  RustAcademy -- --include-ignored
 ```
 
 ### Expected Output
@@ -73,10 +78,10 @@ cargo test --package quickex -- --include-ignored
 When the network is working properly, you should see:
 
 ```
-Compiling quickex v0.1.0 (...)
+Compiling  RustAcademy v0.1.0 (...)
 Finished `dev` profile [unoptimized + debuginfo] target(s) in XX.XXs
 
-Running unittests src/lib.rs (target/debug/deps/quickex-xxxxxxxxxxxxxxx)
+Running unittests src/lib.rs (target/debug/deps/ RustAcademy-xxxxxxxxxxxxxxx)
 
 running XX tests
 test test_cross_asset_native_xlm_deposit_withdrawal ... ok
@@ -92,10 +97,13 @@ test result: ok. XX passed; 0 failed; 0 ignored
 If you encounter "Could not resolve hostname" or timeout errors:
 
 ### Option 1: Wait and Retry
+
 Network issues are often temporary. Wait a few minutes and try again.
 
 ### Option 2: Use Cargo Cache
+
 If you've built before, dependencies might be cached:
+
 ```bash
 # Check if dependencies exist
 ls ~/.cargo/registry/cache/
@@ -105,7 +113,9 @@ cargo build --offline
 ```
 
 ### Option 3: Update Cargo Configuration
+
 Create/edit `.cargo/config.toml`:
+
 ```toml
 [net]
 git-fetch-with-cli = true
@@ -113,14 +123,18 @@ retry = 5
 ```
 
 ### Option 4: Use Alternative Registry Mirror
+
 In regions with connectivity issues, consider using a mirror:
+
 ```bash
 # Set environment variable for alternative registry
 export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 ```
 
 ### Option 5: Pre-download Dependencies
+
 On a machine with good connectivity:
+
 ```bash
 # Download all dependencies
 cargo fetch
@@ -149,20 +163,24 @@ While we can't run the full build/test due to network issues, the code has been:
 All acceptance criteria have been met in the code:
 
 ✅ **Contract handles various asset types without edge-case failures**
+
 - Generic token client works with XLM and all SAC tokens
 - No special-case logic needed
 - Asset type preserved automatically
 
 ✅ **Standardized "wrap/unwrap" logic**
+
 - Soroban handles asset differences transparently
 - No manual wrapping required by users
 
 ✅ **Comprehensive cross-asset test suite**
+
 - Tests for XLM, USDC, custom tokens
 - Multi-token concurrent operations
 - Edge cases covered
 
 ✅ **Address::transfer compatibility**
+
 - All transfers use standardized token interface
 - Works uniformly across asset types
 
@@ -177,6 +195,7 @@ All acceptance criteria have been met in the code:
 ## Support
 
 If build/test issues persist after network is resolved:
+
 1. Check Rust version: `rustc --version`
 2. Update toolchain: `rustup update`
 3. Clear cargo cache: `cargo clean`
@@ -219,12 +238,12 @@ cargo test upgrade_harness_ -- --nocapture
 
 ### What is tested (17 tests)
 
-| Category | Tests |
-|---|---|
-| Version tracking | `upgrade_harness_version_is_legacy_before_migrate`, `upgrade_harness_migrate_bumps_version_to_current` |
-| Escrow data integrity | `upgrade_harness_pending_escrow_fields_match_golden_state`, `upgrade_harness_pending_escrow_is_withdrawable_post_upgrade`, `upgrade_harness_disputed_escrow_status_preserved`, `upgrade_harness_disputed_escrow_arbitration_works_post_upgrade`, `upgrade_harness_terminal_escrow_statuses_preserved`, `upgrade_harness_already_spent_escrow_rejects_re_withdrawal` |
-| Config / roles / privacy | `upgrade_harness_fee_config_survives_migration`, `upgrade_harness_admin_role_is_seeded_post_migration`, `upgrade_harness_privacy_setting_survives_migration` |
-| Regression pitfalls | `upgrade_harness_double_migrate_is_idempotent`, `upgrade_harness_non_admin_migrate_fails`, `upgrade_harness_migrate_without_admin_fails_gracefully`, `upgrade_harness_legacy_symbol_privacy_key_readable_after_upgrade`, `upgrade_harness_escrow_counter_survives_migration`, `upgrade_harness_all_lifecycle_statuses_are_distinct_post_migration` |
+| Category                 | Tests                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Version tracking         | `upgrade_harness_version_is_legacy_before_migrate`, `upgrade_harness_migrate_bumps_version_to_current`                                                                                                                                                                                                                                                              |
+| Escrow data integrity    | `upgrade_harness_pending_escrow_fields_match_golden_state`, `upgrade_harness_pending_escrow_is_withdrawable_post_upgrade`, `upgrade_harness_disputed_escrow_status_preserved`, `upgrade_harness_disputed_escrow_arbitration_works_post_upgrade`, `upgrade_harness_terminal_escrow_statuses_preserved`, `upgrade_harness_already_spent_escrow_rejects_re_withdrawal` |
+| Config / roles / privacy | `upgrade_harness_fee_config_survives_migration`, `upgrade_harness_admin_role_is_seeded_post_migration`, `upgrade_harness_privacy_setting_survives_migration`                                                                                                                                                                                                        |
+| Regression pitfalls      | `upgrade_harness_double_migrate_is_idempotent`, `upgrade_harness_non_admin_migrate_fails`, `upgrade_harness_migrate_without_admin_fails_gracefully`, `upgrade_harness_legacy_symbol_privacy_key_readable_after_upgrade`, `upgrade_harness_escrow_counter_survives_migration`, `upgrade_harness_all_lifecycle_statuses_are_distinct_post_migration`                  |
 
 ### Golden state fixture
 
@@ -237,7 +256,7 @@ cargo test upgrade_harness_ -- --nocapture
 
 ### Upgrade flow
 
-1. `env.register_at(contract_id, QuickexContract, ())` — swaps the WASM in-place on the same address
+1. `env.register_at(contract_id,  RustAcademyContract, ())` — swaps the WASM in-place on the same address
 2. `client.migrate(admin)` — runs the v0→v1 schema migration
 3. All 17 assertions then verify no data was lost or corrupted
 

@@ -9,7 +9,7 @@
 
 ## Overview
 
-Added contract-level safeguards and comprehensive invariant enforcement for safe, controlled upgrades in QuickEx. This implementation ensures upgrades only occur during admin-configured time windows and validates state machine consistency post-migration.
+Added contract-level safeguards and comprehensive invariant enforcement for safe, controlled upgrades in RustAcademy. This implementation ensures upgrades only occur during admin-configured time windows and validates state machine consistency post-migration.
 
 ---
 
@@ -20,16 +20,19 @@ Added contract-level safeguards and comprehensive invariant enforcement for safe
 **What**: `start_upgrade()` deterministically fails if called outside the admin-configured time window.
 
 **Implementation**:
+
 - Storage keys: `UpgradeWindowStart`, `UpgradeWindowEnd`
 - Function: `storage::is_upgrade_window_active(env)` checks ledger timestamp against `[start, end)`
 - Error: Returns `InvalidAmount` (repurposed as "upgrade window not active")
 
 **Test**: `upgrade_safety_gate_blocks_upgrade_outside_window` (lines 660–703 in upgrade_test.rs)
+
 - ✅ Fails before window
 - ✅ Fails after window
 - ✅ Succeeds during window
 
 **Code Flow**:
+
 ```rust
 admin::start_upgrade()
   → storage::is_upgrade_window_active()
@@ -51,6 +54,7 @@ admin::start_upgrade()
 4. **Per-Asset Fee Bounds**: `fee_bps ≤ 10_000`, `arbiter_bps ≤ 10_000`
 
 **Implementation** (storage.rs lines 283–306):
+
 ```rust
 pub fn assert_post_upgrade_invariants(env: &Env) -> Result<(), &'static str> {
     let fee_cfg = get_fee_config(env);
@@ -63,17 +67,19 @@ pub fn assert_post_upgrade_invariants(env: &Env) -> Result<(), &'static str> {
 ```
 
 **Integration** (admin.rs line 183):
+
 ```rust
 pub fn migrate() {
     // ... run migration steps ...
     // Post-upgrade invariant checks (Issue #432)
     if let Err(_msg) = storage::assert_post_upgrade_invariants(env) {
-        env.panic_with_error(QuickexError::InternalError);
+        env.panic_with_error( RustAcademyError::InternalError);
     }
 }
 ```
 
 **Test**: `upgrade_safety_gate_post_upgrade_invariants_enforced` (lines 705–737)
+
 - ✅ Window validation works
 - ✅ Invariants validated post-migrate
 - ✅ `complete_upgrade()` succeeds on clean state
@@ -111,18 +117,21 @@ pub struct UpgradeCompletedEvent {
 ```
 
 **Publishing**:
+
 - `publish_upgrade_started()` called in `admin::start_upgrade()` (lines 158–165)
 - `publish_upgrade_completed()` called in `admin::complete_upgrade()` (lines 220–221)
 
 **Indexer Pattern**:
+
 ```sql
-SELECT * FROM events 
-WHERE type IN ('UpgradeStarted', 'UpgradeCompleted') 
+SELECT * FROM events
+WHERE type IN ('UpgradeStarted', 'UpgradeCompleted')
 AND topics[1] = 'TOPIC_ADMIN'
 ORDER BY timestamp
 ```
 
 **Test**: `upgrade_safety_gate_emits_events` (lines 739–770)
+
 - ✅ Events emitted in correct sequence
 - ✅ Verification depends on soroban SDK event inspection
 
@@ -156,12 +165,12 @@ ORDER BY timestamp
 
 ### New Public Entrypoints
 
-| Function | Admin-Only | Window-Gated | Emits Event |
-|----------|-----------|--------------|-------------|
-| `set_upgrade_window(start, end)` | ✅ | ❌ | ❌ |
-| `get_upgrade_window()` | ❌ | ❌ | ❌ |
-| `start_upgrade(new_version)` | ✅ | ✅ | ✅ `UpgradeStarted` |
-| `complete_upgrade(new_version)` | ✅ | ❌ | ✅ `UpgradeCompleted` |
+| Function                         | Admin-Only | Window-Gated | Emits Event           |
+| -------------------------------- | ---------- | ------------ | --------------------- |
+| `set_upgrade_window(start, end)` | ✅         | ❌           | ❌                    |
+| `get_upgrade_window()`           | ❌         | ❌           | ❌                    |
+| `start_upgrade(new_version)`     | ✅         | ✅           | ✅ `UpgradeStarted`   |
+| `complete_upgrade(new_version)`  | ✅         | ❌           | ✅ `UpgradeCompleted` |
 
 ---
 
@@ -190,6 +199,7 @@ Step 3b: Admin calls complete_upgrade(new_version)
 ```
 
 **Error Handling**:
+
 - `InvalidAmount`: Used to signal "upgrade window not active"
 - `ContractPaused`: Used to signal "upgrade already in progress" (repurposed)
 - `InternalError`: Used when post-upgrade invariants fail (repurposed)
@@ -204,21 +214,23 @@ All tests use the `GoldenState` fixture (legacy v0 contract pre-populated with e
 
 **Test Suite: `upgrade_safety_gate_*`** (5 tests)
 
-| Test Name | Lines | What It Validates |
-|-----------|-------|-------------------|
-| `blocks_upgrade_outside_window` | 660–703 | AC1: window gating |
-| `post_upgrade_invariants_enforced` | 705–737 | AC2: invariant validation |
-| `emits_events` | 739–770 | AC3: event emission |
-| `blocks_double_start` | 772–798 | Safety: concurrent upgrades blocked |
-| `non_admin_blocked` | 800–820 | Security: admin-only enforcement |
+| Test Name                          | Lines   | What It Validates                   |
+| ---------------------------------- | ------- | ----------------------------------- |
+| `blocks_upgrade_outside_window`    | 660–703 | AC1: window gating                  |
+| `post_upgrade_invariants_enforced` | 705–737 | AC2: invariant validation           |
+| `emits_events`                     | 739–770 | AC3: event emission                 |
+| `blocks_double_start`              | 772–798 | Safety: concurrent upgrades blocked |
+| `non_admin_blocked`                | 800–820 | Security: admin-only enforcement    |
 
 **Run Tests**:
+
 ```bash
-cd app/contract/contracts/quickex
+cd app/contract/contracts/ RustAcademy
 cargo test upgrade_safety_gate_ -- --nocapture
 ```
 
 **Expected Output**:
+
 ```
 test upgrade_safety_gate_blocks_upgrade_outside_window ... ok
 test upgrade_safety_gate_post_upgrade_invariants_enforced ... ok
@@ -319,6 +331,6 @@ test result: ok. 5 passed; 0 failed; 0 ignored
 **Testing**: ✅ All ACs verified  
 **Documentation**: ✅ Comprehensive  
 **Backward Compatibility**: ✅ No breaking changes  
-**Performance**: ✅ O(1), no overhead  
+**Performance**: ✅ O(1), no overhead
 
 **Status**: Ready for deployment

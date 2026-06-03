@@ -1,29 +1,38 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString, Min, Max, IsBoolean, IsDateString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import {
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+  Max,
+  IsBoolean,
+  IsDateString,
+} from "class-validator";
 
 // ---------------------------------------------------------------------------
 // Enums
 // ---------------------------------------------------------------------------
 
 export enum FrequencyType {
-  DAILY = 'daily',
-  WEEKLY = 'weekly',
-  MONTHLY = 'monthly',
-  YEARLY = 'yearly',
+  DAILY = "daily",
+  WEEKLY = "weekly",
+  MONTHLY = "monthly",
+  YEARLY = "yearly",
 }
 
 export enum RecurringStatus {
-  ACTIVE = 'active',
-  PAUSED = 'paused',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
+  ACTIVE = "active",
+  PAUSED = "paused",
+  COMPLETED = "completed",
+  CANCELLED = "cancelled",
 }
 
 export enum ExecutionStatus {
-  PENDING = 'pending',
-  SUCCESS = 'success',
-  FAILED = 'failed',
-  SKIPPED = 'skipped',
+  PENDING = "pending",
+  SUCCESS = "success",
+  FAILED = "failed",
+  SKIPPED = "skipped",
 }
 
 // ---------------------------------------------------------------------------
@@ -35,7 +44,7 @@ export enum ExecutionStatus {
  */
 export class CreateRecurringPaymentLinkDto {
   @ApiProperty({
-    description: 'Payment amount',
+    description: "Payment amount",
     example: 100,
     minimum: 1,
   })
@@ -44,23 +53,23 @@ export class CreateRecurringPaymentLinkDto {
   amount!: number;
 
   @ApiProperty({
-    description: 'Asset code (XLM, USDC, etc.)',
-    example: 'XLM',
+    description: "Asset code (XLM, USDC, etc.)",
+    example: "XLM",
   })
   @IsString()
   asset!: string;
 
   @ApiPropertyOptional({
-    description: 'Asset issuer address (for non-native assets)',
-    example: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2K34P4D5NXJ6Z4GJ5B7G',
+    description: "Asset issuer address (for non-native assets)",
+    example: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2K34P4D5NXJ6Z4GJ5B7G",
   })
   @IsString()
   @IsOptional()
   assetIssuer?: string;
 
   @ApiProperty({
-    description: 'Username route (quickex.to/username)',
-    example: 'john_doe',
+    description: "Username route ( RustAcademy.to/username)",
+    example: "john_doe",
     required: false,
   })
   @IsString()
@@ -68,15 +77,15 @@ export class CreateRecurringPaymentLinkDto {
   username?: string;
 
   @ApiPropertyOptional({
-    description: 'Direct Stellar public key destination',
-    example: 'G...56 characters',
+    description: "Direct Stellar public key destination",
+    example: "G...56 characters",
   })
   @IsString()
   @IsOptional()
   destination?: string;
 
   @ApiProperty({
-    description: 'Payment frequency',
+    description: "Payment frequency",
     enum: FrequencyType,
     example: FrequencyType.MONTHLY,
   })
@@ -84,23 +93,23 @@ export class CreateRecurringPaymentLinkDto {
   frequency!: FrequencyType;
 
   @ApiPropertyOptional({
-    description: 'Start date for the recurring payments (ISO 8601)',
-    example: '2025-03-26T00:00:00Z',
+    description: "Start date for the recurring payments (ISO 8601)",
+    example: "2025-03-26T00:00:00Z",
   })
   @IsDateString()
   @IsOptional()
   startDate?: string;
 
   @ApiPropertyOptional({
-    description: 'End date for the recurring payments (ISO 8601)',
-    example: '2026-03-26T00:00:00Z',
+    description: "End date for the recurring payments (ISO 8601)",
+    example: "2026-03-26T00:00:00Z",
   })
   @IsDateString()
   @IsOptional()
   endDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Total number of payments (null for indefinite)',
+    description: "Total number of payments (null for indefinite)",
     example: 12,
     minimum: 1,
   })
@@ -110,32 +119,32 @@ export class CreateRecurringPaymentLinkDto {
   totalPeriods?: number;
 
   @ApiPropertyOptional({
-    description: 'Payment memo/note',
-    example: 'Monthly subscription',
+    description: "Payment memo/note",
+    example: "Monthly subscription",
   })
   @IsString()
   @IsOptional()
   memo?: string;
 
   @ApiPropertyOptional({
-    description: 'Memo type',
-    enum: ['text', 'id', 'hash', 'return'],
-    default: 'text',
+    description: "Memo type",
+    enum: ["text", "id", "hash", "return"],
+    default: "text",
   })
   @IsString()
   @IsOptional()
   memoType?: string;
 
   @ApiPropertyOptional({
-    description: 'Reference ID for tracking',
-    example: 'SUB-2025-001',
+    description: "Reference ID for tracking",
+    example: "SUB-2025-001",
   })
   @IsString()
   @IsOptional()
   referenceId?: string;
 
   @ApiPropertyOptional({
-    description: 'Enable X-Ray privacy (hide amounts/senders)',
+    description: "Enable X-Ray privacy (hide amounts/senders)",
     default: false,
   })
   @IsBoolean()
@@ -148,7 +157,7 @@ export class CreateRecurringPaymentLinkDto {
  */
 export class UpdateRecurringPaymentLinkDto {
   @ApiPropertyOptional({
-    description: 'Payment amount',
+    description: "Payment amount",
     example: 150,
     minimum: 1,
   })
@@ -158,7 +167,7 @@ export class UpdateRecurringPaymentLinkDto {
   amount?: number;
 
   @ApiPropertyOptional({
-    description: 'Payment frequency',
+    description: "Payment frequency",
     enum: FrequencyType,
   })
   @IsEnum(FrequencyType)
@@ -166,14 +175,14 @@ export class UpdateRecurringPaymentLinkDto {
   frequency?: FrequencyType;
 
   @ApiPropertyOptional({
-    description: 'End date for the recurring payments (ISO 8601)',
+    description: "End date for the recurring payments (ISO 8601)",
   })
   @IsDateString()
   @IsOptional()
   endDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Total number of payments',
+    description: "Total number of payments",
     minimum: 1,
   })
   @IsNumber()
@@ -182,14 +191,14 @@ export class UpdateRecurringPaymentLinkDto {
   totalPeriods?: number;
 
   @ApiPropertyOptional({
-    description: 'Payment memo/note',
+    description: "Payment memo/note",
   })
   @IsString()
   @IsOptional()
   memo?: string;
 
   @ApiPropertyOptional({
-    description: 'Reference ID for tracking',
+    description: "Reference ID for tracking",
   })
   @IsString()
   @IsOptional()
@@ -204,40 +213,40 @@ export class UpdateRecurringPaymentLinkDto {
  * DTO for recurring payment execution details
  */
 export class RecurringPaymentExecutionDto {
-  @ApiProperty({ description: 'Execution ID' })
+  @ApiProperty({ description: "Execution ID" })
   id!: string;
 
-  @ApiProperty({ description: 'Period number' })
+  @ApiProperty({ description: "Period number" })
   periodNumber!: number;
 
-  @ApiProperty({ description: 'Scheduled execution time' })
+  @ApiProperty({ description: "Scheduled execution time" })
   scheduledAt!: Date;
 
-  @ApiPropertyOptional({ description: 'Actual execution time' })
+  @ApiPropertyOptional({ description: "Actual execution time" })
   executedAt?: Date;
 
-  @ApiProperty({ description: 'Payment amount' })
+  @ApiProperty({ description: "Payment amount" })
   amount!: number;
 
-  @ApiProperty({ description: 'Asset code' })
+  @ApiProperty({ description: "Asset code" })
   asset!: string;
 
-  @ApiProperty({ description: 'Execution status', enum: ExecutionStatus })
+  @ApiProperty({ description: "Execution status", enum: ExecutionStatus })
   status!: ExecutionStatus;
 
-  @ApiPropertyOptional({ description: 'Stellar transaction hash' })
+  @ApiPropertyOptional({ description: "Stellar transaction hash" })
   transactionHash?: string;
 
-  @ApiPropertyOptional({ description: 'Failure reason' })
+  @ApiPropertyOptional({ description: "Failure reason" })
   failureReason?: string;
 
-  @ApiProperty({ description: 'Retry count' })
+  @ApiProperty({ description: "Retry count" })
   retryCount!: number;
 
-  @ApiProperty({ description: 'Notification sent flag' })
+  @ApiProperty({ description: "Notification sent flag" })
   notificationSent!: boolean;
 
-  @ApiProperty({ description: 'Created timestamp' })
+  @ApiProperty({ description: "Created timestamp" })
   createdAt!: Date;
 }
 
@@ -245,65 +254,65 @@ export class RecurringPaymentExecutionDto {
  * DTO for recurring payment link response
  */
 export class RecurringPaymentLinkResponseDto {
-  @ApiProperty({ description: 'Recurring link ID' })
+  @ApiProperty({ description: "Recurring link ID" })
   id!: string;
 
-  @ApiPropertyOptional({ description: 'Username route' })
+  @ApiPropertyOptional({ description: "Username route" })
   username?: string;
 
-  @ApiPropertyOptional({ description: 'Destination public key' })
+  @ApiPropertyOptional({ description: "Destination public key" })
   destination?: string;
 
-  @ApiProperty({ description: 'Payment amount' })
+  @ApiProperty({ description: "Payment amount" })
   amount!: number;
 
-  @ApiProperty({ description: 'Asset code' })
+  @ApiProperty({ description: "Asset code" })
   asset!: string;
 
-  @ApiPropertyOptional({ description: 'Asset issuer' })
+  @ApiPropertyOptional({ description: "Asset issuer" })
   assetIssuer?: string;
 
-  @ApiProperty({ description: 'Payment frequency', enum: FrequencyType })
+  @ApiProperty({ description: "Payment frequency", enum: FrequencyType })
   frequency!: FrequencyType;
 
-  @ApiProperty({ description: 'Start date' })
+  @ApiProperty({ description: "Start date" })
   startDate!: Date;
 
-  @ApiPropertyOptional({ description: 'End date' })
+  @ApiPropertyOptional({ description: "End date" })
   endDate?: Date;
 
-  @ApiPropertyOptional({ description: 'Total periods' })
+  @ApiPropertyOptional({ description: "Total periods" })
   totalPeriods?: number;
 
-  @ApiProperty({ description: 'Number of executed payments' })
+  @ApiProperty({ description: "Number of executed payments" })
   executedCount!: number;
 
-  @ApiProperty({ description: 'Next execution date' })
+  @ApiProperty({ description: "Next execution date" })
   nextExecutionDate!: Date;
 
-  @ApiProperty({ description: 'Current status', enum: RecurringStatus })
+  @ApiProperty({ description: "Current status", enum: RecurringStatus })
   status!: RecurringStatus;
 
-  @ApiPropertyOptional({ description: 'Payment memo' })
+  @ApiPropertyOptional({ description: "Payment memo" })
   memo?: string;
 
-  @ApiPropertyOptional({ description: 'Memo type' })
+  @ApiPropertyOptional({ description: "Memo type" })
   memoType?: string;
 
-  @ApiPropertyOptional({ description: 'Reference ID' })
+  @ApiPropertyOptional({ description: "Reference ID" })
   referenceId?: string;
 
-  @ApiProperty({ description: 'Privacy enabled flag' })
+  @ApiProperty({ description: "Privacy enabled flag" })
   privacyEnabled!: boolean;
 
-  @ApiProperty({ description: 'Creation timestamp' })
+  @ApiProperty({ description: "Creation timestamp" })
   createdAt!: Date;
 
-  @ApiProperty({ description: 'Last update timestamp' })
+  @ApiProperty({ description: "Last update timestamp" })
   updatedAt!: Date;
 
   @ApiPropertyOptional({
-    description: 'Execution history',
+    description: "Execution history",
     type: [RecurringPaymentExecutionDto],
   })
   executions?: RecurringPaymentExecutionDto[];
@@ -313,25 +322,28 @@ export class RecurringPaymentLinkResponseDto {
  * DTO for listing recurring payment links
  */
 export class ListRecurringPaymentsResponseDto {
-  @ApiProperty({ description: 'Success flag' })
+  @ApiProperty({ description: "Success flag" })
   success!: boolean;
 
-  @ApiProperty({ description: 'Total count' })
+  @ApiProperty({ description: "Total count" })
   total!: number;
 
   @ApiProperty({
-    description: 'Recurring payment links',
+    description: "Recurring payment links",
     type: [RecurringPaymentLinkResponseDto],
   })
   data!: RecurringPaymentLinkResponseDto[];
 
-  @ApiPropertyOptional({ description: 'Cursor for the next page', nullable: true })
+  @ApiPropertyOptional({
+    description: "Cursor for the next page",
+    nullable: true,
+  })
   next_cursor!: string | null;
 
-  @ApiProperty({ description: 'Whether more results exist' })
+  @ApiProperty({ description: "Whether more results exist" })
   has_more!: boolean;
 
-  @ApiProperty({ description: 'Limit used for this page' })
+  @ApiProperty({ description: "Limit used for this page" })
   limit!: number;
 }
 
@@ -344,7 +356,7 @@ export class ListRecurringPaymentsResponseDto {
  */
 export class QueryRecurringPaymentsDto {
   @ApiPropertyOptional({
-    description: 'Filter by status',
+    description: "Filter by status",
     enum: RecurringStatus,
   })
   @IsEnum(RecurringStatus)
@@ -352,29 +364,29 @@ export class QueryRecurringPaymentsDto {
   status?: RecurringStatus;
 
   @ApiPropertyOptional({
-    description: 'Filter by username',
+    description: "Filter by username",
   })
   @IsString()
   @IsOptional()
   username?: string;
 
   @ApiPropertyOptional({
-    description: 'Filter by destination',
+    description: "Filter by destination",
   })
   @IsString()
   @IsOptional()
   destination?: string;
 
   @ApiPropertyOptional({
-    description: 'Opaque cursor for the next page of results',
-    example: 'eyJwayI6IjIwMjYtMDEtMDFUMDA6MDA6MDAuMDAwWiIsImlkIjoiMTIzNCJ9',
+    description: "Opaque cursor for the next page of results",
+    example: "eyJwayI6IjIwMjYtMDEtMDFUMDA6MDA6MDAuMDAwWiIsImlkIjoiMTIzNCJ9",
   })
   @IsString()
   @IsOptional()
   cursor?: string;
 
   @ApiPropertyOptional({
-    description: 'Items per page',
+    description: "Items per page",
     example: 20,
     minimum: 1,
     maximum: 100,

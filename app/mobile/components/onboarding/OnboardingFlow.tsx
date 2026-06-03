@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,14 +6,14 @@ import {
   StyleSheet,
   Dimensions,
   Animated,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-import { useTheme } from '../../src/theme/ThemeContext';
+import { useTheme } from "../../src/theme/ThemeContext";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 interface OnboardingStep {
   id: string;
@@ -28,7 +28,10 @@ interface OnboardingFlowProps {
   onSkip?: () => void;
 }
 
-export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowProps) {
+export default function OnboardingFlow({
+  onComplete,
+  onSkip,
+}: OnboardingFlowProps) {
   const router = useRouter();
   const { theme } = useTheme();
 
@@ -38,9 +41,9 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
 
   const steps: OnboardingStep[] = [
     {
-      id: 'welcome',
-      title: 'Welcome to QuickEx',
-      subtitle: 'Fast, privacy-focused payments on Stellar',
+      id: "welcome",
+      title: "Welcome to  RustAcademy",
+      subtitle: "Fast, privacy-focused payments on Stellar",
       content: (
         <View style={styles.welcomeContent}>
           <View
@@ -49,46 +52,62 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
               { backgroundColor: theme.inputBg, borderColor: theme.border },
             ]}
           >
-            <Ionicons name="wallet-outline" size={80} color={theme.textPrimary} />
+            <Ionicons
+              name="wallet-outline"
+              size={80}
+              color={theme.textPrimary}
+            />
           </View>
-          <Text style={[styles.description, { color: theme.textSecondary }]}> 
-            Send and receive USDC, XLM, and any Stellar asset instantly with your self-custody wallet.
+          <Text style={[styles.description, { color: theme.textSecondary }]}>
+            Send and receive USDC, XLM, and any Stellar asset instantly with
+            your self-custody wallet.
           </Text>
         </View>
       ),
-      action: 'Get Started',
+      action: "Get Started",
     },
     {
-      id: 'wallet-basics',
-      title: 'Your Digital Wallet',
-      subtitle: 'Understanding self-custody',
+      id: "wallet-basics",
+      title: "Your Digital Wallet",
+      subtitle: "Understanding self-custody",
       content: (
         <View style={styles.educationContent}>
           <View style={styles.visualContainer}>
             <View style={styles.walletVisual}>
-              <Ionicons name="lock-closed" size={40} color={theme.status.success} />
-              <Text style={[styles.visualText, { color: theme.textPrimary }]}>Your Keys</Text>
+              <Ionicons
+                name="lock-closed"
+                size={40}
+                color={theme.status.success}
+              />
+              <Text style={[styles.visualText, { color: theme.textPrimary }]}>
+                Your Keys
+              </Text>
             </View>
             <Ionicons name="arrow-forward" size={24} color={theme.textMuted} />
             <View style={styles.walletVisual}>
-              <Ionicons name="globe-outline" size={40} color={theme.status.info} />
-              <Text style={[styles.visualText, { color: theme.textPrimary }]}>Stellar Network</Text>
+              <Ionicons
+                name="globe-outline"
+                size={40}
+                color={theme.status.info}
+              />
+              <Text style={[styles.visualText, { color: theme.textPrimary }]}>
+                Stellar Network
+              </Text>
             </View>
           </View>
-          <Text style={[styles.description, { color: theme.textSecondary }]}> 
-            • You control your private keys{"\n"}
-            • No third-party custody{"\n"}
-            • Transactions are irreversible{"\n"}
-            • Always verify recipient addresses
+          <Text style={[styles.description, { color: theme.textSecondary }]}>
+            • You control your private keys{"\n"}• No third-party custody{"\n"}•
+            Transactions are irreversible{"\n"}• Always verify recipient
+            addresses
           </Text>
         </View>
       ),
-      action: 'I Understand',
+      action: "I Understand",
     },
     {
-      id: 'signing',
-      title: 'Transaction Signing',
-      subtitle: 'How payments work',
+      id: "signing",
+      title: "Transaction Signing",
+      subtitle: "How payments work",
       content: (
         <View style={styles.educationContent}>
           <View style={styles.signingFlow}>
@@ -101,8 +120,14 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
                 },
               ]}
             >
-              <Ionicons name="create-outline" size={30} color={theme.textPrimary} />
-              <Text style={[styles.stepText, { color: theme.textPrimary }]}>1. You initiate payment</Text>
+              <Ionicons
+                name="create-outline"
+                size={30}
+                color={theme.textPrimary}
+              />
+              <Text style={[styles.stepText, { color: theme.textPrimary }]}>
+                1. You initiate payment
+              </Text>
             </View>
             <Ionicons name="chevron-down" size={20} color={theme.textMuted} />
             <View
@@ -114,8 +139,14 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
                 },
               ]}
             >
-              <Ionicons name="key-outline" size={30} color={theme.status.warning} />
-              <Text style={[styles.stepText, { color: theme.textPrimary }]}>2. You sign with private key</Text>
+              <Ionicons
+                name="key-outline"
+                size={30}
+                color={theme.status.warning}
+              />
+              <Text style={[styles.stepText, { color: theme.textPrimary }]}>
+                2. You sign with private key
+              </Text>
             </View>
             <Ionicons name="chevron-down" size={20} color={theme.textMuted} />
             <View
@@ -127,28 +158,37 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
                 },
               ]}
             >
-              <Ionicons name="checkmark-circle" size={30} color={theme.status.success} />
-              <Text style={[styles.stepText, { color: theme.textPrimary }]}>3. Network verifies and executes</Text>
+              <Ionicons
+                name="checkmark-circle"
+                size={30}
+                color={theme.status.success}
+              />
+              <Text style={[styles.stepText, { color: theme.textPrimary }]}>
+                3. Network verifies and executes
+              </Text>
             </View>
           </View>
-          <Text style={[styles.description, { color: theme.textSecondary }]}> 
-            Each transaction requires your digital signature. Never share your private key or recovery phrase.
+          <Text style={[styles.description, { color: theme.textSecondary }]}>
+            Each transaction requires your digital signature. Never share your
+            private key or recovery phrase.
           </Text>
         </View>
       ),
-      action: 'Got It',
+      action: "Got It",
     },
     {
-      id: 'demo-choice',
-      title: 'Choose Your Experience',
-      subtitle: 'Try demo mode or jump right in',
+      id: "demo-choice",
+      title: "Choose Your Experience",
+      subtitle: "Try demo mode or jump right in",
       content: (
         <View style={styles.choiceContent}>
           <TouchableOpacity
             style={[
               styles.choiceCard,
               {
-                backgroundColor: isDemoMode ? theme.chipActiveBg : theme.surface,
+                backgroundColor: isDemoMode
+                  ? theme.chipActiveBg
+                  : theme.surface,
                 borderColor: isDemoMode ? theme.chipActiveBg : theme.border,
               },
             ]}
@@ -162,7 +202,9 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             <Text
               style={[
                 styles.choiceTitle,
-                { color: isDemoMode ? theme.chipActiveText : theme.textPrimary },
+                {
+                  color: isDemoMode ? theme.chipActiveText : theme.textPrimary,
+                },
               ]}
             >
               Demo Mode
@@ -170,7 +212,11 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             <Text
               style={[
                 styles.choiceDescription,
-                { color: isDemoMode ? theme.chipActiveText : theme.textSecondary },
+                {
+                  color: isDemoMode
+                    ? theme.chipActiveText
+                    : theme.textSecondary,
+                },
               ]}
             >
               Practice with testnet funds{"\n"}
@@ -183,7 +229,9 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             style={[
               styles.choiceCard,
               {
-                backgroundColor: !isDemoMode ? theme.chipActiveBg : theme.surface,
+                backgroundColor: !isDemoMode
+                  ? theme.chipActiveBg
+                  : theme.surface,
                 borderColor: !isDemoMode ? theme.chipActiveBg : theme.border,
               },
             ]}
@@ -197,7 +245,9 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             <Text
               style={[
                 styles.choiceTitle,
-                { color: !isDemoMode ? theme.chipActiveText : theme.textPrimary },
+                {
+                  color: !isDemoMode ? theme.chipActiveText : theme.textPrimary,
+                },
               ]}
             >
               Real Mode
@@ -205,7 +255,11 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             <Text
               style={[
                 styles.choiceDescription,
-                { color: !isDemoMode ? theme.chipActiveText : theme.textSecondary },
+                {
+                  color: !isDemoMode
+                    ? theme.chipActiveText
+                    : theme.textSecondary,
+                },
               ]}
             >
               Use actual funds{"\n"}
@@ -215,7 +269,7 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
           </TouchableOpacity>
         </View>
       ),
-      action: isDemoMode ? 'Start Demo' : 'Connect Real Wallet',
+      action: isDemoMode ? "Start Demo" : "Connect Real Wallet",
     },
   ];
 
@@ -239,7 +293,7 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
   };
 
   const handleComplete = () => {
-    trackOnboardingEvent('onboarding_completed', {
+    trackOnboardingEvent("onboarding_completed", {
       demo_mode: isDemoMode,
       steps_completed: currentStep + 1,
     });
@@ -248,14 +302,14 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
       onComplete();
     } else {
       router.push({
-        pathname: '/wallet-connect',
+        pathname: "/wallet-connect",
         params: { demo: isDemoMode.toString() },
       });
     }
   };
 
   const handleSkip = () => {
-    trackOnboardingEvent('onboarding_skipped', {
+    trackOnboardingEvent("onboarding_skipped", {
       step: currentStep,
       steps_completed: currentStep,
     });
@@ -263,37 +317,53 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
     if (onSkip) {
       onSkip();
     } else {
-      router.replace('/');
+      router.replace("/");
     }
   };
 
-  const trackOnboardingEvent = (eventName: string, params: Record<string, unknown>) => {
-    console.log('Analytics Event:', eventName, params);
+  const trackOnboardingEvent = (
+    eventName: string,
+    params: Record<string, unknown>,
+  ) => {
+    console.log("Analytics Event:", eventName, params);
   };
 
   const currentStepData = steps[currentStep];
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}> 
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={handleSkip} style={styles.skipButton}>
-          <Text style={[styles.skipText, { color: theme.textMuted }]}>Skip</Text>
+          <Text style={[styles.skipText, { color: theme.textMuted }]}>
+            Skip
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.progressContainer}>
-        <View style={[styles.progressBar, { backgroundColor: theme.border }]}> 
-          <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: theme.primary }]} />
+        <View style={[styles.progressBar, { backgroundColor: theme.border }]}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${progress}%`, backgroundColor: theme.primary },
+            ]}
+          />
         </View>
         <Text style={[styles.progressText, { color: theme.textMuted }]}>
           Step {currentStep + 1} of {steps.length}
         </Text>
       </View>
 
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}> 
-        <Text style={[styles.title, { color: theme.textPrimary }]}>{currentStepData.title}</Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{currentStepData.subtitle}</Text>
+      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          {currentStepData.title}
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+          {currentStepData.subtitle}
+        </Text>
 
         {currentStepData.content}
       </Animated.View>
@@ -306,7 +376,8 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
               style={[
                 styles.dot,
                 {
-                  backgroundColor: index === currentStep ? theme.primary : theme.border,
+                  backgroundColor:
+                    index === currentStep ? theme.primary : theme.border,
                   width: index === currentStep ? 24 : 8,
                 },
               ]}
@@ -315,13 +386,22 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
         </View>
 
         <TouchableOpacity
-          style={[styles.nextButton, { backgroundColor: theme.buttonPrimaryBg }]}
+          style={[
+            styles.nextButton,
+            { backgroundColor: theme.buttonPrimaryBg },
+          ]}
           onPress={handleNext}
         >
-          <Text style={[styles.nextButtonText, { color: theme.buttonPrimaryText }]}> 
-            {currentStepData.action || 'Next'}
+          <Text
+            style={[styles.nextButtonText, { color: theme.buttonPrimaryText }]}
+          >
+            {currentStepData.action || "Next"}
           </Text>
-          <Ionicons name="arrow-forward" size={20} color={theme.buttonPrimaryText} />
+          <Ionicons
+            name="arrow-forward"
+            size={20}
+            color={theme.buttonPrimaryText}
+          />
         </TouchableOpacity>
 
         {currentStep > 0 && (
@@ -329,7 +409,9 @@ export default function OnboardingFlow({ onComplete, onSkip }: OnboardingFlowPro
             style={styles.backButton}
             onPress={() => setCurrentStep(currentStep - 1)}
           >
-            <Text style={[styles.backButtonText, { color: theme.textMuted }]}>Back</Text>
+            <Text style={[styles.backButtonText, { color: theme.textMuted }]}>
+              Back
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -342,8 +424,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     paddingHorizontal: 24,
     paddingTop: 12,
   },
@@ -352,7 +434,7 @@ const styles = StyleSheet.create({
   },
   skipText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   progressContainer: {
     paddingHorizontal: 24,
@@ -365,67 +447,67 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   progressFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 2,
   },
   progressText: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   content: {
     flex: 1,
     paddingHorizontal: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 40,
   },
   welcomeContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   iconContainer: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 32,
     borderWidth: 1,
   },
   educationContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   visualContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 32,
     width: Math.min(width - 48, 420),
   },
   walletVisual: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 16,
   },
   visualText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 8,
   },
   signingFlow: {
-    width: '100%',
+    width: "100%",
     marginBottom: 32,
   },
   stepBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
@@ -433,14 +515,14 @@ const styles = StyleSheet.create({
   },
   stepText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 12,
     flexShrink: 1,
   },
   description: {
     fontSize: 16,
     lineHeight: 24,
-    textAlign: 'center',
+    textAlign: "center",
   },
   choiceContent: {
     gap: 16,
@@ -449,26 +531,26 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     borderWidth: 2,
-    alignItems: 'center',
+    alignItems: "center",
   },
   choiceTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginTop: 12,
     marginBottom: 8,
   },
   choiceDescription: {
     fontSize: 14,
     lineHeight: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   footer: {
     paddingHorizontal: 24,
     paddingBottom: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
   dotsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 24,
   },
   dot: {
@@ -477,18 +559,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   nextButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 8,
-    width: '100%',
-    justifyContent: 'center',
+    width: "100%",
+    justifyContent: "center",
     gap: 8,
   },
   nextButtonText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   backButton: {
     marginTop: 12,

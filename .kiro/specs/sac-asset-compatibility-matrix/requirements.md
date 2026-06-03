@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The SAC (Stellar Asset Contract) Asset Compatibility Matrix feature validates and documents contract behavior across XLM (the native Stellar asset) and common SAC tokens (USDC, AQUA, yXLM). It ensures that transfer semantics, decimal handling, amount normalization, and fee routing work consistently and correctly across all supported asset types. The feature also establishes clear rejection behavior for unsupported assets and invalid issuers, providing deterministic and testable guarantees for the QuickEx platform.
+The SAC (Stellar Asset Contract) Asset Compatibility Matrix feature validates and documents contract behavior across XLM (the native Stellar asset) and common SAC tokens (USDC, AQUA, yXLM). It ensures that transfer semantics, decimal handling, amount normalization, and fee routing work consistently and correctly across all supported asset types. The feature also establishes clear rejection behavior for unsupported assets and invalid issuers, providing deterministic and testable guarantees for the RustAcademy platform.
 
 ## Glossary
 
@@ -23,7 +23,7 @@ The SAC (Stellar Asset Contract) Asset Compatibility Matrix feature validates an
 
 ### Requirement 1: Asset Identification and Normalization
 
-**User Story:** As a developer integrating with QuickEx, I want asset inputs to be normalized to a canonical form, so that XLM and SAC tokens are identified consistently regardless of how they are provided.
+**User Story:** As a developer integrating with RustAcademy, I want asset inputs to be normalized to a canonical form, so that XLM and SAC tokens are identified consistently regardless of how they are provided.
 
 #### Acceptance Criteria
 

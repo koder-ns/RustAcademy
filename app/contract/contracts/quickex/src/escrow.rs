@@ -64,7 +64,7 @@ use soroban_sdk::{token, Address, Bytes, BytesN, Env, Vec};
 
 use crate::{
     admin, commitment,
-    errors::QuickexError,
+    errors:: RustAcademyError,
     escrow_id, events, fee_router, hook,
     storage::{
         count_dispute_votes, get_dispute_vote, get_escrow, get_escrow_id_mapping, has_dispute_vote,
@@ -110,7 +110,7 @@ fn is_within_window(env: &Env, entry: &EscrowEntry) -> bool {
 /// blocking withdrawal (INV-1 check: `now >= u64::MAX` is always false for
 /// any real ledger). We surface this as `InvalidTimeout` instead of
 /// silently creating a broken escrow.
-fn compute_expires_at(env: &Env, timeout_secs: u64) -> Result<u64, QuickexError> {
+fn compute_expires_at(env: &Env, timeout_secs: u64) -> Result<u64,  RustAcademyError> {
     if timeout_secs == 0 {
         return Ok(0); // non-expiring
     }
@@ -120,7 +120,7 @@ fn compute_expires_at(env: &Env, timeout_secs: u64) -> Result<u64, QuickexError>
     // Guard against saturated overflow: if the result is u64::MAX it means
     // timeout_secs was unreasonably large — reject it explicitly.
     if expires_at == u64::MAX {
-        return Err(QuickexError::InvalidTimeout);
+        return Err( RustAcademyError::InvalidTimeout);
     }
 
     Ok(expires_at)
@@ -150,9 +150,9 @@ pub fn deposit(
     salt: Bytes,
     timeout_secs: u64,
     arbiter: Option<Address>,
-) -> Result<BytesN<32>, QuickexError> {
+) -> Result<BytesN<32>,  RustAcademyError> {
     if amount <= 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
 
     owner.require_auth();
@@ -178,12 +178,12 @@ pub fn deposit(
     let token_client = token::Client::new(env, &token);
     let commitment_bytes: Bytes = commitment.clone().into();
     if has_escrow(env, &commitment_bytes) {
-        return Err(QuickexError::CommitmentAlreadyExists);
+        return Err( RustAcademyError::CommitmentAlreadyExists);
     }
     if legacy_commitment != commitment {
         let legacy_commitment_bytes: Bytes = legacy_commitment.into();
         if has_escrow(env, &legacy_commitment_bytes) {
-            return Err(QuickexError::CommitmentAlreadyExists);
+            return Err( RustAcademyError::CommitmentAlreadyExists);
         }
     }
     let entry = EscrowEntry {
@@ -249,9 +249,9 @@ pub fn deposit_with_commitment(
     commitment: BytesN<32>,
     timeout_secs: u64,
     arbiter: Option<Address>,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     if amount <= 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
 
     from.require_auth();
@@ -262,7 +262,7 @@ pub fn deposit_with_commitment(
     // optimized: convert commitment once, move args into entry
     let commitment_bytes: Bytes = commitment.clone().into();
     if has_escrow(env, &commitment_bytes) {
-        return Err(QuickexError::CommitmentAlreadyExists);
+        return Err( RustAcademyError::CommitmentAlreadyExists);
     }
 
     let token_client = token::Client::new(env, &token);
@@ -335,12 +335,12 @@ pub fn deposit_partial(
     salt: Bytes,
     timeout_secs: u64,
     arbiter: Option<Address>,
-) -> Result<BytesN<32>, QuickexError> {
+) -> Result<BytesN<32>,  RustAcademyError> {
     if initial_payment <= 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
     if amount_due <= 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
 
     owner.require_auth();
@@ -415,20 +415,20 @@ pub fn partial_payment(
     commitment: BytesN<32>,
     payer: Address,
     payment_amount: i128,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     if payment_amount <= 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
 
     payer.require_auth();
 
     let commitment_bytes: Bytes = commitment.clone().into();
     let mut entry: EscrowEntry =
-        get_escrow(env, &commitment_bytes).ok_or(QuickexError::CommitmentNotFound)?;
+        get_escrow(env, &commitment_bytes).ok_or( RustAcademyError::CommitmentNotFound)?;
 
     // INV-5: terminal states are final
     if entry.status != EscrowStatus::Pending {
-        return Err(QuickexError::AlreadySpent);
+        return Err( RustAcademyError::AlreadySpent);
     }
 
     // Calculate remaining amount due
@@ -436,7 +436,7 @@ pub fn partial_payment(
 
     // Reject overpayment
     if payment_amount > remaining {
-        return Err(QuickexError::Overpayment);
+        return Err( RustAcademyError::Overpayment);
     }
 
     // Transfer payment to contract
@@ -497,9 +497,9 @@ pub fn partial_payment(
 /// - [`AlreadySpent`] – escrow already spent or refunded.
 /// - [`InvalidCommitment`] – stored amount_due ≠ requested amount_due.
 /// - [`Overpayment`] – escrow is not fully paid yet.
-pub fn withdraw(env: &Env, amount: i128, to: Address, salt: Bytes) -> Result<bool, QuickexError> {
+pub fn withdraw(env: &Env, amount: i128, to: Address, salt: Bytes) -> Result<bool,  RustAcademyError> {
     if amount <= 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
 
     to.require_auth();
@@ -514,7 +514,7 @@ pub fn withdraw(env: &Env, amount: i128, to: Address, salt: Bytes) -> Result<boo
         } else {
             let legacy_commitment_bytes: Bytes = legacy_commitment.clone().into();
             let entry = get_escrow(env, &legacy_commitment_bytes)
-                .ok_or(QuickexError::CommitmentNotFound)?;
+                .ok_or( RustAcademyError::CommitmentNotFound)?;
             (legacy_commitment, legacy_commitment_bytes, entry)
         };
 
@@ -522,23 +522,23 @@ pub fn withdraw(env: &Env, amount: i128, to: Address, salt: Bytes) -> Result<boo
     if entry.status != EscrowStatus::Pending {
         // Distinguish disputed (INV-4) from other terminal states (INV-5)
         if entry.status == EscrowStatus::Disputed {
-            return Err(QuickexError::InvalidDisputeState);
+            return Err( RustAcademyError::InvalidDisputeState);
         }
-        return Err(QuickexError::AlreadySpent);
+        return Err( RustAcademyError::AlreadySpent);
     }
 
     // INV-1: strictly enforce the time-lock — no bypass
     if !is_within_window(env, &entry) {
-        return Err(QuickexError::EscrowExpired);
+        return Err( RustAcademyError::EscrowExpired);
     }
 
     if entry.amount_due != amount {
-        return Err(QuickexError::InvalidCommitment);
+        return Err( RustAcademyError::InvalidCommitment);
     }
 
     // Check if escrow is fully paid
     if entry.amount_paid < entry.amount_due {
-        return Err(QuickexError::Overpayment);
+        return Err( RustAcademyError::Overpayment);
     }
 
     // optimized: destructure what we need, move entry instead of cloning
@@ -596,29 +596,29 @@ pub fn withdraw(env: &Env, amount: i128, to: Address, salt: Bytes) -> Result<boo
 /// - [`InvalidDisputeState`] – escrow is disputed, funds locked (INV-4).
 /// - [`EscrowNotExpired`] – expiry not set or not yet reached (INV-2).
 /// - [`InvalidOwner`] – caller is not the original owner.
-pub fn refund(env: &Env, commitment: BytesN<32>, caller: Address) -> Result<(), QuickexError> {
+pub fn refund(env: &Env, commitment: BytesN<32>, caller: Address) -> Result<(),  RustAcademyError> {
     caller.require_auth();
 
     let commitment_bytes: Bytes = commitment.clone().into();
     let entry: EscrowEntry =
-        get_escrow(env, &commitment_bytes).ok_or(QuickexError::CommitmentNotFound)?;
+        get_escrow(env, &commitment_bytes).ok_or( RustAcademyError::CommitmentNotFound)?;
 
     // INV-5: terminal states are final
     if entry.status != EscrowStatus::Pending {
         // INV-4: disputed funds are locked — surface a more specific error
         if entry.status == EscrowStatus::Disputed {
-            return Err(QuickexError::InvalidDisputeState);
+            return Err( RustAcademyError::InvalidDisputeState);
         }
-        return Err(QuickexError::AlreadySpent);
+        return Err( RustAcademyError::AlreadySpent);
     }
 
     // INV-2: strictly enforce — both expires_at > 0 AND now >= expires_at must hold
     if !is_expired(env, &entry) {
-        return Err(QuickexError::EscrowNotExpired);
+        return Err( RustAcademyError::EscrowNotExpired);
     }
 
     if caller != entry.owner {
-        return Err(QuickexError::InvalidOwner);
+        return Err( RustAcademyError::InvalidOwner);
     }
 
     let token_ref = entry.token.clone();
@@ -660,10 +660,10 @@ pub fn refund(env: &Env, commitment: BytesN<32>, caller: Address) -> Result<(), 
 /// Extend the storage TTL of an escrow record.
 ///
 /// Any user can call this to keep an escrow from being archived.
-pub fn extend_escrow_ttl(env: &Env, commitment: BytesN<32>) -> Result<(), QuickexError> {
+pub fn extend_escrow_ttl(env: &Env, commitment: BytesN<32>) -> Result<(),  RustAcademyError> {
     let commitment_bytes: Bytes = commitment.into();
     if !has_escrow(env, &commitment_bytes) {
-        return Err(QuickexError::CommitmentNotFound);
+        return Err( RustAcademyError::CommitmentNotFound);
     }
 
     env.storage().persistent().extend_ttl(
@@ -677,17 +677,17 @@ pub fn extend_escrow_ttl(env: &Env, commitment: BytesN<32>) -> Result<(), Quicke
 /// Cleanup terminal escrow entries to reclaim storage deposits.
 ///
 /// Only escrows in `Spent` or `Refunded` status can be removed.
-pub fn cleanup_escrow(env: &Env, commitment: BytesN<32>) -> Result<(), QuickexError> {
+pub fn cleanup_escrow(env: &Env, commitment: BytesN<32>) -> Result<(),  RustAcademyError> {
     let commitment_bytes: Bytes = commitment.into();
     let entry: EscrowEntry =
-        get_escrow(env, &commitment_bytes).ok_or(QuickexError::CommitmentNotFound)?;
+        get_escrow(env, &commitment_bytes).ok_or( RustAcademyError::CommitmentNotFound)?;
 
     match entry.status {
         EscrowStatus::Spent | EscrowStatus::Refunded => {
             remove_escrow(env, &commitment_bytes);
             Ok(())
         }
-        _ => Err(QuickexError::AlreadySpent), // Reuse error or add a more specific one if needed
+        _ => Err( RustAcademyError::AlreadySpent), // Reuse error or add a more specific one if needed
     }
 }
 
@@ -706,17 +706,17 @@ pub fn cleanup_escrow(env: &Env, commitment: BytesN<32>) -> Result<(), QuickexEr
 /// - [`CommitmentNotFound`] – no escrow for the given commitment.
 /// - [`NoArbiter`] – no arbiter assigned to the escrow.
 /// - [`InvalidDisputeState`] – escrow is not in `Pending` status.
-pub fn dispute(env: &Env, commitment: BytesN<32>) -> Result<(), QuickexError> {
+pub fn dispute(env: &Env, commitment: BytesN<32>) -> Result<(),  RustAcademyError> {
     let commitment_bytes: Bytes = commitment.clone().into();
     let entry: EscrowEntry =
-        get_escrow(env, &commitment_bytes).ok_or(QuickexError::CommitmentNotFound)?;
+        get_escrow(env, &commitment_bytes).ok_or( RustAcademyError::CommitmentNotFound)?;
 
     // Guard: must have an arbiter assigned
-    let arbiter = entry.arbiter.as_ref().ok_or(QuickexError::NoArbiter)?;
+    let arbiter = entry.arbiter.as_ref().ok_or( RustAcademyError::NoArbiter)?;
 
     // Guard: escrow must be in Pending state
     if entry.status != EscrowStatus::Pending {
-        return Err(QuickexError::InvalidDisputeState);
+        return Err( RustAcademyError::InvalidDisputeState);
     }
 
     let mut updated = entry.clone();
@@ -753,10 +753,10 @@ pub fn resolve_dispute(
     commitment: BytesN<32>,
     resolve_for_owner: bool,
     recipient: Address,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     let commitment_bytes: Bytes = commitment.clone().into();
     let entry: EscrowEntry =
-        get_escrow(env, &commitment_bytes).ok_or(QuickexError::CommitmentNotFound)?;
+        get_escrow(env, &commitment_bytes).ok_or( RustAcademyError::CommitmentNotFound)?;
 
     // Guard: caller must be either the assigned arbiter OR have the global Arbiter role.
     caller.require_auth();
@@ -771,12 +771,12 @@ pub fn resolve_dispute(
     }
 
     if !is_authorized {
-        return Err(QuickexError::NotArbiter);
+        return Err( RustAcademyError::NotArbiter);
     }
 
     // Guard: escrow must be in Disputed state
     if entry.status != EscrowStatus::Disputed {
-        return Err(QuickexError::InvalidDisputeState);
+        return Err( RustAcademyError::InvalidDisputeState);
     }
 
     let (final_status, recipient_address) = if resolve_for_owner {
@@ -875,21 +875,21 @@ pub fn vote_for_dispute(
     caller: Address,
     commitment: BytesN<32>,
     resolve_for_owner: bool,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     caller.require_auth();
 
     let commitment_bytes: Bytes = commitment.clone().into();
     let entry: EscrowEntry =
-        get_escrow(env, &commitment_bytes).ok_or(QuickexError::CommitmentNotFound)?;
+        get_escrow(env, &commitment_bytes).ok_or( RustAcademyError::CommitmentNotFound)?;
 
     // Guard: escrow must be in Disputed state
     if entry.status != EscrowStatus::Disputed {
-        return Err(QuickexError::InvalidDisputeState);
+        return Err( RustAcademyError::InvalidDisputeState);
     }
 
     // Guard: must be in multi-sig mode (threshold > 0)
     if entry.arbiter_threshold == 0 {
-        return Err(QuickexError::NoArbiter);
+        return Err( RustAcademyError::NoArbiter);
     }
 
     // Guard: caller must be one of the assigned arbiters
@@ -907,12 +907,12 @@ pub fn vote_for_dispute(
     }
 
     if !is_arbiter {
-        return Err(QuickexError::NotAnArbiter);
+        return Err( RustAcademyError::NotAnArbiter);
     }
 
     // Guard: arbiter must not have already voted
     if has_dispute_vote(env, &commitment_bytes, &caller) {
-        return Err(QuickexError::ArbiterAlreadyVoted);
+        return Err( RustAcademyError::ArbiterAlreadyVoted);
     }
 
     // Record the vote
@@ -963,19 +963,19 @@ pub fn resolve_dispute_multi_sig(
     env: &Env,
     commitment: BytesN<32>,
     recipient: Address,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     let commitment_bytes: Bytes = commitment.clone().into();
     let entry: EscrowEntry =
-        get_escrow(env, &commitment_bytes).ok_or(QuickexError::CommitmentNotFound)?;
+        get_escrow(env, &commitment_bytes).ok_or( RustAcademyError::CommitmentNotFound)?;
 
     // Guard: escrow must be in Disputed state
     if entry.status != EscrowStatus::Disputed {
-        return Err(QuickexError::InvalidDisputeState);
+        return Err( RustAcademyError::InvalidDisputeState);
     }
 
     // Guard: must be in multi-sig mode
     if entry.arbiter_threshold == 0 {
-        return Err(QuickexError::NoArbiter);
+        return Err( RustAcademyError::NoArbiter);
     }
 
     // Count votes
@@ -983,7 +983,7 @@ pub fn resolve_dispute_multi_sig(
 
     // Guard: threshold must be met
     if vote_count < entry.arbiter_threshold {
-        return Err(QuickexError::InsufficientVotes);
+        return Err( RustAcademyError::InsufficientVotes);
     }
 
     // Count votes for each side

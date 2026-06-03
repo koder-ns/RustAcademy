@@ -9,18 +9,18 @@
  *  - memo                  → only included when it is a short, non-sensitive label
  */
 
-export const SITE_NAME = "QuickEx";
+export const SITE_NAME = " RustAcademy";
 export const SITE_DESCRIPTION = "Privacy-focused payments on Stellar";
 
 /** Resolved at build/request time from the environment. Falls back to a relative path. */
 export function getSiteUrl(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    process.env.NEXT_PUBLIC_QUICKEX_API_URL?.replace(/\/$/, "").replace(
+    process.env.NEXT_PUBLIC_ RustAcademy_API_URL?.replace(/\/$/, "").replace(
       /:4000$/,
       ":3000",
     ) ||
-    "https://quickex.to"
+    "https:// RustAcademy.to"
   );
 }
 
@@ -50,8 +50,8 @@ export async function fetchPaymentMeta(params: {
 }): Promise<SafePaymentMeta | null> {
   try {
     const apiBase =
-      process.env.QUICKEX_INTERNAL_API_URL?.replace(/\/$/, "") ||
-      process.env.NEXT_PUBLIC_QUICKEX_API_URL?.replace(/\/$/, "") ||
+      process.env. RustAcademy_INTERNAL_API_URL?.replace(/\/$/, "") ||
+      process.env.NEXT_PUBLIC_ RustAcademy_API_URL?.replace(/\/$/, "") ||
       "http://localhost:4000";
 
     const qs = new URLSearchParams({ username: params.username, amount: params.amount });
@@ -98,7 +98,7 @@ export function buildPaymentTitle(meta: SafePaymentMeta): string {
     case "DRAFT":
       return `Pay ${meta.amount} ${meta.asset} to @${meta.username}`;
     default:
-      return `Payment link — QuickEx`;
+      return `Payment link —  RustAcademy`;
   }
 }
 
@@ -125,7 +125,7 @@ export function buildPaymentDescription(meta: SafePaymentMeta): string {
 export const FALLBACK_PAYMENT_METADATA = {
   title: `Payment Link — ${SITE_NAME}`,
   description:
-    "This payment link is unavailable, expired, or invalid. Visit QuickEx to create a new one.",
+    "This payment link is unavailable, expired, or invalid. Visit  RustAcademy to create a new one.",
   ogImage: DEFAULT_OG_IMAGE,
 } as const;
 

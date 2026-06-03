@@ -1,6 +1,6 @@
-# Contributing to QuickEx Mobile (Expo)
+# Contributing to RustAcademy Mobile (Expo)
 
-Thank you for your interest in contributing to the QuickEx mobile app!
+Thank you for your interest in contributing to the RustAcademy mobile app!
 
 ## Development Workflow
 

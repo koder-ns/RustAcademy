@@ -1,365 +1,186 @@
-# QuickEx Backend (NestJS)
 
-A NestJS-based backend API for the QuickEx Stellar exchange platform.
+# 🚀 RustAcademy API
 
-## Setup
+> Backend powering RustAcademy.
 
-### 1. Install dependencies
+---
 
-From the repository root:
+## Overview
 
-```bash
-pnpm install
-```
+The API manages:
 
-### 2. Configure environment variables
+* Authentication
+* Course management
+* Task grading
+* Reward distribution
+* Community interactions
+* AI mentor integration
+* Wallet operations
 
-Copy the example environment file and fill in the required values:
+---
 
-```bash
-cp .env.example .env
-```
+## Features
 
-**Required environment variables must be configured before the server will start.**
+### Authentication
 
-### Environment Variables
+* JWT Authentication
+* Wallet Authentication
+* Role-based Access Control
 
-| Variable           | Required | Default       | Description                                           |
-| ------------------ | -------- | ------------- | ----------------------------------------------------- |
-| `PORT`             | No       | `4000`        | Port number for the HTTP server                       |
-| `NODE_ENV`         | No       | `development` | Environment: `development`, `production`, or `test`   |
-| `NETWORK`          | **Yes**  | -             | Stellar network: `testnet` or `mainnet`               |
-| `SUPABASE_URL`     | **Yes**  | -             | Supabase project URL (e.g., `https://xxx.supabase.co`)|
-| `SUPABASE_ANON_KEY`| **Yes**  | -             | Supabase anonymous (public) API key                   |
-| `MAX_USERNAMES_PER_WALLET` | No | (no limit) | Max usernames per wallet; omit for no limit           |
+### Learning Engine
 
-#### Getting Supabase credentials
+* Course CRUD
+* Lesson Management
+* Task Management
+* Submission Processing
 
-1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
-2. Select your project (or create a new one)
-3. Navigate to **Project Settings** > **API**
-4. Copy the **Project URL** → `SUPABASE_URL`
-5. Copy the **anon/public** key → `SUPABASE_ANON_KEY`
+### AI Services
 
-#### Example `.env` file
+* Claude Integration
+* Code Review
+* Grading Engine
+* Hint Generation
 
-```env
-PORT=4000
-NODE_ENV=development
-NETWORK=testnet
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
+### Blockchain Services
 
-### Environment Validation
+* Stellar SDK
+* Soroban Contracts
+* Reward Distribution
+* NFT Certificates
 
-The backend validates all environment variables at startup using a Joi schema. If required variables are missing or invalid, the application will:
+### Community
 
-1. Log a clear, actionable error message listing all missing/invalid keys
-2. Exit with a non-zero exit code
+* Feed
+* Comments
+* Messaging
+* Notifications
 
-**Note:** For security, actual secret values are never logged—only the key names.
+---
 
-## Stellar configuration
+## Tech Stack
 
-### Network
+* Fastify
+* TypeScript
+* PostgreSQL
+* Prisma
+* Redis
+* BullMQ
+* Stellar SDK
+* Anthropic Claude API
 
-- Env var: `STELLAR_NETWORK`
-- Allowed values: `testnet`, `mainnet`
-- Default: `testnet`
-- Invalid values fail fast with a startup error.
-
-Example `.env`:
-
-```bash
-STELLAR_NETWORK=testnet
-```
-
-### Supported assets
-
-Asset validation is driven by `SUPPORTED_ASSETS` in `src/config/stellar.config.ts`.
-
-Native asset shape:
-
-```ts
-{ type: 'native', code: 'XLM' }
-```
-
-Issued asset shape:
-
-```ts
-{ type: 'credit_alphanum4', code: 'USDC', issuer: 'G...ISSUER' }
-```
-
-How to add a new supported asset:
-
-1. Add a new entry to `SUPPORTED_ASSETS`.
-2. For issued assets, include the exact issuer (case-sensitive).
-3. Update tests and docs.
-
-Example issued asset:
-
-```ts
-{
-  type: 'credit_alphanum4',
-  code: 'EURT',
-  issuer: 'GEXAMPLEISSUERADDRESS'
-}
-```
-
-## Scripts
-
-Run from repo root using TurboRepo filters:
-
-```bash
-pnpm turbo run dev --filter=@quickex/backend      # Start development server
-pnpm turbo run test --filter=@quickex/backend     # Run tests
-pnpm turbo run type-check --filter=@quickex/backend  # TypeScript type checking
-pnpm turbo run lint --filter=@quickex/backend     # Lint code
-pnpm turbo run build --filter=@quickex/backend    # Build for production
-```
-
-## API Documentation (Swagger/OpenAPI)
-
-Interactive API documentation is available via Swagger UI:
-
-**URL:** `http://localhost:4000/docs`
-
-The Swagger UI provides:
-- Interactive endpoint exploration
-- Request/response schema documentation
-- "Try it out" functionality for testing endpoints
-- Downloadable OpenAPI specification
-
-### Screenshots
-
-When the server is running, navigate to `/docs` to see:
-- All available endpoints organized by tags
-- **Transactions Endpoint**: `GET /transactions` fetches recent payments with caching and pagination.
-- Response schemas and status codes
-- Example payloads
-
-## Endpoints
-
-### Health and Readiness (Ops Visibility)
-
-The API provides two endpoints for monitoring, following standard probe semantics:
-
-| Method | Path      | Name      | Description                                      | Response                                      |
-| ------ | --------- | --------- | ------------------------------------------------ | --------------------------------------------- |
-| GET    | `/health` | Liveness  | Shallow check: is the server up?                 | `{ "status": "ok", "version", "uptime" }`     |
-| GET    | `/ready`  | Readiness | Deep check: are dependencies (Supabase) healthy? | `{ "ready": true, "checks": [...] }`          |
-
-#### Probe Semantics
-
-- **`/health` (Liveness)**: Use this for Kubernetes liveness probes. It returns `200 OK` as long as the process is running. It includes application version and uptime for better visibility.
-- **`/ready` (Readiness)**: Use this for Kubernetes readiness probes or load balancer health checks. It performs dependency checks:
-  - **Supabase Connectivity**: Pings the database to ensure it's reachable.
-  - **Environment Validation**: Ensures all critical environment variables are loaded.
-  - Returns `503 Service Unavailable` if any check fails.
-
-### Usernames (quickex.to/yourname)
-
-| Method | Path        | Description              | Request / Query                 | Response                    |
-| ------ | ----------- | ------------------------ | ------------------------------- | --------------------------- |
-| POST   | `/username` | Create a new username    | Body: `{ "username", "publicKey" }` | `{ "ok": true }` or 409/403 |
-| GET    | `/username` | List usernames for wallet| Query: `?publicKey=G...`         | `{ "usernames": [...] }`     |
-
-**Username rules (enforced server-side):**
-- **Length:** 3–32 characters (inclusive).
-- **Characters:** Lowercase letters (`a-z`), digits (`0-9`), underscore (`_`) only. Pattern: `^[a-z0-9_]+$`.
-- **Uniqueness:** One username per value (normalized to lowercase). Duplicate creation returns **409 Conflict** with code `USERNAME_CONFLICT`.
-- **Per-wallet limit (optional):** Set `MAX_USERNAMES_PER_WALLET` to cap usernames per Stellar public key; exceeding returns **403 Forbidden** with code `USERNAME_LIMIT_EXCEEDED`.
-- **Race conditions:** Uniqueness is enforced by a database unique constraint so concurrent creates are safe.
-
-### Payment Links
-
-| Method | Path                | Description                      | Request Body                | Response                  |
-| ------ | ------------------- | -------------------------------- | --------------------------- | ------------------------- |
-| POST   | `/links/metadata`   | Generate canonical link metadata | See below                   | See below                 |
-
-#### Generate Canonical Link Metadata
-
-**Endpoint:** `POST /links/metadata`
-
-Validates payment link parameters and generates canonical metadata for frontend consumption.
-
-**Request Body:**
-```json
-{
-  "amount": 50.5,
-  "memo": "Payment for service",
-  "memoType": "text",
-  "asset": "XLM",
-  "privacy": false,
-  "expirationDays": 30
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": {
-    "amount": "50.5000000",
-    "memo": "Payment for service",
-    "memoType": "text",
-    "asset": "XLM",
-    "privacy": false,
-    "expiresAt": "2026-02-24T12:00:00.000Z",
-    "canonical": "amount=50.5000000&asset=XLM&memo=Payment%20for%20service",
-    "metadata": {
-      "normalized": false
-    }
-  }
-}
-```
-
-**Validation Rules:**
-- `amount`: Must be between 0.0000001 and 1,000,000
-- `memo`: Maximum 28 characters, sanitized for security
-- `asset`: Must be whitelisted (XLM, USDC, AQUA, yXLM)
-- `expirationDays`: Between 1 and 365 days
-
-**Error Codes:**
-- `INVALID_AMOUNT` - Amount is invalid or out of range
-- `MEMO_TOO_LONG` - Memo exceeds 28 characters
-- `ASSET_NOT_WHITELISTED` - Asset not supported
-- `INVALID_EXPIRATION` - Expiration days out of range
-
-**Example cURL:**
-```bash
-curl -X POST http://localhost:4000/links/metadata \
-  -H "Content-Type: application/json" \
-  -d '{
-    "amount": 100,
-    "memo": "Invoice #12345",
-    "asset": "XLM"
-  }'
-```
-
-## Local Development
-
-### Start the development server
-
-To run the backend locally:
-
-```bash
-pnpm turbo run dev --filter=@quickex/backend
-```
-
-The server will start on the configured port (default: `4000`).
-
-### Verify the server is running
-
-```bash
-# Liveness check
-curl http://localhost:4000/health
-# Response: {"status":"ok","version":"0.1.0","uptime":123}
-
-# Readiness check
-curl http://localhost:4000/ready
-# Response: {"ready":true,"checks":[{"name":"supabase","status":"up","latency":"12ms"},...]}
-```
-
-### View API documentation
-
-Open `http://localhost:4000/docs` in your browser.
+---
 
 ## Architecture
 
+```text
+Frontend
+   ↓
+Fastify API
+   ↓
+Services Layer
+   ↓
+PostgreSQL
+Redis
+BullMQ
+Stellar
+Claude
 ```
-src/
-├── main.ts                 # Application entry point, Swagger setup
-├── app.module.ts           # Root module
-├── config/                 # Configuration module
-│   ├── env.schema.ts       # Joi validation schema
-│   ├── app-config.service.ts # Typed config accessors
-│   └── config.module.ts    # Config module setup
-├── health/                 # Health check module
-│   ├── health.controller.ts
-│   └── health-response.dto.ts
-├── usernames/              # Username management (quickex.to/yourname)
-│   ├── usernames.controller.ts
-│   ├── usernames.service.ts
-│   ├── constants.ts        # Username rules (length, pattern, limits)
-│   └── errors/             # Conflict, limit-exceeded, validation errors
-└── supabase/               # Supabase integration
-    ├── supabase.service.ts
-    └── supabase.module.ts
+
+---
+
+## Environment Variables
+
+```env
+DATABASE_URL=
+
+REDIS_URL=
+
+JWT_SECRET=
+
+ANTHROPIC_API_KEY=
+
+STELLAR_NETWORK=testnet
+
+STELLAR_HORIZON_URL=
+STELLAR_RPC_URL=
+
+REWARD_POOL_SECRET_KEY=
 ```
+
+---
+
+## Run Locally
+
+```bash
+pnpm install
+
+pnpm prisma migrate dev
+
+pnpm dev
+```
+
+Runs on:
+
+```bash
+http://localhost:4000
+```
+
+---
+
+## Database Modules
+
+### Users
+
+* Learners
+* Tutors
+* Admins
+
+### Courses
+
+* Courses
+* Lessons
+* Tasks
+
+### Learning
+
+* Enrollments
+* Progress
+* Submissions
+
+### Community
+
+* Posts
+* Comments
+* Messages
+
+### Blockchain
+
+* Rewards
+* Badges
+* Certificates
+
+---
+
+## Queue Workers
+
+BullMQ Workers:
+
+```text
+submission-grading
+reward-distribution
+certificate-minting
+badge-minting
+notification-delivery
+```
+
+---
 
 ## Testing
 
 ```bash
-pnpm turbo run test --filter=@quickex/backend
+pnpm test
+
+pnpm test:coverage
 ```
 
-Tests include:
-- Environment schema validation tests (`env.schema.spec.ts`)
-- Integration tests for endpoints (`app.spec.ts`)
-
-## Notifications
-
-The backend includes a comprehensive notification engine that supports multiple channels:
-
-### Supported Channels
-
-- **Email** - via SendGrid
-- **Push Notifications** - via Expo Push (for mobile app)
-- **Webhooks** - for custom integrations
-- **Telegram** - real-time bot notifications ✨
-
-### Telegram Bot Integration
-
-QuickEx supports real-time notifications via Telegram! Users can link their Telegram accounts to receive instant alerts for payments, escrow events, and more.
-
-#### Quick Setup
-
-1. **Create a Telegram Bot**: Use [@BotFather](https://t.me/BotFather) to create a bot and get a token
-2. **Configure environment**: Add `TELEGRAM_BOT_TOKEN=your-token-here` to `.env`
-3. **Install dependencies**: `npm install telegraf`
-4. **Run migrations**: Apply the database migration for Telegram tables
-5. **Restart the server**: The bot will start automatically
-
-For complete setup instructions, user guide, and API documentation, see:
-- **[Telegram Bot Guide](docs/TELEGRAM-BOT-GUIDE.md)** - Complete setup and usage guide
-
-#### User Commands
-
-Users interact with the bot using Telegram commands:
-- `/start` - Link their QuickEx account
-- `/status` - Check linkage status
-- `/settings` - Configure notification preferences
-- `/min <amount>` - Set minimum amount threshold (in XLM)
-- `/enable` / `/disable` - Toggle notifications
-- `/unlink` - Disconnect account
-
-#### API Endpoints
-
-Programmatic access is available via REST API:
-- `GET /telegram/status/:telegramId` - Check linkage status
-- `POST /telegram/verify/:telegramId` - Verify account with code
-- `PUT /telegram/settings/:telegramId` - Update settings
-- `DELETE /telegram/link/:telegramId` - Unlink account
-
-### Event Types
-
-Notifications are triggered for:
-- 💰 Payment received
-- 🔒 Escrow deposited/withdrawn/refunded
-- 🔄 Recurring payment events
-- ✅ Username claimed
-
-### Configuration
-
-Notification providers are configured via environment variables:
-
-| Variable | Channel | Required |
-|----------|---------|----------|
-| `SENDGRID_API_KEY` | Email | No |
-| `SENDGRID_FROM_EMAIL` | Email | No |
-| `EXPO_ACCESS_TOKEN` | Push | No |
-| `TELEGRAM_BOT_TOKEN` | Telegram | No |
-
-Webhook channel requires no credentials and is always available.
+---

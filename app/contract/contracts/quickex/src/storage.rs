@@ -1,6 +1,6 @@
-//! # QuickEx Storage Schema
+//! #  RustAcademy Storage Schema
 //!
-//! This module defines the persistent storage layout for the QuickEx contract.
+//! This module defines the persistent storage layout for the  RustAcademy contract.
 //! All long-term data is stored via the [`DataKey`] enum, which centralises key
 //! construction and ensures type-safe storage access.
 //!

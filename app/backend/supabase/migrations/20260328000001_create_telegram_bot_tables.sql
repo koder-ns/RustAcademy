@@ -5,16 +5,16 @@
 -- ---------------------------------------------------------------------------
 -- telegram_user_mappings
 -- ---------------------------------------------------------------------------
--- Maps Telegram user IDs to QuickEx public keys for notification delivery.
+-- Maps Telegram user IDs to  RustAcademy public keys for notification delivery.
 -- Users link their Telegram account by starting a conversation with the bot
--- and providing their QuickEx public key or username.
+-- and providing their  RustAcademy public key or username.
 
 CREATE TABLE IF NOT EXISTS telegram_user_mappings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   telegram_id BIGINT NOT NULL,                -- Telegram user ID
   username TEXT,                               -- Telegram username (@username without @)
-  public_key TEXT NOT NULL,                   -- QuickEx public key (G...)
+  public_key TEXT NOT NULL,                   --  RustAcademy public key (G...)
   
   -- Linking status
   is_verified BOOLEAN NOT NULL DEFAULT false, -- Whether user confirmed the link
@@ -45,10 +45,10 @@ CREATE INDEX IF NOT EXISTS telegram_user_mappings_enabled_idx
   WHERE enabled = true;
 
 COMMENT ON TABLE telegram_user_mappings IS
-  'Maps Telegram users to QuickEx accounts for real-time payment notifications.';
+  'Maps Telegram users to  RustAcademy accounts for real-time payment notifications.';
 
 COMMENT ON COLUMN telegram_user_mappings.is_verified IS 
-  'Whether the user has confirmed the Telegram-QuickEx account link';
+  'Whether the user has confirmed the Telegram- RustAcademy account link';
 
 COMMENT ON COLUMN telegram_user_mappings.verification_code IS 
   'One-time code sent via Telegram to verify account ownership';

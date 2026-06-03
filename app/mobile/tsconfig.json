@@ -1,5 +1,5 @@
 {
-  "extends": "expo/tsconfig.base.json",
+  // "extends": "expo/tsconfig.base.json",
   "compilerOptions": {
     "allowJs": true,
     "esModuleInterop": true,
@@ -15,7 +15,7 @@
     "target": "ESNext",
     "strict": true,
     "ignoreDeprecations": "5.0",
-    "baseUrl": ".",
+    // "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }

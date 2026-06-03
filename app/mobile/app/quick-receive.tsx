@@ -24,7 +24,7 @@ export default function QuickReceiveScreen() {
 
   const receiveLink = useMemo(() => {
     if (!username) return null;
-    return `https://quickex.to/${username}`;
+    return `https:// RustAcademy.to/${username}`;
   }, [username]);
 
   const handleCopy = async () => {
@@ -37,7 +37,7 @@ export default function QuickReceiveScreen() {
     if (!receiveLink) return;
 
     await Share.share({
-      message: `Send me payment via QuickEx:\n${receiveLink}`,
+      message: `Send me payment via  RustAcademy:\n${receiveLink}`,
     });
   };
 
@@ -63,7 +63,9 @@ export default function QuickReceiveScreen() {
           </Text>
 
           {/* QR codes must always be black-on-white for scanner readability */}
-          <View style={[styles.qrWrapper, { backgroundColor: theme.qrBackground }]}>
+          <View
+            style={[styles.qrWrapper, { backgroundColor: theme.qrBackground }]}
+          >
             <QRCode
               value={receiveLink!}
               size={220}
@@ -73,17 +75,31 @@ export default function QuickReceiveScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.primaryButton, { backgroundColor: theme.status.info }]}
+            style={[
+              styles.primaryButton,
+              { backgroundColor: theme.status.info },
+            ]}
             onPress={handleCopy}
           >
-            <Text style={[styles.buttonText, { color: theme.buttonPrimaryText }]}>Copy Link</Text>
+            <Text
+              style={[styles.buttonText, { color: theme.buttonPrimaryText }]}
+            >
+              Copy Link
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.secondaryButton, { backgroundColor: theme.status.success }]}
+            style={[
+              styles.secondaryButton,
+              { backgroundColor: theme.status.success },
+            ]}
             onPress={handleShare}
           >
-            <Text style={[styles.buttonText, { color: theme.buttonPrimaryText }]}>Share</Text>
+            <Text
+              style={[styles.buttonText, { color: theme.buttonPrimaryText }]}
+            >
+              Share
+            </Text>
           </TouchableOpacity>
         </>
       )}

@@ -24,11 +24,13 @@ You have **4 options** to run the migration. Choose the one that works best for 
 8. You should see "Success. No rows returned"
 
 **Verify it worked:**
+
 ```sql
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN ('crash_reports', 'crash_reporting_settings');
 ```
+
 You should see both tables listed.
 
 ---
@@ -48,10 +50,10 @@ This will show you the migration SQL and instructions for running it.
 
 ```bash
 cd app/backend
-psql -U postgres -d quickex -f src/crash-reporting/migrations/001_create_crash_reporting_tables.sql
+psql -U postgres -d  RustAcademy -f src/crash-reporting/migrations/001_create_crash_reporting_tables.sql
 ```
 
-Replace `postgres` with your database username and `quickex` with your database name.
+Replace `postgres` with your database username and ` RustAcademy` with your database name.
 
 ---
 
@@ -82,16 +84,19 @@ This will run all three test suites and show you the results.
 ### Option B: Run Tests Individually
 
 **1. Test Redaction Service:**
+
 ```bash
 npm run test:unit -- --testPathPattern=redaction.service.spec.ts
 ```
 
 **2. Test Crash Reporting Service:**
+
 ```bash
 npm run test:unit -- --testPathPattern=crash-reporting.service.spec.ts
 ```
 
 **3. Test Integration:**
+
 ```bash
 npm run test:int -- --testPathPattern=crash-reporting.integration.spec.ts
 ```
@@ -111,16 +116,19 @@ npm run test:unit -- --testPathPattern=crash-reporting
 ### Test the API Endpoints
 
 **1. Start the backend:**
+
 ```bash
 npm run dev
 ```
 
 **2. Test getting settings (should return default):**
+
 ```bash
 curl http://localhost:4000/crash-reporting/settings/test-user
 ```
 
 Expected response:
+
 ```json
 {
   "userId": "test-user",
@@ -130,6 +138,7 @@ Expected response:
 ```
 
 **3. Enable crash reporting:**
+
 ```bash
 curl -X PUT http://localhost:4000/crash-reporting/settings/test-user ^
   -H "Content-Type: application/json" ^
@@ -137,6 +146,7 @@ curl -X PUT http://localhost:4000/crash-reporting/settings/test-user ^
 ```
 
 Expected response:
+
 ```json
 {
   "message": "Crash reporting enabled successfully"
@@ -144,11 +154,13 @@ Expected response:
 ```
 
 **4. Verify it's enabled:**
+
 ```bash
 curl http://localhost:4000/crash-reporting/settings/test-user
 ```
 
 Expected response:
+
 ```json
 {
   "userId": "test-user",
@@ -164,6 +176,7 @@ Expected response:
 ### Issue: "jest is not recognized"
 
 **Solution:** Install dependencies first:
+
 ```bash
 cd app/backend
 npm install
@@ -174,6 +187,7 @@ npm install
 ### Issue: Migration fails with "permission denied"
 
 **Solution:** Make sure you're using the service role key (not the anon key) in your `.env` file:
+
 ```
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ```
@@ -183,6 +197,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ### Issue: Tests fail with "Cannot find module"
 
 **Solution:** Make sure you're in the backend directory:
+
 ```bash
 cd app/backend
 npm install
@@ -194,9 +209,10 @@ npm run test:unit -- --testPathPattern=crash-reporting
 ### Issue: "Table already exists"
 
 **Solution:** The migration has already been run. You can verify the tables exist:
+
 ```sql
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name LIKE 'crash_%';
 ```
 

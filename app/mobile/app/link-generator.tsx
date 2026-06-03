@@ -4,15 +4,15 @@ import Constants from "expo-constants";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -113,7 +113,10 @@ export default function LinkGeneratorScreen() {
 
   const handleGenerate = async () => {
     if (isConnected === false) {
-      Alert.alert("Offline Mode", "You cannot generate payment links while offline.");
+      Alert.alert(
+        "Offline Mode",
+        "You cannot generate payment links while offline.",
+      );
       return;
     }
     if (!isValidAmount || !isValidDestination) {
@@ -153,10 +156,10 @@ export default function LinkGeneratorScreen() {
   const handleShare = async () => {
     const url =
       canonicalData ||
-      `https://quickex.to/${form.destination}/${form.amount}?asset=${recipientAssetCode}${form.memo ? `&memo=${encodeURIComponent(form.memo)}` : ""}`;
+      `https:// RustAcademy.to/${form.destination}/${form.amount}?asset=${recipientAssetCode}${form.memo ? `&memo=${encodeURIComponent(form.memo)}` : ""}`;
     try {
       await Share.share({
-        message: `Pay me via QuickEx:\n${url}`,
+        message: `Pay me via  RustAcademy:\n${url}`,
       });
     } catch (error: any) {
       Alert.alert("Error sharing", error.message);
@@ -166,7 +169,7 @@ export default function LinkGeneratorScreen() {
   const handleCopy = async () => {
     const url =
       canonicalData ||
-      `https://quickex.to/${form.destination}/${form.amount}?asset=${recipientAssetCode}${form.memo ? `&memo=${encodeURIComponent(form.memo)}` : ""}`;
+      `https:// RustAcademy.to/${form.destination}/${form.amount}?asset=${recipientAssetCode}${form.memo ? `&memo=${encodeURIComponent(form.memo)}` : ""}`;
     await Clipboard.setStringAsync(url);
     Alert.alert("Copied", "Payment link copied to clipboard");
   };

@@ -1,4 +1,4 @@
-//! Shared test scaffolding for QuickEx contract tests.
+//! Shared test scaffolding for  RustAcademy contract tests.
 //!
 //! Pick the constructor that matches what your test needs and you're ready to go:
 //!
@@ -33,9 +33,9 @@ use soroban_sdk::{
     Address, Bytes, BytesN, Env,
 };
 
-use crate::{types::FeeConfig, QuickexContract, QuickexContractClient};
+use crate::{types::FeeConfig,  RustAcademyContract,  RustAcademyContractClient};
 
-/// Test harness for QuickEx contract tests.
+/// Test harness for  RustAcademy contract tests.
 ///
 /// See the module-level docs for usage examples.
 #[allow(dead_code)]
@@ -43,7 +43,7 @@ pub struct TestContext<'a> {
     /// Soroban test env, all auths mocked.
     pub env: Env,
     /// Contract client pointing at the deployed instance.
-    pub client: QuickexContractClient<'a>,
+    pub client:  RustAcademyContractClient<'a>,
     pub admin: Address,
     pub platform_wallet: Address,
     /// First test user.
@@ -62,8 +62,8 @@ impl<'a> TestContext<'a> {
     pub fn new() -> Self {
         let env = Env::default();
         env.mock_all_auths();
-        let contract_id = env.register(QuickexContract, ());
-        let client = QuickexContractClient::new(&env, &contract_id);
+        let contract_id = env.register( RustAcademyContract, ());
+        let client =  RustAcademyContractClient::new(&env, &contract_id);
 
         let admin = Address::generate(&env);
         let platform_wallet = Address::generate(&env);

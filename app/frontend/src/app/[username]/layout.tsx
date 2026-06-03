@@ -6,7 +6,12 @@
  */
 
 import type { Metadata } from "next";
-import { getSiteUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_DESCRIPTION } from "@/lib/og-metadata";
+import {
+  getSiteUrl,
+  DEFAULT_OG_IMAGE,
+  SITE_NAME,
+  SITE_DESCRIPTION,
+} from "@/lib/og-metadata";
 
 interface UsernameLayoutProps {
   children: React.ReactNode;
@@ -33,11 +38,14 @@ export async function generateMetadata({
   const canonicalUrl = `${siteUrl}/${safeUsername}`;
 
   // Build dynamic OG image URL
-  const ogImageParams = new URLSearchParams({ type: "profile", username: safeUsername });
+  const ogImageParams = new URLSearchParams({
+    type: "profile",
+    username: safeUsername,
+  });
   const dynamicOgImage = `${siteUrl}/api/og?${ogImageParams.toString()}`;
 
-  const title = `@${safeUsername} — Pay with QuickEx`;
-  const description = `Send a payment to @${safeUsername} on the Stellar network using QuickEx. Fast, private, and fee-efficient.`;
+  const title = `@${safeUsername} — Pay with  RustAcademy`;
+  const description = `Send a payment to @${safeUsername} on the Stellar network using  RustAcademy. Fast, private, and fee-efficient.`;
 
   return {
     title: `${title} | ${SITE_NAME}`,
@@ -56,13 +64,13 @@ export async function generateMetadata({
           url: dynamicOgImage,
           width: 1200,
           height: 630,
-          alt: `${safeUsername} on QuickEx`,
+          alt: `${safeUsername} on  RustAcademy`,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
-      site: "@quickex",
+      site: "@ RustAcademy",
       title,
       description,
       images: [dynamicOgImage],
@@ -86,7 +94,7 @@ function buildProfileFallback(siteUrl: string): Metadata {
     },
     twitter: {
       card: "summary_large_image",
-      site: "@quickex",
+      site: "@ RustAcademy",
       title: `Profile not found — ${SITE_NAME}`,
       description: SITE_DESCRIPTION,
       images: [ogImage],

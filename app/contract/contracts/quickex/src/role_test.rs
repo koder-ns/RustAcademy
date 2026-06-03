@@ -1,4 +1,4 @@
-use crate::{errors::QuickexError, test_context::TestContext, types::Role};
+use crate::{errors:: RustAcademyError, test_context::TestContext, types::Role};
 use soroban_sdk::{testutils::Address as _, Address};
 
 #[test]
@@ -97,7 +97,7 @@ fn test_insufficient_role_error() {
         .try_set_fee_config(&ctx.alice, &crate::types::FeeConfig { fee_bps: 100 });
 
     match res {
-        Err(Ok(QuickexError::InsufficientRole)) => (),
+        Err(Ok( RustAcademyError::InsufficientRole)) => (),
         _ => panic!("Expected InsufficientRole error"),
     }
 }

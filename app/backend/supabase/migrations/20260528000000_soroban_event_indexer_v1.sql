@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS privacy_events (
 CREATE INDEX IF NOT EXISTS privacy_events_owner_idx          ON privacy_events (owner);
 CREATE INDEX IF NOT EXISTS privacy_events_ledger_idx         ON privacy_events (ledger_sequence);
 
-COMMENT ON TABLE privacy_events IS 'PrivacyToggled events from the QuickEx Soroban contract.';
+COMMENT ON TABLE privacy_events IS 'PrivacyToggled events from the  RustAcademy Soroban contract.';
 
 -- ─── Admin events ────────────────────────────────────────────────────────────
 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS admin_events (
 CREATE INDEX IF NOT EXISTS admin_events_event_type_idx ON admin_events (event_type);
 CREATE INDEX IF NOT EXISTS admin_events_ledger_idx     ON admin_events (ledger_sequence);
 
-COMMENT ON TABLE admin_events IS 'Admin action events from the QuickEx Soroban contract.';
+COMMENT ON TABLE admin_events IS 'Admin action events from the  RustAcademy Soroban contract.';
 
 -- ─── Stealth events ──────────────────────────────────────────────────────────
 
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS stealth_events (
 CREATE INDEX IF NOT EXISTS stealth_events_stealth_address_idx ON stealth_events (stealth_address);
 CREATE INDEX IF NOT EXISTS stealth_events_ledger_idx          ON stealth_events (ledger_sequence);
 
-COMMENT ON TABLE stealth_events IS 'Stealth address events from the QuickEx Soroban contract.';
+COMMENT ON TABLE stealth_events IS 'Stealth address events from the  RustAcademy Soroban contract.';
 
 -- ─── Escrow events: add schema_version column (idempotent) ───────────────────
 

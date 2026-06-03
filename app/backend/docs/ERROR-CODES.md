@@ -1,6 +1,6 @@
-# QuickEx API — Error Contract & Troubleshooting Guide
+# RustAcademy API — Error Contract & Troubleshooting Guide
 
-Every non-2xx response from the QuickEx backend follows a single JSON shape.
+Every non-2xx response from the RustAcademy backend follows a single JSON shape.
 Clients can rely on this contract for all key flows.
 
 **Last Updated:** April 2026 | **Version:** 2.0.0
@@ -20,15 +20,15 @@ Clients can rely on this contract for all key flows.
 }
 ```
 
-| Field | Type | Always present | Description |
-|---|---|---|---|
-| `success` | `false` | ✅ | Always `false` for error responses |
-| `error.code` | `string` | ✅ | Machine-readable error code (see table below) |
-| `error.message` | `string \| string[]` | ✅ | Human-readable description |
-| `error.request_id` | `string` | When available | UUID that ties the response to server logs. Also sent as `x-request-id` and `x-correlation-id` response headers. Pass this to support when reporting issues. |
-| `error.correlationId` | `string` | When available | Alias for `request_id` (kept for backward compatibility) |
-| `error.fields` | `object` | Validation errors only | Map of field name → array of messages |
-| `error.details` | `object` | Non-production only | Extra context (omitted in production) |
+| Field                 | Type                 | Always present         | Description                                                                                                                                                  |
+| --------------------- | -------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `success`             | `false`              | ✅                     | Always `false` for error responses                                                                                                                           |
+| `error.code`          | `string`             | ✅                     | Machine-readable error code (see table below)                                                                                                                |
+| `error.message`       | `string \| string[]` | ✅                     | Human-readable description                                                                                                                                   |
+| `error.request_id`    | `string`             | When available         | UUID that ties the response to server logs. Also sent as `x-request-id` and `x-correlation-id` response headers. Pass this to support when reporting issues. |
+| `error.correlationId` | `string`             | When available         | Alias for `request_id` (kept for backward compatibility)                                                                                                     |
+| `error.fields`        | `object`             | Validation errors only | Map of field name → array of messages                                                                                                                        |
+| `error.details`       | `object`             | Non-production only    | Extra context (omitted in production)                                                                                                                        |
 
 ### request_id propagation
 
@@ -47,126 +47,126 @@ request header. The resolved value is echoed back in:
 
 ### Generic / Infrastructure
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `INTERNAL_SERVER_ERROR` | 500 | Unexpected server error |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests. Check `details.retryAfterSeconds` |
-| `VALIDATION_ERROR` | 400 | Request body / query failed validation. Check `fields` |
-| `UNAUTHORIZED` | 401 | Missing or invalid API key |
-| `FORBIDDEN` | 403 | Valid credentials but insufficient scope |
-| `NOT_FOUND` | 404 | Resource does not exist |
+| Code                    | HTTP Status | Description                                            |
+| ----------------------- | ----------- | ------------------------------------------------------ |
+| `INTERNAL_SERVER_ERROR` | 500         | Unexpected server error                                |
+| `RATE_LIMIT_EXCEEDED`   | 429         | Too many requests. Check `details.retryAfterSeconds`   |
+| `VALIDATION_ERROR`      | 400         | Request body / query failed validation. Check `fields` |
+| `UNAUTHORIZED`          | 401         | Missing or invalid API key                             |
+| `FORBIDDEN`             | 403         | Valid credentials but insufficient scope               |
+| `NOT_FOUND`             | 404         | Resource does not exist                                |
 
 ### Username
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `USERNAME_TAKEN` | 409 | The requested username is already registered |
-| `USERNAME_INVALID` | 400 | Username does not meet format requirements |
-| `USERNAME_NOT_FOUND` | 404 | No user with that username exists |
-| `USERNAME_RESERVED` | 409 | Username is reserved and cannot be claimed |
+| Code                 | HTTP Status | Description                                  |
+| -------------------- | ----------- | -------------------------------------------- |
+| `USERNAME_TAKEN`     | 409         | The requested username is already registered |
+| `USERNAME_INVALID`   | 400         | Username does not meet format requirements   |
+| `USERNAME_NOT_FOUND` | 404         | No user with that username exists            |
+| `USERNAME_RESERVED`  | 409         | Username is reserved and cannot be claimed   |
 
 ### Payment Links
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `LINK_NOT_FOUND` | 404 | Payment link does not exist |
-| `LINK_EXPIRED` | 410 | Payment link has passed its expiry date |
-| `LINK_ALREADY_PAID` | 409 | Payment link has already been fulfilled |
-| `LINK_CANCELLED` | 410 | Payment link was cancelled by the creator |
-| `LINK_LIMIT_EXCEEDED` | 422 | User has reached the maximum number of active links |
+| Code                  | HTTP Status | Description                                         |
+| --------------------- | ----------- | --------------------------------------------------- |
+| `LINK_NOT_FOUND`      | 404         | Payment link does not exist                         |
+| `LINK_EXPIRED`        | 410         | Payment link has passed its expiry date             |
+| `LINK_ALREADY_PAID`   | 409         | Payment link has already been fulfilled             |
+| `LINK_CANCELLED`      | 410         | Payment link was cancelled by the creator           |
+| `LINK_LIMIT_EXCEEDED` | 422         | User has reached the maximum number of active links |
 
 ### Stellar / Transactions
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `STELLAR_INVALID_ADDRESS` | 400 | Public key is not a valid Stellar address |
-| `STELLAR_INVALID_ASSET` | 400 | Asset code or issuer is invalid |
-| `STELLAR_INVALID_AMOUNT` | 400 | Amount is out of range or has too many decimal places |
-| `STELLAR_INVALID_MEMO` | 400 | Memo exceeds length or contains invalid characters |
-| `STELLAR_NETWORK_ERROR` | 502 | Horizon API returned an error or is unreachable |
-| `STELLAR_TRANSACTION_FAILED` | 422 | Transaction was submitted but rejected by the network |
-| `STELLAR_INSUFFICIENT_FUNDS` | 422 | Source account does not have enough balance |
-| `STELLAR_PATH_NOT_FOUND` | 404 | No conversion path found between the requested assets |
+| Code                         | HTTP Status | Description                                           |
+| ---------------------------- | ----------- | ----------------------------------------------------- |
+| `STELLAR_INVALID_ADDRESS`    | 400         | Public key is not a valid Stellar address             |
+| `STELLAR_INVALID_ASSET`      | 400         | Asset code or issuer is invalid                       |
+| `STELLAR_INVALID_AMOUNT`     | 400         | Amount is out of range or has too many decimal places |
+| `STELLAR_INVALID_MEMO`       | 400         | Memo exceeds length or contains invalid characters    |
+| `STELLAR_NETWORK_ERROR`      | 502         | Horizon API returned an error or is unreachable       |
+| `STELLAR_TRANSACTION_FAILED` | 422         | Transaction was submitted but rejected by the network |
+| `STELLAR_INSUFFICIENT_FUNDS` | 422         | Source account does not have enough balance           |
+| `STELLAR_PATH_NOT_FOUND`     | 404         | No conversion path found between the requested assets |
 
 ### Marketplace
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `LISTING_NOT_FOUND` | 404 | Marketplace listing does not exist |
-| `BID_NOT_FOUND` | 404 | Bid does not exist |
-| `LISTING_ALREADY_ACTIVE` | 409 | Username is already listed for sale |
-| `BID_BELOW_MINIMUM` | 422 | Bid amount is below the listing minimum |
+| Code                     | HTTP Status | Description                             |
+| ------------------------ | ----------- | --------------------------------------- |
+| `LISTING_NOT_FOUND`      | 404         | Marketplace listing does not exist      |
+| `BID_NOT_FOUND`          | 404         | Bid does not exist                      |
+| `LISTING_ALREADY_ACTIVE` | 409         | Username is already listed for sale     |
+| `BID_BELOW_MINIMUM`      | 422         | Bid amount is below the listing minimum |
 
 ### API Keys
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `USERNAME_CONFLICT` | 409 | Username already exists (alias for USERNAME_TAKEN) |
-| `USERNAME_LIMIT_EXCEEDED` | 403 | Wallet has reached the maximum allowed usernames |
+| Code                      | HTTP Status | Description                                        |
+| ------------------------- | ----------- | -------------------------------------------------- |
+| `USERNAME_CONFLICT`       | 409         | Username already exists (alias for USERNAME_TAKEN) |
+| `USERNAME_LIMIT_EXCEEDED` | 403         | Wallet has reached the maximum allowed usernames   |
 
 ### Notifications / Webhooks
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `WEBHOOK_NOT_FOUND` | 404 | Webhook endpoint does not exist |
-| `WEBHOOK_DELIVERY_FAILED` | 502 | Webhook could not be delivered after retries |
+| Code                      | HTTP Status | Description                                  |
+| ------------------------- | ----------- | -------------------------------------------- |
+| `WEBHOOK_NOT_FOUND`       | 404         | Webhook endpoint does not exist              |
+| `WEBHOOK_DELIVERY_FAILED` | 502         | Webhook could not be delivered after retries |
 
 ### Refunds
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `REFUND_NOT_FOUND` | 404 | Refund attempt does not exist |
-| `REFUND_NOT_REFUNDABLE` | 409 | Entity is not in a refundable state |
-| `REFUND_IDEMPOTENCY_CONFLICT` | 409 | Idempotency key already used for a different refund |
+| Code                          | HTTP Status | Description                                         |
+| ----------------------------- | ----------- | --------------------------------------------------- |
+| `REFUND_NOT_FOUND`            | 404         | Refund attempt does not exist                       |
+| `REFUND_NOT_REFUNDABLE`       | 409         | Entity is not in a refundable state                 |
+| `REFUND_IDEMPOTENCY_CONFLICT` | 409         | Idempotency key already used for a different refund |
 
 ### Soroban / Contract
 
-| Code | HTTP Status | Description |
-|---|---|---|
-| `CONTRACT_NOT_CONFIGURED` | 503 | QUICKEX_CONTRACT_ID is not set on the server |
-| `SIMULATION_FAILED` | 422 | Soroban transaction simulation failed |
+| Code                      | HTTP Status | Description                                      |
+| ------------------------- | ----------- | ------------------------------------------------ |
+| `CONTRACT_NOT_CONFIGURED` | 503         | RustAcademy_CONTRACT_ID is not set on the server |
+| `SIMULATION_FAILED`       | 422         | Soroban transaction simulation failed            |
 
 ---
 
 ## Complete Error Code Reference Table
 
-| Code | HTTP | Category | Resolution |
-|---|---|---|---|
-| `INTERNAL_SERVER_ERROR` | 500 | Infrastructure | Retry once; if persistent, contact support with `request_id` |
-| `RATE_LIMIT_EXCEEDED` | 429 | Infrastructure | Wait `details.retryAfterSeconds` then retry with exponential backoff |
-| `VALIDATION_ERROR` | 400 | Infrastructure | Check `fields` for per-field errors; fix and retry |
-| `UNAUTHORIZED` | 401 | Auth | Provide a valid API key via `X-API-Key` header |
-| `FORBIDDEN` | 403 | Auth | Your API key scope is insufficient; create a key with broader scopes |
-| `NOT_FOUND` | 404 | Generic | Verify the resource ID or path is correct |
-| `USERNAME_TAKEN` | 409 | Username | Choose a different username |
-| `USERNAME_INVALID` | 400 | Username | Use 3-32 lowercase alphanumeric + underscores |
-| `USERNAME_NOT_FOUND` | 404 | Username | Verify the username is spelled correctly |
-| `USERNAME_RESERVED` | 409 | Username | This name is reserved; choose another |
-| `USERNAME_CONFLICT` | 409 | Username | Same as USERNAME_TAKEN; choose a different name |
-| `USERNAME_LIMIT_EXCEEDED` | 403 | Username | Delete an existing username or request a limit increase |
-| `LINK_NOT_FOUND` | 404 | Links | Verify the link parameters (username, amount, asset) |
-| `LINK_EXPIRED` | 410 | Links | Create a new link or ask the sender to regenerate |
-| `LINK_ALREADY_PAID` | 409 | Links | This link has been fulfilled; check `transactionHash` for details |
-| `LINK_CANCELLED` | 410 | Links | The creator cancelled this link; create a new one |
-| `LINK_LIMIT_EXCEEDED` | 422 | Links | Reduce active links or contact support for a limit increase |
-| `STELLAR_INVALID_ADDRESS` | 400 | Stellar | Provide a valid `G...` public key (56 characters) |
-| `STELLAR_INVALID_ASSET` | 400 | Stellar | Use a whitelisted asset: XLM, USDC, AQUA, yXLM |
-| `STELLAR_INVALID_AMOUNT` | 400 | Stellar | Amount must be > 0 with at most 7 decimal places |
-| `STELLAR_INVALID_MEMO` | 400 | Stellar | Memo max 28 characters; type must be text/id/hash/return |
-| `STELLAR_NETWORK_ERROR` | 502 | Stellar | Horizon is unreachable; retry after a few seconds |
-| `STELLAR_TRANSACTION_FAILED` | 422 | Stellar | Transaction rejected by network; check sequence numbers and signers |
-| `STELLAR_INSUFFICIENT_FUNDS` | 422 | Stellar | Source account needs more balance (including min reserve + fees) |
-| `STELLAR_PATH_NOT_FOUND` | 404 | Stellar | No liquidity path exists; try different assets or amounts |
-| `LISTING_NOT_FOUND` | 404 | Marketplace | Verify the listing ID |
-| `BID_NOT_FOUND` | 404 | Marketplace | Verify the bid ID |
-| `LISTING_ALREADY_ACTIVE` | 409 | Marketplace | Cancel the existing listing before relisting |
-| `BID_BELOW_MINIMUM` | 422 | Marketplace | Bid must meet or exceed the listing's asking price |
-| `WEBHOOK_NOT_FOUND` | 404 | Webhooks | Verify the webhook ID and public key |
-| `WEBHOOK_DELIVERY_FAILED` | 502 | Webhooks | Check delivery logs; verify your endpoint returns 200 |
-| `REFUND_NOT_FOUND` | 404 | Refunds | Verify the refund ID |
-| `REFUND_NOT_REFUNDABLE` | 409 | Refunds | The entity is not in a state that allows refunding |
-| `CONTRACT_NOT_CONFIGURED` | 503 | Soroban | Server configuration issue; contact the QuickEx team |
-| `SIMULATION_FAILED` | 422 | Soroban | Transaction would fail on-chain; check contract parameters |
+| Code                         | HTTP | Category       | Resolution                                                           |
+| ---------------------------- | ---- | -------------- | -------------------------------------------------------------------- |
+| `INTERNAL_SERVER_ERROR`      | 500  | Infrastructure | Retry once; if persistent, contact support with `request_id`         |
+| `RATE_LIMIT_EXCEEDED`        | 429  | Infrastructure | Wait `details.retryAfterSeconds` then retry with exponential backoff |
+| `VALIDATION_ERROR`           | 400  | Infrastructure | Check `fields` for per-field errors; fix and retry                   |
+| `UNAUTHORIZED`               | 401  | Auth           | Provide a valid API key via `X-API-Key` header                       |
+| `FORBIDDEN`                  | 403  | Auth           | Your API key scope is insufficient; create a key with broader scopes |
+| `NOT_FOUND`                  | 404  | Generic        | Verify the resource ID or path is correct                            |
+| `USERNAME_TAKEN`             | 409  | Username       | Choose a different username                                          |
+| `USERNAME_INVALID`           | 400  | Username       | Use 3-32 lowercase alphanumeric + underscores                        |
+| `USERNAME_NOT_FOUND`         | 404  | Username       | Verify the username is spelled correctly                             |
+| `USERNAME_RESERVED`          | 409  | Username       | This name is reserved; choose another                                |
+| `USERNAME_CONFLICT`          | 409  | Username       | Same as USERNAME_TAKEN; choose a different name                      |
+| `USERNAME_LIMIT_EXCEEDED`    | 403  | Username       | Delete an existing username or request a limit increase              |
+| `LINK_NOT_FOUND`             | 404  | Links          | Verify the link parameters (username, amount, asset)                 |
+| `LINK_EXPIRED`               | 410  | Links          | Create a new link or ask the sender to regenerate                    |
+| `LINK_ALREADY_PAID`          | 409  | Links          | This link has been fulfilled; check `transactionHash` for details    |
+| `LINK_CANCELLED`             | 410  | Links          | The creator cancelled this link; create a new one                    |
+| `LINK_LIMIT_EXCEEDED`        | 422  | Links          | Reduce active links or contact support for a limit increase          |
+| `STELLAR_INVALID_ADDRESS`    | 400  | Stellar        | Provide a valid `G...` public key (56 characters)                    |
+| `STELLAR_INVALID_ASSET`      | 400  | Stellar        | Use a whitelisted asset: XLM, USDC, AQUA, yXLM                       |
+| `STELLAR_INVALID_AMOUNT`     | 400  | Stellar        | Amount must be > 0 with at most 7 decimal places                     |
+| `STELLAR_INVALID_MEMO`       | 400  | Stellar        | Memo max 28 characters; type must be text/id/hash/return             |
+| `STELLAR_NETWORK_ERROR`      | 502  | Stellar        | Horizon is unreachable; retry after a few seconds                    |
+| `STELLAR_TRANSACTION_FAILED` | 422  | Stellar        | Transaction rejected by network; check sequence numbers and signers  |
+| `STELLAR_INSUFFICIENT_FUNDS` | 422  | Stellar        | Source account needs more balance (including min reserve + fees)     |
+| `STELLAR_PATH_NOT_FOUND`     | 404  | Stellar        | No liquidity path exists; try different assets or amounts            |
+| `LISTING_NOT_FOUND`          | 404  | Marketplace    | Verify the listing ID                                                |
+| `BID_NOT_FOUND`              | 404  | Marketplace    | Verify the bid ID                                                    |
+| `LISTING_ALREADY_ACTIVE`     | 409  | Marketplace    | Cancel the existing listing before relisting                         |
+| `BID_BELOW_MINIMUM`          | 422  | Marketplace    | Bid must meet or exceed the listing's asking price                   |
+| `WEBHOOK_NOT_FOUND`          | 404  | Webhooks       | Verify the webhook ID and public key                                 |
+| `WEBHOOK_DELIVERY_FAILED`    | 502  | Webhooks       | Check delivery logs; verify your endpoint returns 200                |
+| `REFUND_NOT_FOUND`           | 404  | Refunds        | Verify the refund ID                                                 |
+| `REFUND_NOT_REFUNDABLE`      | 409  | Refunds        | The entity is not in a state that allows refunding                   |
+| `CONTRACT_NOT_CONFIGURED`    | 503  | Soroban        | Server configuration issue; contact the RustAcademy team             |
+| `SIMULATION_FAILED`          | 422  | Soroban        | Transaction would fail on-chain; check contract parameters           |
 
 ---
 
@@ -280,18 +280,18 @@ Multiple error codes can share the same HTTP status. Always switch on `error.cod
 
 ```typescript
 try {
-  await client.createUsername('alice', publicKey);
+  await client.createUsername("alice", publicKey);
 } catch (err) {
   const error = err.response?.data?.error;
   if (!error) throw err;
 
   // ✅ Good — switch on the code
   switch (error.code) {
-    case 'USERNAME_TAKEN':    // 409
-    case 'USERNAME_RESERVED': // 409
+    case "USERNAME_TAKEN": // 409
+    case "USERNAME_RESERVED": // 409
       suggestAlternateName();
       break;
-    case 'USERNAME_INVALID':  // 400
+    case "USERNAME_INVALID": // 400
       showFormatHint();
       break;
     default:
@@ -308,7 +308,7 @@ The `request_id` links your error to the server-side logs:
 catch (err) {
   const error = err.response?.data?.error;
   console.error(
-    `QuickEx error [${error.code}]: ${error.message}\n` +
+    ` RustAcademy error [${error.code}]: ${error.message}\n` +
     `Request ID: ${error.request_id}`
   );
   // When contacting support:
@@ -319,6 +319,7 @@ catch (err) {
 ### 3. Implement Exponential Backoff for Retryable Errors
 
 Only these error codes are safe to retry:
+
 - `RATE_LIMIT_EXCEEDED` (429)
 - `STELLAR_NETWORK_ERROR` (502)
 - `INTERNAL_SERVER_ERROR` (500)
@@ -334,8 +335,11 @@ async function retryableRequest<T>(
       return await fn();
     } catch (err) {
       const error = err?.response?.data?.error;
-      const isRetryable = ['RATE_LIMIT_EXCEEDED', 'STELLAR_NETWORK_ERROR', 'INTERNAL_SERVER_ERROR']
-        .includes(error?.code);
+      const isRetryable = [
+        "RATE_LIMIT_EXCEEDED",
+        "STELLAR_NETWORK_ERROR",
+        "INTERNAL_SERVER_ERROR",
+      ].includes(error?.code);
 
       if (!isRetryable || attempt === maxRetries) throw err;
 
@@ -343,10 +347,10 @@ async function retryableRequest<T>(
       const retryAfter = error.details?.retryAfterSeconds;
       const waitMs = retryAfter ? retryAfter * 1000 : delay;
 
-      await new Promise(resolve => setTimeout(resolve, waitMs));
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
     }
   }
-  throw new Error('Unreachable');
+  throw new Error("Unreachable");
 }
 ```
 
@@ -376,11 +380,12 @@ catch (err) {
 **Symptoms:** Frequent 429 responses even at low traffic.
 
 **Resolution:**
+
 1. Check if you're sending an API key in the `X-API-Key` header — it increases limits from 20 to 120 req/min.
 2. Implement client-side request deduplication (don't send the same request twice).
 3. Add caching for read endpoints (e.g., `/stellar/verified-assets` rarely changes).
 4. Use cursor-based pagination instead of making many small requests.
-5. If you need higher limits, contact the QuickEx team for a custom rate limit.
+5. If you need higher limits, contact the RustAcademy team for a custom rate limit.
 
 ```typescript
 // Simple in-memory cache
@@ -390,7 +395,7 @@ async function cachedFetch<T>(url: string, ttlMs = 60000): Promise<T> {
   const cached = cache.get(url);
   if (cached && Date.now() < cached.expiry) return cached.data;
 
-  const data = await fetch(url).then(r => r.json());
+  const data = await fetch(url).then((r) => r.json());
   cache.set(url, { data, expiry: Date.now() + ttlMs });
   return data;
 }
@@ -403,8 +408,9 @@ async function cachedFetch<T>(url: string, ttlMs = 60000): Promise<T> {
 **Symptoms:** Intermittent 502 errors when querying transactions or payments.
 
 **Resolution:**
+
 1. The Horizon API may be temporarily unreachable. Implement retry with exponential backoff.
-2. QuickEx caches responses for 60 seconds — don't bypass caching by varying query params.
+2. RustAcademy caches responses for 60 seconds — don't bypass caching by varying query params.
 3. If errors persist for > 5 minutes, check the Stellar status page.
 4. Consider using the `cursor` parameter instead of re-fetching from the beginning.
 
@@ -415,6 +421,7 @@ async function cachedFetch<T>(url: string, ttlMs = 60000): Promise<T> {
 **Symptoms:** `LINK_EXPIRED` (410) for a recently created link.
 
 **Resolution:**
+
 1. Check the `expirationDays` parameter used when creating the link (default: no expiration).
 2. Verify the server clock is synchronized (NTP).
 3. A link can be re-activated after expiration. Contact support or create a new link.
@@ -426,6 +433,7 @@ async function cachedFetch<T>(url: string, ttlMs = 60000): Promise<T> {
 **Symptoms:** 400 error when trying to create a username.
 
 **Resolution:**
+
 1. Usernames must be 3-32 characters.
 2. Only lowercase letters, numbers, and underscores are allowed.
 3. Cannot start or end with a special character.
@@ -436,10 +444,10 @@ function isValidUsername(username: string): boolean {
   return /^[a-z0-9][a-z0-9_-]{1,30}[a-z0-9]$|^[a-z0-9]{1,32}$/.test(username);
 }
 
-isValidUsername('alice_123'); // true
-isValidUsername('Alice');     // false (uppercase)
-isValidUsername('ab');        // false (too short)
-isValidUsername('_alice');    // false (starts with special char)
+isValidUsername("alice_123"); // true
+isValidUsername("Alice"); // false (uppercase)
+isValidUsername("ab"); // false (too short)
+isValidUsername("_alice"); // false (starts with special char)
 ```
 
 ---
@@ -449,6 +457,7 @@ isValidUsername('_alice');    // false (starts with special char)
 **Symptoms:** 404 error when requesting a path payment conversion.
 
 **Resolution:**
+
 1. No liquidity path exists between the requested asset pair at the requested amount.
 2. Try a smaller amount — large amounts may exceed available liquidity.
 3. Try a different source or destination asset.
@@ -462,6 +471,7 @@ isValidUsername('_alice');    // false (starts with special char)
 **Symptoms:** Webhook events are not reaching your endpoint.
 
 **Resolution:**
+
 1. Check delivery logs: `GET /webhooks/:publicKey/:id/logs`
 2. Verify your endpoint returns HTTP 200 within 10 seconds.
 3. Ensure your endpoint is publicly accessible (not localhost or behind auth).
@@ -477,6 +487,7 @@ isValidUsername('_alice');    // false (starts with special char)
 **Symptoms:** 401 error despite providing an API key.
 
 **Resolution:**
+
 1. Verify the key is in the `X-API-Key` header (not `Authorization` or `API-Key`).
 2. Check the key hasn't been revoked: `GET /api-keys`.
 3. Ensure you're using the correct key prefix (`qk_live_` vs `qk_test_`).
@@ -489,18 +500,19 @@ isValidUsername('_alice');    // false (starts with special char)
 **Symptoms:** 403 error on `/admin/refunds` or other admin endpoints.
 
 **Resolution:**
+
 1. Your API key needs the `refunds:write` scope for refund endpoints.
 2. Admin endpoints require the `admin` scope.
 3. Create a new API key with the required scope.
 
 ```typescript
 // Create a key with refund scope
-const response = await fetch('http://localhost:3000/api-keys', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("http://localhost:3000/api-keys", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    name: 'Refund Admin',
-    scopes: ['refunds:write'],
+    name: "Refund Admin",
+    scopes: ["refunds:write"],
   }),
 });
 ```
@@ -512,6 +524,7 @@ const response = await fetch('http://localhost:3000/api-keys', {
 **Symptoms:** Recurring payment execution fails with insufficient funds.
 
 **Resolution:**
+
 1. The platform account needs enough XLM to cover the payment amount + base reserve + transaction fees.
 2. Check the `STELLAR_SECRET_KEY` environment variable is set on the server.
 3. Fund the platform account on testnet via the friendbot.
@@ -525,11 +538,12 @@ const response = await fetch('http://localhost:3000/api-keys', {
 **Symptoms:** 503 error when calling `/stellar/soroban-preflight`.
 
 **Resolution:**
-1. The `QUICKEX_CONTRACT_ID` environment variable is not set on the server.
-2. This is a server-side configuration issue — contact the QuickEx team.
+
+1. The ` RustAcademy_CONTRACT_ID` environment variable is not set on the server.
+2. This is a server-side configuration issue — contact the RustAcademy team.
 3. In development, set it in your `.env` file:
    ```env
-   QUICKEX_CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM
+    RustAcademy_CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM
    ```
 
 ---
@@ -539,6 +553,7 @@ const response = await fetch('http://localhost:3000/api-keys', {
 **Symptoms:** `GET /transactions?accountId=...` returns empty `transactions` array.
 
 **Resolution:**
+
 1. Verify the account ID is a valid Stellar public key starting with `G`.
 2. The account may not have any payment operations yet.
 3. Responses are cached for 60 seconds — recent transactions may not appear immediately.
@@ -549,19 +564,19 @@ const response = await fetch('http://localhost:3000/api-keys', {
 
 ## HTTP Status Code Summary
 
-| Status | Meaning | Common Codes |
-|---|---|---|
-| 200 | Success | (all endpoints) |
-| 201 | Created | `USERNAME_TAKEN` won't trigger this |
-| 204 | No Content | Successful DELETE operations |
-| 400 | Bad Request | `VALIDATION_ERROR`, `USERNAME_INVALID`, `STELLAR_INVALID_*` |
-| 401 | Unauthorized | `UNAUTHORIZED` |
-| 403 | Forbidden | `FORBIDDEN`, `USERNAME_LIMIT_EXCEEDED` |
-| 404 | Not Found | `NOT_FOUND`, `USERNAME_NOT_FOUND`, `LINK_NOT_FOUND` |
-| 409 | Conflict | `USERNAME_TAKEN`, `LINK_ALREADY_PAID`, `LISTING_ALREADY_ACTIVE` |
-| 410 | Gone | `LINK_EXPIRED`, `LINK_CANCELLED` |
-| 422 | Unprocessable | `STELLAR_TRANSACTION_FAILED`, `BID_BELOW_MINIMUM`, `LINK_LIMIT_EXCEEDED` |
-| 429 | Rate Limited | `RATE_LIMIT_EXCEEDED` |
-| 500 | Server Error | `INTERNAL_SERVER_ERROR` |
-| 502 | Bad Gateway | `STELLAR_NETWORK_ERROR`, `WEBHOOK_DELIVERY_FAILED` |
-| 503 | Unavailable | `CONTRACT_NOT_CONFIGURED`, Horizon backoff |
+| Status | Meaning       | Common Codes                                                             |
+| ------ | ------------- | ------------------------------------------------------------------------ |
+| 200    | Success       | (all endpoints)                                                          |
+| 201    | Created       | `USERNAME_TAKEN` won't trigger this                                      |
+| 204    | No Content    | Successful DELETE operations                                             |
+| 400    | Bad Request   | `VALIDATION_ERROR`, `USERNAME_INVALID`, `STELLAR_INVALID_*`              |
+| 401    | Unauthorized  | `UNAUTHORIZED`                                                           |
+| 403    | Forbidden     | `FORBIDDEN`, `USERNAME_LIMIT_EXCEEDED`                                   |
+| 404    | Not Found     | `NOT_FOUND`, `USERNAME_NOT_FOUND`, `LINK_NOT_FOUND`                      |
+| 409    | Conflict      | `USERNAME_TAKEN`, `LINK_ALREADY_PAID`, `LISTING_ALREADY_ACTIVE`          |
+| 410    | Gone          | `LINK_EXPIRED`, `LINK_CANCELLED`                                         |
+| 422    | Unprocessable | `STELLAR_TRANSACTION_FAILED`, `BID_BELOW_MINIMUM`, `LINK_LIMIT_EXCEEDED` |
+| 429    | Rate Limited  | `RATE_LIMIT_EXCEEDED`                                                    |
+| 500    | Server Error  | `INTERNAL_SERVER_ERROR`                                                  |
+| 502    | Bad Gateway   | `STELLAR_NETWORK_ERROR`, `WEBHOOK_DELIVERY_FAILED`                       |
+| 503    | Unavailable   | `CONTRACT_NOT_CONFIGURED`, Horizon backoff                               |

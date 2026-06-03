@@ -1,13 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Horizon } from '@stellar/stellar-sdk';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { Horizon } from "@stellar/stellar-sdk";
 
-import { AppConfigService } from '../config/app-config.service';
-import { SupabaseService } from '../supabase/supabase.service';
-import { MetricsService } from '../metrics/metrics.service';
-import { HORIZON_BASE_URLS } from '../config/stellar.config';
-import { UnmatchedQueueRepository } from './unmatched-queue.repository';
+import { AppConfigService } from "../config/app-config.service";
+import { SupabaseService } from "../supabase/supabase.service";
+import { MetricsService } from "../metrics/metrics.service";
+import { HORIZON_BASE_URLS } from "../config/stellar.config";
+import { UnmatchedQueueRepository } from "./unmatched-queue.repository";
 import {
   AutoReconciliationSucceededPayload,
   IncomingTransaction,
@@ -17,7 +17,7 @@ import {
   MatchScoreBreakdown,
   PaymentLink,
   PaymentLinkStatus,
-} from './types/auto-match.types';
+} from "./types/auto-match.types";
 
 /**
  * Minimum confidence (0–100) required to auto-apply a match.
@@ -44,7 +44,7 @@ const AMOUNT_TOLERANCE_PCT = 0.001;
  * AutoMatchService
  *
  * Background service that automatically reconciles incoming Stellar payment
- * transactions with open QuickEx payment links.
+ * transactions with open  RustAcademy payment links.
  *
  * ## Confidence scoring (0–100 points)
  *
@@ -93,7 +93,9 @@ export class AutoMatchService {
   ) {
     const horizonUrl = HORIZON_BASE_URLS[config.network];
     this.server = new Horizon.Server(horizonUrl);
-    this.logger.log(`AutoMatchService initialised (${config.network} → ${horizonUrl})`);
+    this.logger.log(
+      `AutoMatchService initialised (${config.network} → ${horizonUrl})`,
+    );
   }
 
   // ─── Cron ──────────────────────────────────────────────────────────────────
@@ -103,12 +105,14 @@ export class AutoMatchService {
    * progress when the next tick fires, the tick is skipped.
    */
   @Cron(CronExpression.EVERY_MINUTE, {
-    name: 'auto-match-cycle',
-    timeZone: 'UTC',
+    name: "auto-match-cycle",
+    timeZone: "UTC",
   })
   async handleCron(): Promise<void> {
     if (this.isRunning) {
-      this.logger.warn('Auto-match tick skipped — previous cycle still in progress');
+      this.logger.warn(
+        "Auto-match tick skipped — previous cycle still in progress",
+      );
       return;
     }
     await this.runAutoMatchCycle();
@@ -143,7 +147,7 @@ export class AutoMatchService {
     try {
       const openLinks = await this.fetchOpenPaymentLinks();
       if (openLinks.length === 0) {
-        this.logger.debug('Auto-match cycle: no open payment links found');
+        this.logger.debug("Auto-match cycle: no open payment links found");
         return { processed, matched, queued, unmatched };
       }
 
@@ -151,7 +155,10 @@ export class AutoMatchService {
 
       for (const [destination, links] of byDestination.entries()) {
         const cursor = this.destinationCursors.get(destination);
-        const transactions = await this.fetchRecentPayments(destination, cursor);
+        const transactions = await this.fetchRecentPayments(
+          destination,
+          cursor,
+        );
 
         for (const tx of transactions) {
           processed++;
@@ -176,7 +183,7 @@ export class AutoMatchService {
       const durationMs = Date.now() - startMs;
       this.logger.log(
         `Auto-match cycle complete in ${durationMs}ms — ` +
-        `processed:${processed} matched:${matched} queued:${queued} unmatched:${unmatched}`,
+          `processed:${processed} matched:${matched} queued:${queued} unmatched:${unmatched}`,
       );
     } catch (err) {
       this.logger.error(
@@ -207,8 +214,9 @@ export class AutoMatchService {
     tx: IncomingTransaction,
     candidateLinks?: PaymentLink[],
   ): Promise<MatchResult> {
-    const links = candidateLinks
-      ?? await this.fetchOpenLinksForDestination(tx.destinationAccount);
+    const links =
+      candidateLinks ??
+      (await this.fetchOpenLinksForDestination(tx.destinationAccount));
 
     const candidates = this.scoreCandidates(tx, links);
     const best = candidates[0] ?? null;
@@ -363,13 +371,15 @@ export class AutoMatchService {
         );
         this.logger.log(
           `Transaction ${tx.txHash} queued for review ` +
-          `(confidence=${bestScore?.confidence ?? 0}, candidate=${bestLink?.id ?? 'none'})`,
+            `(confidence=${bestScore?.confidence ?? 0}, candidate=${bestLink?.id ?? "none"})`,
         );
         break;
 
       default:
         await this.unmatchedQueue.enqueue(tx, null, null);
-        this.logger.log(`Transaction ${tx.txHash} stored as unmatched (no candidates above threshold)`);
+        this.logger.log(
+          `Transaction ${tx.txHash} stored as unmatched (no candidates above threshold)`,
+        );
     }
   }
 
@@ -387,7 +397,7 @@ export class AutoMatchService {
     try {
       const { error } = await this.supabase
         .getClient()
-        .from('payment_links')
+        .from("payment_links")
         .update({
           status: PaymentLinkStatus.Paid,
           matched_tx_hash: tx.txHash,
@@ -395,19 +405,21 @@ export class AutoMatchService {
           match_confidence: confidence,
           updated_at: matchedAt,
         })
-        .eq('id', link.id)
+        .eq("id", link.id)
         // Guard: only update if the link is still open.  Prevents race conditions
         // where two concurrent cycles attempt to apply the same match.
-        .eq('status', PaymentLinkStatus.Open);
+        .eq("status", PaymentLinkStatus.Open);
 
       if (error) {
-        this.logger.error(`Failed to mark link ${link.id} as paid: ${error.message}`);
+        this.logger.error(
+          `Failed to mark link ${link.id} as paid: ${error.message}`,
+        );
         return;
       }
 
       this.logger.log(
         `Auto-match applied: link ${link.id} → PAID ` +
-        `(tx=${tx.txHash}, confidence=${confidence})`,
+          `(tx=${tx.txHash}, confidence=${confidence})`,
       );
 
       this.fireReconciliationEvent(link, tx, confidence, matchedAt);
@@ -439,7 +451,7 @@ export class AutoMatchService {
       matchedAt,
     };
 
-    this.eventEmitter.emit('auto_reconciliation.succeeded', eventPayload);
+    this.eventEmitter.emit("auto_reconciliation.succeeded", eventPayload);
 
     this.logger.debug(
       `Emitted auto_reconciliation.succeeded for link ${link.id} (tx=${tx.txHash})`,
@@ -470,7 +482,7 @@ export class AutoMatchService {
       let builder: any = (this.server as any)
         .payments()
         .forAccount(destination)
-        .order('desc')
+        .order("desc")
         .limit(50);
 
       if (afterCursor) {
@@ -480,17 +492,25 @@ export class AutoMatchService {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const response: any = await builder.call();
       const duration = (Date.now() - callStart) / 1000;
-      this.metrics.recordExternalCall('horizon', 'payments_for_account', duration);
+      this.metrics.recordExternalCall(
+        "horizon",
+        "payments_for_account",
+        duration,
+      );
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const records: any[] = response?.records ?? [];
 
       return records
-        .filter((op) => op.type === 'payment' && op.to === destination)
+        .filter((op) => op.type === "payment" && op.to === destination)
         .map((op) => this.normalizePaymentOp(op));
     } catch (err: unknown) {
       const duration = (Date.now() - callStart) / 1000;
-      this.metrics.recordExternalCall('horizon', 'payments_for_account', duration);
+      this.metrics.recordExternalCall(
+        "horizon",
+        "payments_for_account",
+        duration,
+      );
 
       const horizonErr = err as { response?: { status?: number } };
       if (horizonErr?.response?.status === 404) {
@@ -507,15 +527,17 @@ export class AutoMatchService {
   /** Normalise a raw Horizon payment record into a typed IncomingTransaction. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private normalizePaymentOp(op: any): IncomingTransaction {
-    const isNative = op.asset_type === 'native';
+    const isNative = op.asset_type === "native";
     return {
       txHash: op.transaction_hash as string,
       ledger: (op.transaction?.ledger_attr as number | undefined) ?? 0,
       sourceAccount: op.from as string,
       destinationAccount: op.to as string,
       amount: op.amount as string,
-      assetCode: isNative ? 'XLM' : (op.asset_code as string),
-      assetIssuer: isNative ? null : ((op.asset_issuer as string | undefined) ?? null),
+      assetCode: isNative ? "XLM" : (op.asset_code as string),
+      assetIssuer: isNative
+        ? null
+        : ((op.asset_issuer as string | undefined) ?? null),
       memo: (op.transaction?.memo as string | undefined) ?? null,
       memoType: (op.transaction?.memo_type as string | undefined) ?? null,
       occurredAt: op.created_at as string,
@@ -530,9 +552,9 @@ export class AutoMatchService {
 
     const { data, error } = await this.supabase
       .getClient()
-      .from('payment_links')
-      .select('*')
-      .eq('status', PaymentLinkStatus.Open)
+      .from("payment_links")
+      .select("*")
+      .eq("status", PaymentLinkStatus.Open)
       .or(`expires_at.is.null,expires_at.gt.${now}`);
 
     if (error) {
@@ -544,15 +566,17 @@ export class AutoMatchService {
   }
 
   /** Fetch open payment links for a specific destination address. */
-  private async fetchOpenLinksForDestination(destination: string): Promise<PaymentLink[]> {
+  private async fetchOpenLinksForDestination(
+    destination: string,
+  ): Promise<PaymentLink[]> {
     const now = new Date().toISOString();
 
     const { data, error } = await this.supabase
       .getClient()
-      .from('payment_links')
-      .select('*')
-      .eq('status', PaymentLinkStatus.Open)
-      .eq('destination_public_key', destination)
+      .from("payment_links")
+      .select("*")
+      .eq("status", PaymentLinkStatus.Open)
+      .eq("destination_public_key", destination)
       .or(`expires_at.is.null,expires_at.gt.${now}`);
 
     if (error) {

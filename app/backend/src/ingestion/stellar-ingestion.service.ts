@@ -20,7 +20,7 @@ import { JobType } from "../job-queue/types";
 import { StellarReconnectPayload } from "../job-queue/types/job-payloads.types";
 import type {
   EscrowEvent,
-  QuickExContractEvent,
+  RustAcademyContractEvent,
 } from "./types/contract-event.types";
 
 /** Milliseconds between reconnect attempts (doubles each retry, capped at MAX_BACKOFF_MS). */
@@ -38,7 +38,7 @@ export interface DualReadIngestionConfig extends IngestionConfig {
 }
 
 /**
- * Listens to Horizon SSE streams for a QuickEx Soroban contract.
+ * Listens to Horizon SSE streams for a  RustAcademy Soroban contract.
  *
  * Responsibilities:
  *  - Open a streaming subscription starting from the last known cursor.
@@ -104,7 +104,9 @@ export class StellarIngestionService implements OnModuleInit, OnModuleDestroy {
    * Start streaming contract events with dual-read support for transition windows.
    * Streams from both current and previous contract IDs until effective ledger is reached.
    */
-  async startStreamingWithDualRead(config: DualReadIngestionConfig): Promise<void> {
+  async startStreamingWithDualRead(
+    config: DualReadIngestionConfig,
+  ): Promise<void> {
     this.currentContractId = config.contractId;
     this.previousContractId = config.previousContractId ?? null;
     this.stopCurrentStream();
@@ -115,7 +117,9 @@ export class StellarIngestionService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(
         `Starting dual-read streams: previous=${config.previousContractId}, current=${config.contractId}, effective ledger=${config.effectiveLedger}`,
       );
-      this.stopPreviousStream = await this.openStreamAsync(config.previousContractId);
+      this.stopPreviousStream = await this.openStreamAsync(
+        config.previousContractId,
+      );
     }
 
     // Always open current stream
@@ -331,7 +335,7 @@ export class StellarIngestionService implements OnModuleInit, OnModuleDestroy {
 
       this.logger.log(
         `SSE stream disconnected - reconnect job enqueued: ${jobId} ` +
-        `(contractId: ${contractId}, lastCursor: ${lastCursor})`,
+          `(contractId: ${contractId}, lastCursor: ${lastCursor})`,
       );
 
       // Reset backoff since we successfully enqueued the job
@@ -372,7 +376,7 @@ export class StellarIngestionService implements OnModuleInit, OnModuleDestroy {
     const event = this.parser.parse(raw);
 
     if (!event) {
-      // Unrecognised or non-QuickEx event; still advance cursor.
+      // Unrecognised or non- RustAcademy event; still advance cursor.
       await this.safeUpdateCursor(streamId, raw.paging_token, raw.ledger);
       return;
     }
@@ -388,7 +392,7 @@ export class StellarIngestionService implements OnModuleInit, OnModuleDestroy {
     this.eventEmitter.emit(`stellar.${event.eventType}`, event);
   }
 
-  private async persistEvent(event: QuickExContractEvent): Promise<void> {
+  private async persistEvent(event: RustAcademyContractEvent): Promise<void> {
     switch (event.eventType) {
       case "EscrowDeposited":
       case "EscrowWithdrawn":

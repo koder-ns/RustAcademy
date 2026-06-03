@@ -2,11 +2,12 @@
 
 ## Overview
 
-This document summarizes the implementation of the opt-in crash/log capture feature with strict redaction for the QuickEx backend.
+This document summarizes the implementation of the opt-in crash/log capture feature with strict redaction for the RustAcademy backend.
 
 ## ✅ Acceptance Criteria Met
 
 ### 1. Logs are redacted reliably and never include secrets
+
 **Status: ✅ COMPLETE**
 
 - Implemented comprehensive `RedactionService` with patterns for:
@@ -32,6 +33,7 @@ This document summarizes the implementation of the opt-in crash/log capture feat
   - `crash-reporting.integration.spec.ts`: End-to-end tests ensuring no leaks
 
 ### 2. Users can export logs for support when opted-in
+
 **Status: ✅ COMPLETE**
 
 - Implemented `exportLogs()` API endpoint: `GET /crash-reporting/export/:userId`
@@ -39,11 +41,11 @@ This document summarizes the implementation of the opt-in crash/log capture feat
   - Current log buffer (last 100 lines, redacted)
   - Recent crash reports (up to 10, redacted)
   - Timestamp of export
-  
 - Export only works if user has opted in
 - All exported data is automatically redacted
 
 ### 3. Feature is disabled by default
+
 **Status: ✅ COMPLETE**
 
 - Users must explicitly opt-in via: `PUT /crash-reporting/settings/:userId`
@@ -102,12 +104,12 @@ Two tables with Row Level Security (RLS):
 
 ### API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/crash-reporting/settings/:userId` | GET | Get user's settings |
-| `/crash-reporting/settings/:userId` | PUT | Update user's settings |
-| `/crash-reporting/export/:userId` | GET | Export logs for support |
-| `/crash-reporting/reports/:userId` | GET | Get crash reports |
+| Endpoint                            | Method | Description             |
+| ----------------------------------- | ------ | ----------------------- |
+| `/crash-reporting/settings/:userId` | GET    | Get user's settings     |
+| `/crash-reporting/settings/:userId` | PUT    | Update user's settings  |
+| `/crash-reporting/export/:userId`   | GET    | Export logs for support |
+| `/crash-reporting/reports/:userId`  | GET    | Get crash reports       |
 
 ### Test Coverage
 
@@ -217,11 +219,10 @@ try {
   // Some operation
   await riskyOperation();
 } catch (error) {
-  await crashReportingService.captureCrash(
-    userId,
-    error,
-    { route: '/api/payments', method: 'POST' }
-  );
+  await crashReportingService.captureCrash(userId, error, {
+    route: "/api/payments",
+    method: "POST",
+  });
   throw error; // Re-throw if needed
 }
 ```
@@ -229,6 +230,7 @@ try {
 ## Files Created
 
 ### Core Implementation
+
 - `src/crash-reporting/redaction.service.ts`
 - `src/crash-reporting/crash-reporting.service.ts`
 - `src/crash-reporting/crash-reporting.repository.ts`
@@ -240,24 +242,29 @@ try {
 - `src/crash-reporting/index.ts`
 
 ### DTOs
+
 - `src/crash-reporting/dto/update-settings.dto.ts`
 - `src/crash-reporting/dto/settings.dto.ts`
 - `src/crash-reporting/dto/crash-report.dto.ts`
 - `src/crash-reporting/dto/log-export.dto.ts`
 
 ### Tests
+
 - `src/crash-reporting/redaction.service.spec.ts`
 - `src/crash-reporting/crash-reporting.service.spec.ts`
 - `src/crash-reporting/crash-reporting.integration.spec.ts`
 
 ### Documentation
+
 - `src/crash-reporting/README.md`
 - `src/crash-reporting/IMPLEMENTATION_SUMMARY.md`
 
 ### Database
+
 - `src/crash-reporting/migrations/001_create_crash_reporting_tables.sql`
 
 ### Configuration
+
 - Updated `src/app.module.ts` to include CrashReportingModule
 - Updated `.env.example` with crash reporting documentation
 
@@ -300,16 +307,19 @@ npm run test:unit -- --testPathPattern=crash-reporting
 ## Next Steps
 
 1. **Install dependencies** (if not already installed):
+
    ```bash
    npm install
    ```
 
 2. **Run database migration**:
+
    ```sql
    \i src/crash-reporting/migrations/001_create_crash_reporting_tables.sql
    ```
 
 3. **Run tests** to validate implementation:
+
    ```bash
    npm run test:unit -- --testPathPattern=crash-reporting
    ```

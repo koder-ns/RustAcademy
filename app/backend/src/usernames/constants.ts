@@ -1,5 +1,5 @@
 /**
- * Username rules for quickex.to/yourname
+ * Username rules for  RustAcademy.to/yourname
  *
  * Rules are enforced server-side in UsernamesService and by DTO validation.
  * Uniqueness and race conditions are enforced by the database (Supabase) unique constraint.
@@ -25,4 +25,4 @@ export const USERNAME_DEFAULT_MAX_PER_WALLET = 0;
 
 /** Display name for the pattern (for error messages). */
 export const USERNAME_PATTERN_DESCRIPTION =
-  'lowercase letters, numbers, and underscores only';
+  "lowercase letters, numbers, and underscores only";

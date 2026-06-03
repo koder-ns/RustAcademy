@@ -19,7 +19,10 @@ function resolveOrigin(
 describe("buildCorsOptions", () => {
   describe("non-production", () => {
     it("returns origin: true in development", () => {
-      const opts = buildCorsOptions({ nodeEnv: "development", allowedOrigins: [] });
+      const opts = buildCorsOptions({
+        nodeEnv: "development",
+        allowedOrigins: [],
+      });
       expect(opts.origin).toBe(true);
     });
 
@@ -32,15 +35,22 @@ describe("buildCorsOptions", () => {
   describe("production — static origins", () => {
     const opts = buildCorsOptions({
       nodeEnv: "production",
-      allowedOrigins: ["https://quickex.to", "https://app.quickex.to"],
+      allowedOrigins: [
+        "https:// RustAcademy.to",
+        "https://app. RustAcademy.to",
+      ],
     });
 
     it("allows a listed origin", async () => {
-      await expect(resolveOrigin(opts, "https://quickex.to")).resolves.toBe(true);
+      await expect(
+        resolveOrigin(opts, "https:// RustAcademy.to"),
+      ).resolves.toBe(true);
     });
 
     it("allows a second listed origin", async () => {
-      await expect(resolveOrigin(opts, "https://app.quickex.to")).resolves.toBe(true);
+      await expect(
+        resolveOrigin(opts, "https://app. RustAcademy.to"),
+      ).resolves.toBe(true);
     });
 
     it("blocks an unlisted origin", async () => {
@@ -57,13 +67,16 @@ describe("buildCorsOptions", () => {
   describe("production — Vercel preview URLs", () => {
     const opts = buildCorsOptions({
       nodeEnv: "production",
-      allowedOrigins: ["https://quickex.to"],
-      vercelProject: "quickex-frontend",
+      allowedOrigins: ["https:// RustAcademy.to"],
+      vercelProject: " RustAcademy-frontend",
     });
 
     it("allows a valid Vercel preview URL", async () => {
       await expect(
-        resolveOrigin(opts, "https://quickex-frontend-abc123-team.vercel.app"),
+        resolveOrigin(
+          opts,
+          "https:// RustAcademy-frontend-abc123-team.vercel.app",
+        ),
       ).resolves.toBe(true);
     });
 
@@ -75,12 +88,17 @@ describe("buildCorsOptions", () => {
 
     it("blocks a URL that tries to spoof the project name", async () => {
       await expect(
-        resolveOrigin(opts, "https://evil-quickex-frontend-abc.vercel.app"),
+        resolveOrigin(
+          opts,
+          "https://evil- RustAcademy-frontend-abc.vercel.app",
+        ),
       ).rejects.toThrow("Origin not allowed");
     });
 
     it("still allows the static production origin", async () => {
-      await expect(resolveOrigin(opts, "https://quickex.to")).resolves.toBe(true);
+      await expect(
+        resolveOrigin(opts, "https:// RustAcademy.to"),
+      ).resolves.toBe(true);
     });
   });
 
@@ -88,7 +106,7 @@ describe("buildCorsOptions", () => {
     it("does not set origin to true or '*' in production", () => {
       const opts = buildCorsOptions({
         nodeEnv: "production",
-        allowedOrigins: ["https://quickex.to"],
+        allowedOrigins: ["https:// RustAcademy.to"],
       });
       expect(opts.origin).not.toBe(true);
       expect(opts.origin).not.toBe("*");
@@ -97,17 +115,26 @@ describe("buildCorsOptions", () => {
 
   describe("credentials and headers", () => {
     it("sets credentials: true in production", () => {
-      const opts = buildCorsOptions({ nodeEnv: "production", allowedOrigins: [] });
+      const opts = buildCorsOptions({
+        nodeEnv: "production",
+        allowedOrigins: [],
+      });
       expect(opts.credentials).toBe(true);
     });
 
     it("includes Authorization in allowedHeaders", () => {
-      const opts = buildCorsOptions({ nodeEnv: "production", allowedOrigins: [] });
+      const opts = buildCorsOptions({
+        nodeEnv: "production",
+        allowedOrigins: [],
+      });
       expect(opts.allowedHeaders).toContain("Authorization");
     });
 
     it("includes X-API-Key in allowedHeaders", () => {
-      const opts = buildCorsOptions({ nodeEnv: "production", allowedOrigins: [] });
+      const opts = buildCorsOptions({
+        nodeEnv: "production",
+        allowedOrigins: [],
+      });
       expect(opts.allowedHeaders).toContain("X-API-Key");
     });
   });

@@ -11,7 +11,13 @@ import {
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common";
-import { ApiHeader, ApiOperation, ApiParam, ApiResponse, ApiTags } from "@nestjs/swagger";
+import {
+  ApiHeader,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from "@nestjs/swagger";
 
 import { ApiKeyGuard } from "../auth/guards/api-key.guard";
 import { AssetMetadataService } from "../asset-metadata/asset-metadata.service";
@@ -94,15 +100,15 @@ export class StellarController {
   @ApiOperation({
     summary: "Run Soroban tx composer preflight (health_check simulation)",
     description:
-      "Uses the same pipeline as POST /transactions/compose against QUICKEX_CONTRACT_ID.",
+      "Uses the same pipeline as POST /transactions/compose against  RustAcademy_CONTRACT_ID.",
   })
   async sorobanPreflight(@Body() body: SorobanPreflightDto) {
-    const contractId = this.appConfig.quickexContractId;
+    const contractId = this.appConfig.RustAcademyContractId;
     if (!contractId?.trim()) {
       throw new ServiceUnavailableException({
         code: "CONTRACT_NOT_CONFIGURED",
         message:
-          "Set QUICKEX_CONTRACT_ID to enable Soroban preflight simulation.",
+          "Set  RustAcademy_CONTRACT_ID to enable Soroban preflight simulation.",
       });
     }
 
@@ -123,8 +129,15 @@ export class StellarController {
       "Computes path payment routes with slippage tolerance and a TTL. " +
       "Returns a quote ID that can be retrieved until expiry.",
   })
-  @ApiResponse({ status: 200, description: "Quote created", type: QuoteResponseDto })
-  @ApiResponse({ status: 400, description: "No path found or invalid parameters" })
+  @ApiResponse({
+    status: 200,
+    description: "Quote created",
+    type: QuoteResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: "No path found or invalid parameters",
+  })
   async createQuote(@Body() body: CreateQuoteDto): Promise<QuoteResponseDto> {
     return this.quoteService.createQuote(body);
   }
@@ -132,10 +145,18 @@ export class StellarController {
   @Get("quote/:quoteId")
   @ApiOperation({
     summary: "Retrieve a quote by ID",
-    description: "Returns the stored quote. Returns 410 Gone if the quote has expired.",
+    description:
+      "Returns the stored quote. Returns 410 Gone if the quote has expired.",
   })
-  @ApiParam({ name: "quoteId", description: "Quote ID returned by POST /stellar/quote" })
-  @ApiResponse({ status: 200, description: "Quote details", type: QuoteResponseDto })
+  @ApiParam({
+    name: "quoteId",
+    description: "Quote ID returned by POST /stellar/quote",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Quote details",
+    type: QuoteResponseDto,
+  })
   @ApiResponse({ status: 404, description: "Quote not found" })
   @ApiResponse({ status: 410, description: "Quote expired" })
   getQuote(@Param("quoteId") quoteId: string): QuoteResponseDto {

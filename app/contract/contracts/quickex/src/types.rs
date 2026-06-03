@@ -1,4 +1,4 @@
-//! Types used in the QuickEx storage layer and contract logic.
+//! Types used in the  RustAcademy storage layer and contract logic.
 //!
 //! See [`crate::storage`] for the storage schema and key layout.
 
@@ -61,7 +61,7 @@ pub struct EscrowEntry {
 
 /// Privacy-aware view of an escrow entry.
 ///
-/// Returned by [`QuickexContract::get_escrow_details`] instead of the raw
+/// Returned by [` RustAcademyContract::get_escrow_details`] instead of the raw
 /// [`EscrowEntry`]. Sensitive fields (`amount_due`, `amount_paid`, `owner`) are set to `None`
 /// when the escrow owner has privacy enabled and the caller is not the owner.
 ///
@@ -207,7 +207,7 @@ pub struct OracleFeeConfig {
     pub stale_threshold_secs: u64,
 }
 
-/// Deployment metadata returned by [`crate::QuickexContract::get_deployment_metadata`].
+/// Deployment metadata returned by [`crate:: RustAcademyContract::get_deployment_metadata`].
 ///
 /// Clients and indexers can call this view to validate compatibility without
 /// any off-chain coordination.

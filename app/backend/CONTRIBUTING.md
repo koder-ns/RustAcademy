@@ -1,6 +1,6 @@
 # Contributing (Backend)
 
-This guide covers contribution standards for the QuickEx backend.
+This guide covers contribution standards for the RustAcademy backend.
 
 ## Quick Start
 
@@ -20,13 +20,14 @@ cp app/backend/.env.example app/backend/.env
 
 The backend validates environment variables at startup. You must configure:
 
-| Variable           | Description                              |
-| ------------------ | ---------------------------------------- |
-| `NETWORK`          | `testnet` or `mainnet`                   |
-| `SUPABASE_URL`     | Your Supabase project URL                |
-| `SUPABASE_ANON_KEY`| Your Supabase anonymous key              |
+| Variable            | Description                 |
+| ------------------- | --------------------------- |
+| `NETWORK`           | `testnet` or `mainnet`      |
+| `SUPABASE_URL`      | Your Supabase project URL   |
+| `SUPABASE_ANON_KEY` | Your Supabase anonymous key |
 
 **Validation behavior:**
+
 - Missing required variables → Clear error message listing all missing keys → Exit code 1
 - Invalid values → Descriptive error explaining the constraint → Exit code 1
 - All valid → Application starts normally
@@ -34,7 +35,7 @@ The backend validates environment variables at startup. You must configure:
 ### 3. Run Development Server
 
 ```bash
-pnpm turbo run dev --filter=@quickex/backend
+pnpm turbo run dev --filter=@ RustAcademy/backend
 ```
 
 Server starts at `http://localhost:4000` with API docs at `http://localhost:4000/docs`.
@@ -99,13 +100,13 @@ export class FeatureController {
 #### DTOs
 
 ```typescript
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, Length } from 'class-validator';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNotEmpty, Length } from "class-validator";
 
 export class CreateFeatureDto {
   @ApiProperty({
-    description: 'What this field represents',
-    example: 'example_value',
+    description: "What this field represents",
+    example: "example_value",
     minLength: 3,
     maxLength: 32,
   })
@@ -119,11 +120,11 @@ export class CreateFeatureDto {
 #### Response DTOs
 
 ```typescript
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from "@nestjs/swagger";
 
 export class FeatureResponseDto {
   @ApiProperty({
-    description: 'Response field description',
+    description: "Response field description",
     example: true,
   })
   success!: boolean;
@@ -172,7 +173,7 @@ import {
   LinkMetadataResponseDto,
   TransactionQueryDto,
   ScanLinkDto,
-} from '../dto';
+} from "../dto";
 ```
 
 **Import validators:**
@@ -184,21 +185,21 @@ import {
   IsStellarAmount,
   IsStellarMemo,
   IsStellarAsset,
-} from '../dto/validators';
+} from "../dto/validators";
 ```
 
 ### Example: Using Shared DTOs in Controllers
 
 ```typescript
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateUsernameDto, CreateUsernameResponseDto } from '../dto';
+import { Controller, Post, Body } from "@nestjs/common";
+import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { CreateUsernameDto, CreateUsernameResponseDto } from "../dto";
 
-@ApiTags('usernames')
-@Controller('username')
+@ApiTags("usernames")
+@Controller("username")
 export class UsernamesController {
   @Post()
-  @ApiOperation({ summary: 'Create a new username' })
+  @ApiOperation({ summary: "Create a new username" })
   @ApiResponse({ status: 201, type: CreateUsernameResponseDto })
   createUsername(@Body() dto: CreateUsernameDto): CreateUsernameResponseDto {
     // Implementation
@@ -210,18 +211,18 @@ export class UsernamesController {
 ### Example: Creating Custom DTOs with Shared Validators
 
 ```typescript
-import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty } from 'class-validator';
-import { IsUsername, IsStellarPublicKey } from '../dto/validators';
+import { ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNotEmpty } from "class-validator";
+import { IsUsername, IsStellarPublicKey } from "../dto/validators";
 
 export class CustomUserDto {
-  @ApiProperty({ example: 'alice_123' })
+  @ApiProperty({ example: "alice_123" })
   @IsString()
   @IsNotEmpty()
   @IsUsername()
   username!: string;
 
-  @ApiProperty({ example: 'GBXGQ...' })
+  @ApiProperty({ example: "GBXGQ..." })
   @IsString()
   @IsNotEmpty()
   @IsStellarPublicKey()
@@ -231,26 +232,29 @@ export class CustomUserDto {
 
 ### Available Validators
 
-| Validator | Description | Example |
-|-----------|-------------|---------|
-| `@IsUsername()` | Validates username format (3-32 chars, lowercase alphanumeric + underscore) | `alice_123` |
-| `@IsStellarPublicKey()` | Validates Stellar public key (G... 56 chars) | `GBXGQ55JMQ4L2B6E7S8Y9Z0A1B2C3D4E5F6G7H8I7YWR` |
-| `@IsStellarAmount()` | Validates amount within Stellar limits (0.0000001 - 1,000,000) | `100.5` |
-| `@IsStellarMemo()` | Validates memo length (max 28 chars) | `Payment for service` |
-| `@IsStellarAsset()` | Validates asset code against whitelist | `XLM`, `USDC`, `AQUA`, `yXLM` |
+| Validator               | Description                                                                 | Example                                        |
+| ----------------------- | --------------------------------------------------------------------------- | ---------------------------------------------- |
+| `@IsUsername()`         | Validates username format (3-32 chars, lowercase alphanumeric + underscore) | `alice_123`                                    |
+| `@IsStellarPublicKey()` | Validates Stellar public key (G... 56 chars)                                | `GBXGQ55JMQ4L2B6E7S8Y9Z0A1B2C3D4E5F6G7H8I7YWR` |
+| `@IsStellarAmount()`    | Validates amount within Stellar limits (0.0000001 - 1,000,000)              | `100.5`                                        |
+| `@IsStellarMemo()`      | Validates memo length (max 28 chars)                                        | `Payment for service`                          |
+| `@IsStellarAsset()`     | Validates asset code against whitelist                                      | `XLM`, `USDC`, `AQUA`, `yXLM`                  |
 
 ### Available DTOs
 
 #### Username DTOs
+
 - `CreateUsernameDto` - Request DTO for username creation
 - `CreateUsernameResponseDto` - Response DTO for username creation
 
 #### Link DTOs
+
 - `LinkMetadataRequestDto` - Request DTO for link metadata generation
 - `LinkMetadataResponseDto` - Response DTO for link metadata
 - `ScanLinkDto` - Request DTO for scanning payment links
 
 #### Transaction DTOs
+
 - `TransactionQueryDto` - Query DTO for transaction filtering and pagination
 - `TransactionResponseDto` - Response DTO for transaction queries
 - `TransactionDto` - Individual transaction in response
@@ -261,13 +265,14 @@ export class CustomUserDto {
 
 ```typescript
 // Good: Using shared validators with descriptive messages
-import { IsUsername, IsStellarPublicKey } from '../dto/validators';
+import { IsUsername, IsStellarPublicKey } from "../dto/validators";
 
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   @IsUsername({
-    message: 'Username must contain only lowercase letters, numbers, and underscores',
+    message:
+      "Username must contain only lowercase letters, numbers, and underscores",
   })
   username!: string;
 
@@ -298,23 +303,27 @@ export class BadDto {
 When working with payment link features, follow these validation constraints:
 
 #### Amount Validation
+
 - Minimum: 0.0000001 XLM (Stellar minimum)
 - Maximum: 1,000,000 XLM
 - Precision: 7 decimal places (Stellar standard)
 - Normalized automatically to 7 decimals
 
 #### Memo Validation
+
 - Maximum length: 28 characters (Stellar limit)
 - Allowed types: 'text', 'id', 'hash', 'return'
 - Sanitization: Removes <, >, ", ' characters
 - Whitespace: Trimmed automatically
 
 #### Asset Validation
+
 - Whitelist enforcement: Only approved assets accepted
 - Current whitelist: XLM, USDC, AQUA, yXLM
 - Default: XLM if not specified
 
 #### Security Considerations
+
 - All memos are sanitized to prevent injection attacks
 - Input validation occurs before any processing
 - Clear error messages for debugging
@@ -329,7 +338,7 @@ When working with payment link features, follow these validation constraints:
 ```typescript
 export const envSchema = Joi.object({
   // ... existing vars
-  NEW_VAR: Joi.string().required().description('Description'),
+  NEW_VAR: Joi.string().required().description("Description"),
 });
 
 export interface EnvConfig {
@@ -383,12 +392,13 @@ Network configuration:
 ### Run Tests
 
 ```bash
-pnpm turbo run test --filter=@quickex/backend
+pnpm turbo run test --filter=@ RustAcademy/backend
 ```
 
 ### Test Requirements
 
 Add tests for:
+
 - **Happy path:** Valid inputs produce expected outputs
 - **Validation errors:** Invalid inputs return appropriate errors
 - **Edge cases:** Boundary conditions, empty values, etc.
@@ -396,6 +406,7 @@ Add tests for:
 ### Schema Validation Tests
 
 Environment schema tests are in `src/config/env.schema.spec.ts`. When adding new env vars, add tests for:
+
 - Valid values are accepted
 - Missing required values are rejected with clear messages
 - Invalid values are rejected with clear messages
@@ -409,28 +420,28 @@ Before submitting a PR, ensure:
 - [ ] DTO validation added/updated with descriptive messages
 - [ ] Unit/integration tests added and passing
 - [ ] Schema validation tests added for new env vars
-- [ ] `pnpm turbo run type-check --filter=@quickex/backend` passes
-- [ ] `pnpm turbo run lint --filter=@quickex/backend` passes
-- [ ] `pnpm turbo run test --filter=@quickex/backend` passes
+- [ ] `pnpm turbo run type-check --filter=@ RustAcademy/backend` passes
+- [ ] `pnpm turbo run lint --filter=@ RustAcademy/backend` passes
+- [ ] `pnpm turbo run test --filter=@ RustAcademy/backend` passes
 - [ ] API docs updated (verify at `/docs`)
 
 ## Common Commands
 
 ```bash
 # Development
-pnpm turbo run dev --filter=@quickex/backend
+pnpm turbo run dev --filter=@ RustAcademy/backend
 
 # Testing
-pnpm turbo run test --filter=@quickex/backend
+pnpm turbo run test --filter=@ RustAcademy/backend
 
 # Type checking
-pnpm turbo run type-check --filter=@quickex/backend
+pnpm turbo run type-check --filter=@ RustAcademy/backend
 
 # Linting
-pnpm turbo run lint --filter=@quickex/backend
+pnpm turbo run lint --filter=@ RustAcademy/backend
 
 # Build
-pnpm turbo run build --filter=@quickex/backend
+pnpm turbo run build --filter=@ RustAcademy/backend
 ```
 
 ## Demo Mode (Testnet Only)

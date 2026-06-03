@@ -12,8 +12,8 @@ export interface WalletSession {
   lastConfirmedAt: string;
 }
 
-const WALLET_SESSION_KEY = "quickex.wallet.session.v2";
-const LAST_WALLET_TYPE_KEY = "quickex.wallet.lastType";
+const WALLET_SESSION_KEY = " RustAcademy.wallet.session.v2";
+const LAST_WALLET_TYPE_KEY = " RustAcademy.wallet.lastType";
 
 /**
  * Maximum age for a session to be considered restorable (7 days).
@@ -59,7 +59,8 @@ export async function getWalletSession(): Promise<WalletSession | null> {
       network: parsed.network,
       walletType: parsed.walletType,
       connectedAt: parsed.connectedAt,
-      lastConfirmedAt: parsed.lastConfirmedAt ?? new Date(parsed.connectedAt).toISOString(),
+      lastConfirmedAt:
+        parsed.lastConfirmedAt ?? new Date(parsed.connectedAt).toISOString(),
     };
   } catch {
     return null;

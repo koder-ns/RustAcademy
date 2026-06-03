@@ -1,5 +1,5 @@
 import i18n from "i18next";
-import { getQuickexApiBase } from "@/lib/api";
+import { get RustAcademyApiBase } from "@/lib/api";
 
 export type DateRange = "24h" | "7d" | "30d" | "all";
 
@@ -64,8 +64,8 @@ const DEFAULT_PUBLIC_KEY =
   "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
 const PUBLIC_KEY_REGEX = /^G[A-Z2-7]{55}$/;
 const PUBLIC_KEY_STORAGE_CANDIDATES = [
-  "quickex.publicKey",
-  "quickex.walletPublicKey",
+  " RustAcademy.publicKey",
+  " RustAcademy.walletPublicKey",
   "walletPublicKey",
   "publicKey",
 ];
@@ -114,7 +114,7 @@ function resolveAnalyticsPublicKey(): string {
     }
   }
 
-  const fromEnv = process.env.NEXT_PUBLIC_QUICKEX_ANALYTICS_PUBLIC_KEY?.trim();
+  const fromEnv = process.env.NEXT_PUBLIC_ RustAcademy_ANALYTICS_PUBLIC_KEY?.trim();
   if (fromEnv && PUBLIC_KEY_REGEX.test(fromEnv)) {
     return fromEnv;
   }
@@ -204,7 +204,7 @@ export async function fetchAnalytics(range: DateRange): Promise<AnalyticsData> {
 
   const publicKey = resolveAnalyticsPublicKey();
   const { startDate, endDate, interval } = rangeToWindow(range);
-  const url = new URL(`${getQuickexApiBase()}/analytics/report`);
+  const url = new URL(`${get RustAcademyApiBase()}/analytics/report`);
   url.searchParams.set("publicKey", publicKey);
   url.searchParams.set("startDate", startDate);
   url.searchParams.set("endDate", endDate);
@@ -234,7 +234,7 @@ export async function exportAnalyticsReport(
 ): Promise<void> {
   const publicKey = resolveAnalyticsPublicKey();
   const { startDate, endDate, interval } = rangeToWindow(range);
-  const url = new URL(`${getQuickexApiBase()}/analytics/export`);
+  const url = new URL(`${get RustAcademyApiBase()}/analytics/export`);
   url.searchParams.set("publicKey", publicKey);
   url.searchParams.set("startDate", startDate);
   url.searchParams.set("endDate", endDate);
@@ -249,7 +249,7 @@ export async function exportAnalyticsReport(
 
   const blob = await res.blob();
   const disposition = res.headers.get("Content-Disposition");
-  const fallbackName = `quickex-analytics-report.${format}`;
+  const fallbackName = ` RustAcademy-analytics-report.${format}`;
   const fileName = parseFilename(disposition) ?? fallbackName;
   const objectUrl = window.URL.createObjectURL(blob);
   const link = document.createElement("a");

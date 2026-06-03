@@ -2,12 +2,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -18,9 +18,9 @@ import { useOnboarding } from "../hooks/useOnboarding";
 import { SUPPORTED_WALLETS, useWalletContext } from "../hooks/useWalletContext";
 import { useTheme } from "../src/theme/ThemeContext";
 import type {
-    StellarNetwork,
-    WalletErrorCode,
-    WalletType,
+  StellarNetwork,
+  WalletErrorCode,
+  WalletType,
 } from "../types/wallet";
 
 // ── Error banner config ──────────────────────────────────────────────────────
@@ -228,7 +228,7 @@ export default function WalletConnectScreen() {
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           {wallet.connected
             ? "Your wallet is connected. You can switch accounts, change networks, or disconnect below."
-            : "Connect a wallet once and QuickEx will remember it for next time."}
+            : "Connect a wallet once and  RustAcademy will remember it for next time."}
         </Text>
 
         {/* ── Demo banner ──────────────────────────────────────────────── */}

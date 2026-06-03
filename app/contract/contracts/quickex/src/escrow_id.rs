@@ -46,14 +46,14 @@
 
 use soroban_sdk::{xdr::ToXdr, Address, Bytes, BytesN, Env};
 
-use crate::errors::QuickexError;
+use crate::errors:: RustAcademyError;
 
 /// Domain separation tag for escrow-id derivation.
 ///
 /// Bump the version suffix (`v1` → `v2`) if the canonical encoding ever
 /// changes; this guarantees that clients and storage from different
 /// versions cannot collide.
-pub const ESCROW_ID_DOMAIN_TAG: &[u8] = b"QUICKEX::ESCROW_ID::v1";
+pub const ESCROW_ID_DOMAIN_TAG: &[u8] = b" RustAcademy::ESCROW_ID::v1";
 
 /// Arbiter presence tag for canonical serialization.
 const ARBITER_TAG_NONE: u8 = 0;
@@ -79,8 +79,8 @@ fn append_len_prefixed(env: &Env, payload: &mut Bytes, field: &Bytes) {
 ///
 /// # Errors
 ///
-/// - [`QuickexError::InvalidAmount`] if `amount < 0`.
-/// - [`QuickexError::InvalidSalt`] if `salt.len() > 1024`.
+/// - [` RustAcademyError::InvalidAmount`] if `amount < 0`.
+/// - [` RustAcademyError::InvalidSalt`] if `salt.len() > 1024`.
 pub fn derive_escrow_id(
     env: &Env,
     token: &Address,
@@ -89,12 +89,12 @@ pub fn derive_escrow_id(
     salt: &Bytes,
     timeout_secs: u64,
     arbiter: &Option<Address>,
-) -> Result<BytesN<32>, QuickexError> {
+) -> Result<BytesN<32>,  RustAcademyError> {
     if amount < 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
     if salt.len() > MAX_SALT_LEN {
-        return Err(QuickexError::InvalidSalt);
+        return Err( RustAcademyError::InvalidSalt);
     }
 
     let mut payload = Bytes::new(env);

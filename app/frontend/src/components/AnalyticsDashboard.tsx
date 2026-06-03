@@ -3,9 +3,9 @@
 /**
  * AnalyticsDashboard.tsx
  *
- * Interactive analytics dashboard for QuickEx (Issue #175).
+ * Interactive analytics dashboard for  RustAcademy (Issue #175).
  * Charts: Area (volume), Line (tx count), Donut (asset distribution).
- * Fully responsive and themed to QuickEx dark-glass aesthetic.
+ * Fully responsive and themed to  RustAcademy dark-glass aesthetic.
  */
 
 import { useEffect, useState, useCallback } from "react";
@@ -172,7 +172,9 @@ export default function AnalyticsDashboard() {
   const [range, setRange] = useState<DateRange>("30d");
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [reportType, setReportType] = useState<"accounting" | "tax">("accounting");
+  const [reportType, setReportType] = useState<"accounting" | "tax">(
+    "accounting",
+  );
   const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
 
@@ -194,19 +196,22 @@ export default function AnalyticsDashboard() {
     return () => window.clearTimeout(timer);
   }, [exportMessage]);
 
-  const handleExport = useCallback(async (format: "csv" | "pdf") => {
-    setExporting(format);
-    setExportMessage(null);
-    try {
-      await exportAnalyticsReport(range, format, reportType);
-      setExportMessage(`${format.toUpperCase()} report generated.`);
-    } catch (error) {
-      console.error(error);
-      setExportMessage(`Failed to export ${format.toUpperCase()} report.`);
-    } finally {
-      setExporting(null);
-    }
-  }, [range, reportType]);
+  const handleExport = useCallback(
+    async (format: "csv" | "pdf") => {
+      setExporting(format);
+      setExportMessage(null);
+      try {
+        await exportAnalyticsReport(range, format, reportType);
+        setExportMessage(`${format.toUpperCase()} report generated.`);
+      } catch (error) {
+        console.error(error);
+        setExportMessage(`Failed to export ${format.toUpperCase()} report.`);
+      } finally {
+        setExporting(null);
+      }
+    },
+    [range, reportType],
+  );
 
   const { summary, volume, txCount, assetDist } = data ?? {
     summary: null,
@@ -265,7 +270,9 @@ export default function AnalyticsDashboard() {
             </button>
           </div>
           {exportMessage ? (
-            <p className="text-[11px] font-bold text-neutral-300">{exportMessage}</p>
+            <p className="text-[11px] font-bold text-neutral-300">
+              {exportMessage}
+            </p>
           ) : null}
         </div>
       </div>
@@ -291,10 +298,7 @@ export default function AnalyticsDashboard() {
                 label="Transactions"
                 value={summary.totalTx.toLocaleString()}
               />
-              <StatCard
-                label="Avg Tx Size"
-                value={fmt(summary.avgTxSize)}
-              />
+              <StatCard label="Avg Tx Size" value={fmt(summary.avgTxSize)} />
               <StatCard
                 label="Top Asset"
                 value={
@@ -425,7 +429,10 @@ export default function AnalyticsDashboard() {
                     />
                     <Tooltip
                       {...tooltipStyle}
-                      formatter={(v?: ValueType) => [Number(v ?? 0), "Transactions"]}
+                      formatter={(v?: ValueType) => [
+                        Number(v ?? 0),
+                        "Transactions",
+                      ]}
                     />
                     <Line
                       type="monotone"

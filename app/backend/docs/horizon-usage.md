@@ -1,6 +1,6 @@
 # Horizon Usage Guidelines
 
-This document outlines how to fetch Stellar transaction data via Horizon in the QuickEx backend.
+This document outlines how to fetch Stellar transaction data via Horizon in the RustAcademy backend.
 
 ## Overview
 
@@ -16,12 +16,12 @@ To get reliable amount and asset data, we fetch **operations** of type `payment`
 
 ### Query Parameters
 
-| Parameter | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `accountId` | string | Yes | Stellar public key (G...) |
-| `asset` | string | No | Filter by asset (`XLM` or `CODE:ISSUER`) |
-| `limit` | number | No | Max items to return (1-200, default 20) |
-| `cursor` | string | No | Pagination token (`paging_token`) |
+| Parameter   | Type   | Required | Description                              |
+| :---------- | :----- | :------- | :--------------------------------------- |
+| `accountId` | string | Yes      | Stellar public key (G...)                |
+| `asset`     | string | No       | Filter by asset (`XLM` or `CODE:ISSUER`) |
+| `limit`     | number | No       | Max items to return (1-200, default 20)  |
+| `cursor`    | string | No       | Pagination token (`paging_token`)        |
 
 ## Caching
 
@@ -36,10 +36,10 @@ If Horizon returns a `429 Too Many Requests` error, the backend will return a `5
 ```typescript
 // In a controller or service
 const transactions = await this.horizonService.getPayments(
-  'GD...',
-  'USDC:GA...',
+  "GD...",
+  "USDC:GA...",
   20,
-  '123456789'
+  "123456789",
 );
 ```
 

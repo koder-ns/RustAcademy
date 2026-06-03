@@ -30,11 +30,7 @@ function UrgencyBar({ endsAt }: { endsAt: Date }) {
   const remaining = Math.max(0, endsAt.getTime() - Date.now());
   const pct = Math.min(100, Math.round((remaining / total) * 100));
   const color =
-    pct < 15
-      ? "bg-red-500"
-      : pct < 40
-      ? "bg-amber-500"
-      : "bg-indigo-500";
+    pct < 15 ? "bg-red-500" : pct < 40 ? "bg-amber-500" : "bg-indigo-500";
 
   return (
     <div className="w-full h-[3px] bg-white/5 rounded-full overflow-hidden">
@@ -46,7 +42,11 @@ function UrgencyBar({ endsAt }: { endsAt: Date }) {
   );
 }
 
-export function UsernameCard({ listing, onBid, onViewDetails }: UsernameCardProps) {
+export function UsernameCard({
+  listing,
+  onBid,
+  onViewDetails,
+}: UsernameCardProps) {
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const catColor = CATEGORY_COLORS[listing.category];
   const catLabel = CATEGORY_LABELS[listing.category];
@@ -85,19 +85,22 @@ export function UsernameCard({ listing, onBid, onViewDetails }: UsernameCardProp
               onClick={handleWatchlistClick}
               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isWatched
-                  ? 'bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30'
-                  : 'bg-white/5 border border-white/10 text-neutral-400 hover:text-red-400 hover:bg-red-500/10'
+                  ? "bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30"
+                  : "bg-white/5 border border-white/10 text-neutral-400 hover:text-red-400 hover:bg-red-500/10"
               }`}
-              title={isWatched ? 'Remove from watchlist' : 'Add to watchlist'}
+              title={isWatched ? "Remove from watchlist" : "Add to watchlist"}
             >
-              {isWatched ? '❤️' : '🤍'}
+              {isWatched ? "❤️" : "🤍"}
             </button>
           </div>
         </div>
 
         {/* Username */}
         <div className="flex-1">
-          <p className="text-xs text-neutral-600 font-mono mb-0.5">quickex.to/</p>
+          <p className="text-xs text-neutral-600 font-mono mb-0.5">
+            {" "}
+            RustAcademy.to/
+          </p>
           <h3 className="text-3xl font-black tracking-tight text-white leading-none group-hover:text-indigo-300 transition-colors duration-300">
             {listing.username}
           </h3>
@@ -111,7 +114,9 @@ export function UsernameCard({ listing, onBid, onViewDetails }: UsernameCardProp
             </p>
             <p className="font-black text-base text-white leading-none">
               {listing.currentBid.toLocaleString()}
-              <span className="text-[10px] font-bold text-neutral-500 ml-1">USDC</span>
+              <span className="text-[10px] font-bold text-neutral-500 ml-1">
+                USDC
+              </span>
             </p>
           </div>
           <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5">
@@ -132,9 +137,7 @@ export function UsernameCard({ listing, onBid, onViewDetails }: UsernameCardProp
 
         {/* Bottom row: owner + bid count */}
         <div className="flex items-center justify-between text-[11px] text-neutral-600">
-          <span className="font-mono">
-            {listing.ownerAddress}
-          </span>
+          <span className="font-mono">{listing.ownerAddress}</span>
           <span className="font-bold">
             {listing.bidCount} bids · {listing.watchers} watching
           </span>

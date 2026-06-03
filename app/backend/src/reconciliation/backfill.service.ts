@@ -1,15 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Horizon } from '@stellar/stellar-sdk';
-import { v4 as uuidv4 } from 'uuid';
+import { Injectable, Logger } from "@nestjs/common";
+import { Horizon } from "@stellar/stellar-sdk";
+import { v4 as uuidv4 } from "uuid";
 
-import { AppConfigService } from '../config/app-config.service';
-import { SupabaseService } from '../supabase/supabase.service';
-import { MetricsService } from '../metrics/metrics.service';
-import { SorobanEventParser } from '../ingestion/soroban-event.parser';
-import { EscrowEventRepository } from '../ingestion/escrow-event.repository';
-import { CursorRepository } from '../ingestion/cursor.repository';
-import type { RawHorizonContractEvent } from '../ingestion/soroban-event.parser';
-import type { EscrowEvent, QuickExContractEvent } from '../ingestion/types/contract-event.types';
+import { AppConfigService } from "../config/app-config.service";
+import { SupabaseService } from "../supabase/supabase.service";
+import { MetricsService } from "../metrics/metrics.service";
+import { SorobanEventParser } from "../ingestion/soroban-event.parser";
+import { EscrowEventRepository } from "../ingestion/escrow-event.repository";
+import { CursorRepository } from "../ingestion/cursor.repository";
+import type { RawHorizonContractEvent } from "../ingestion/soroban-event.parser";
+import type {
+  EscrowEvent,
+  RustAcademyContractEvent,
+} from "../ingestion/types/contract-event.types";
 
 export interface BackfillConfig {
   startLedger: number;
@@ -20,7 +23,7 @@ export interface BackfillConfig {
 
 export interface BackfillProgress {
   runId: string;
-  status: 'running' | 'completed' | 'failed';
+  status: "running" | "completed" | "failed";
   startLedger: number;
   endLedger: number;
   currentLedger: number;
@@ -43,7 +46,7 @@ export interface BackfillResult {
 
 /**
  * BackfillService processes historical ledger ranges to fill gaps in event ingestion.
- * 
+ *
  * Features:
  * - Idempotent: Can be run repeatedly without duplicating data
  * - Batch processing: Processes ledgers in configurable batch sizes
@@ -66,9 +69,9 @@ export class BackfillService {
     private readonly cursorRepo: CursorRepository,
   ) {
     const horizonUrl =
-      config.network === 'mainnet'
-        ? 'https://horizon.stellar.org'
-        : 'https://horizon-testnet.stellar.org';
+      config.network === "mainnet"
+        ? "https://horizon.stellar.org"
+        : "https://horizon-testnet.stellar.org";
 
     this.server = new Horizon.Server(horizonUrl);
     this.logger.log(
@@ -82,7 +85,7 @@ export class BackfillService {
    */
   async startBackfill(config: BackfillConfig): Promise<BackfillResult> {
     if (this.activeBackfill) {
-      throw new Error('A backfill job is already running');
+      throw new Error("A backfill job is already running");
     }
 
     const runId = uuidv4();
@@ -91,7 +94,7 @@ export class BackfillService {
 
     this.activeBackfill = {
       runId,
-      status: 'running',
+      status: "running",
       startLedger: config.startLedger,
       endLedger: config.endLedger,
       currentLedger: config.startLedger,
@@ -124,7 +127,7 @@ export class BackfillService {
         success: true,
       };
 
-      this.activeBackfill.status = 'completed';
+      this.activeBackfill.status = "completed";
       this.activeBackfill.completedAt = new Date().toISOString();
       this.logger.log(
         `[${runId}] Backfill completed: ${this.activeBackfill.processedCount} processed, ${this.activeBackfill.errorCount} errors in ${durationMs}ms`,
@@ -134,9 +137,10 @@ export class BackfillService {
       return result;
     } catch (error) {
       const durationMs = Date.now() - startTime;
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
 
-      this.activeBackfill.status = 'failed';
+      this.activeBackfill.status = "failed";
       this.activeBackfill.completedAt = new Date().toISOString();
       this.activeBackfill.errorMessage = errorMessage;
 
@@ -144,7 +148,7 @@ export class BackfillService {
         `[${runId}] Backfill failed after ${durationMs}ms: ${errorMessage}`,
       );
 
-      this.metrics.recordError('backfill', 'processing_error');
+      this.metrics.recordError("backfill", "processing_error");
 
       const result: BackfillResult = {
         runId,
@@ -222,7 +226,11 @@ export class BackfillService {
       );
 
       const duration = (Date.now() - startTime) / 1000;
-      this.metrics.recordExternalCall('horizon', 'fetchContractEvents', duration);
+      this.metrics.recordExternalCall(
+        "horizon",
+        "fetchContractEvents",
+        duration,
+      );
 
       // Process each event
       for (const rawEvent of events) {
@@ -242,9 +250,14 @@ export class BackfillService {
       );
     } catch (error) {
       const duration = (Date.now() - startTime) / 1000;
-      this.metrics.recordExternalCall('horizon', 'fetchContractEvents', duration);
-      const errorType = error instanceof Error ? error.constructor.name : 'UnknownError';
-      this.metrics.recordError('horizon', errorType);
+      this.metrics.recordExternalCall(
+        "horizon",
+        "fetchContractEvents",
+        duration,
+      );
+      const errorType =
+        error instanceof Error ? error.constructor.name : "UnknownError";
+      this.metrics.recordError("horizon", errorType);
       throw error;
     }
   }
@@ -257,13 +270,11 @@ export class BackfillService {
     startLedger: number,
     endLedger: number,
   ): Promise<RawHorizonContractEvent[]> {
-    const url = new URL(
-      `${this.server.serverURL}/contract_events`,
-    );
-    url.searchParams.set('contract_id', contractId);
-    url.searchParams.set('min_ledger', startLedger.toString());
-    url.searchParams.set('max_ledger', endLedger.toString());
-    url.searchParams.set('limit', '200');
+    const url = new URL(`${this.server.serverURL}/contract_events`);
+    url.searchParams.set("contract_id", contractId);
+    url.searchParams.set("min_ledger", startLedger.toString());
+    url.searchParams.set("max_ledger", endLedger.toString());
+    url.searchParams.set("limit", "200");
 
     const response = await fetch(url.toString());
     if (!response.ok) {
@@ -272,7 +283,9 @@ export class BackfillService {
       );
     }
 
-    const data = (await response.json()) as { _embedded: { records: RawHorizonContractEvent[] } };
+    const data = (await response.json()) as {
+      _embedded: { records: RawHorizonContractEvent[] };
+    };
     return data._embedded?.records || [];
   }
 
@@ -300,17 +313,21 @@ export class BackfillService {
 
     // Update cursor to the latest ledger in this batch
     const streamId = `contract:${contractId}`;
-    await this.cursorRepo.saveCursor(streamId, rawEvent.paging_token, rawEvent.ledger);
+    await this.cursorRepo.saveCursor(
+      streamId,
+      rawEvent.paging_token,
+      rawEvent.ledger,
+    );
   }
 
   /**
    * Persist an event to the database.
    */
-  private async persistEvent(event: QuickExContractEvent): Promise<void> {
+  private async persistEvent(event: RustAcademyContractEvent): Promise<void> {
     switch (event.eventType) {
-      case 'EscrowDeposited':
-      case 'EscrowWithdrawn':
-      case 'EscrowRefunded':
+      case "EscrowDeposited":
+      case "EscrowWithdrawn":
+      case "EscrowRefunded":
         await this.escrowRepo.upsertEvent(event as EscrowEvent);
         break;
       default:

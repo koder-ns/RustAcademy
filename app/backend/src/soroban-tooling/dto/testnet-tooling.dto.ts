@@ -1,5 +1,5 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
   IsArray,
   IsBoolean,
@@ -10,10 +10,10 @@ import {
   Matches,
   Min,
   ValidateNested,
-} from 'class-validator';
+} from "class-validator";
 
 export class FundingPreflightDto {
-  @ApiProperty({ example: 'GABCD1234EXAMPLE' })
+  @ApiProperty({ example: "GABCD1234EXAMPLE" })
   @IsString()
   @IsNotEmpty()
   accountId: string;
@@ -27,22 +27,25 @@ export class FundingPreflightDto {
 }
 
 export class DeployContractSpecDto {
-  @ApiProperty({ example: 'quickex' })
+  @ApiProperty({ example: " RustAcademy" })
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ example: 'app/contract/target/wasm32-unknown-unknown/release/quickex.wasm' })
+  @ApiProperty({
+    example:
+      "app/contract/target/wasm32-unknown-unknown/release/ RustAcademy.wasm",
+  })
   @IsString()
   @IsNotEmpty()
   wasmPath: string;
 
-  @ApiPropertyOptional({ example: 'initialize' })
+  @ApiPropertyOptional({ example: "initialize" })
   @IsOptional()
   @IsString()
   initMethod?: string;
 
-  @ApiPropertyOptional({ example: ['GADMINEXAMPLE...'] })
+  @ApiPropertyOptional({ example: ["GADMINEXAMPLE..."] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -50,12 +53,12 @@ export class DeployContractSpecDto {
 }
 
 export class DeploymentPlanDto {
-  @ApiProperty({ example: 'testnet' })
+  @ApiProperty({ example: "testnet" })
   @IsString()
   @Matches(/^(testnet|mainnet)$/)
-  network: 'testnet' | 'mainnet';
+  network: "testnet" | "mainnet";
 
-  @ApiProperty({ example: 'test' })
+  @ApiProperty({ example: "test" })
   @IsString()
   @IsNotEmpty()
   source: string;
@@ -70,7 +73,7 @@ export class DeploymentPlanDto {
   @IsBoolean()
   publishRegistry?: boolean;
 
-  @ApiPropertyOptional({ example: 'GADMINEXAMPLE...' })
+  @ApiPropertyOptional({ example: "GADMINEXAMPLE..." })
   @IsOptional()
   @IsString()
   adminPublicKey?: string;

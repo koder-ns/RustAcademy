@@ -12,7 +12,7 @@ Telegram notifications use a **separate, parallel system** rather than integrati
    - Telegram user ID (bigint, unique to Telegram platform)
    - Verification codes (temporary, security-sensitive)
    - Telegram username (optional, can change)
-   
+
    These don't fit the generic notification_preferences schema.
 
 2. **Security Requirements**:
@@ -62,22 +62,27 @@ Logs to telegram_notification_log
 ## Comparison: Integrated vs Separate
 
 ### Option A: Integrated (Rejected)
+
 Add telegram_id column to notification_preferences
 
 **Pros:**
+
 - Single source of truth
 - Consistent API
 
 **Cons:**
+
 - Schema pollution (nullable telegram_id, verification_code, etc.)
 - Complex validation logic
 - Harder to extend Telegram-specific features
 - Security concerns mixing verification codes with other prefs
 
 ### Option B: Separate (Chosen)
+
 Parallel telegram_user_mappings table
 
 **Pros:**
+
 - Clean separation of concerns
 - Telegram-specific fields without affecting other channels
 - Independent evolution possible
@@ -85,6 +90,7 @@ Parallel telegram_user_mappings table
 - Simpler queries and debugging
 
 **Cons:**
+
 - Two tables to manage
 - Need to ensure consistency between tables
 
@@ -104,7 +110,7 @@ Parallel telegram_user_mappings table
    - Creates/updates row in telegram_user_mappings
 
 3. User verifies linkage
-   - Enters code in QuickEx app
+   - Enters code in RustAcademy app
    - Marks telegram_user_mappings.is_verified = true
 
 4. Notifications flow
@@ -118,7 +124,7 @@ Consider creating a view or unified query layer:
 
 ```sql
 CREATE VIEW all_notification_channels AS
-SELECT 
+SELECT
   public_key,
   channel,
   enabled,
@@ -128,7 +134,7 @@ SELECT
   NULL as verification_code
 FROM notification_preferences
 UNION ALL
-SELECT 
+SELECT
   public_key,
   'telegram' as channel,
   enabled,
@@ -151,6 +157,7 @@ This would simplify future queries and provide a unified interface.
 ## Monitoring
 
 Track separately from other channels:
+
 - Active Telegram mappings count
 - Verification success rate
 - Delivery latency (target: < 5 seconds)
@@ -159,6 +166,7 @@ Track separately from other channels:
 ## Rollback Plan
 
 If issues arise:
+
 1. Set TELEGRAM_BOT_TOKEN to empty string (stops bot)
 2. Disable all telegram_user_mappings: `UPDATE telegram_user_mappings SET enabled=false`
 3. Remove Telegram provider from NotificationsModule
@@ -166,6 +174,7 @@ If issues arise:
 ## Migration Path
 
 If we later decide to integrate more tightly:
+
 1. Create migration script to merge data
 2. Add telegram_id as nullable column to notification_preferences
 3. Migrate existing telegram_user_mappings data

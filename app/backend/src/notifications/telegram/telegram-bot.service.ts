@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  OnModuleDestroy,
+} from "@nestjs/common";
 import { Context, Telegraf } from "telegraf";
 import { message } from "telegraf/filters";
 import { TelegramRepository } from "./telegram.repository";
@@ -70,13 +75,12 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       }
 
       // Check if user is already linked
-      const existingMapping = await this.telegramRepo.findByTelegramId(
-        telegramId,
-      );
+      const existingMapping =
+        await this.telegramRepo.findByTelegramId(telegramId);
 
       if (existingMapping) {
         await ctx.reply(
-          `✅ Your Telegram account is already linked to QuickEx!\n\n` +
+          `✅ Your Telegram account is already linked to  RustAcademy!\n\n` +
             `Public Key: \`${existingMapping.publicKey}\`\n\n` +
             `You will receive real-time notifications for:\n` +
             `• Payment received\n` +
@@ -89,12 +93,12 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
       // Show welcome message with instructions
       await ctx.reply(
-        `👋 Welcome to QuickEx Notifications Bot!\n\n` +
+        `👋 Welcome to  RustAcademy Notifications Bot!\n\n` +
           `I'll send you real-time alerts for:\n` +
           `• 💰 Payments received\n` +
           `• 🔒 Escrow deposits, withdrawals, and refunds\n\n` +
-          `To link your QuickEx account:\n` +
-          `1. Copy your QuickEx public key (starts with G...)\n` +
+          `To link your  RustAcademy account:\n` +
+          `1. Copy your  RustAcademy public key (starts with G...)\n` +
           `2. Send it to me in the next message\n\n` +
           `Or use /cancel anytime to abort.`,
         { parse_mode: "Markdown" },
@@ -142,7 +146,10 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
         ctx.session.linkingPublicKey = text;
 
         // Generate verification code
-        const verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const verificationCode = Math.random()
+          .toString(36)
+          .substring(2, 8)
+          .toUpperCase();
         ctx.session.verificationCode = verificationCode;
 
         // Save mapping with verification code
@@ -155,7 +162,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
         await ctx.reply(
           `🔐 Verification Required\n\n` +
-            `To confirm you own this QuickEx account, please visit:\n` +
+            `To confirm you own this  RustAcademy account, please visit:\n` +
             `\`${text}\`\n\n` +
             `And enter this verification code:\n` +
             `✨ \`${verificationCode}\` ✨\n\n` +
@@ -175,17 +182,19 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
       if (!mapping) {
         await ctx.reply(
-          "❌ Your Telegram account is not linked to any QuickEx account.\n\n" +
+          "❌ Your Telegram account is not linked to any  RustAcademy account.\n\n" +
             "Use /start to begin linking.",
         );
         return;
       }
 
-      const status = mapping.isVerified ? "✅ Verified" : "⏳ Pending verification";
+      const status = mapping.isVerified
+        ? "✅ Verified"
+        : "⏳ Pending verification";
       const notifications = mapping.enabled ? "🔔 Enabled" : "🔕 Disabled";
 
       await ctx.reply(
-        `📊 Your QuickEx Link Status\n\n` +
+        `📊 Your  RustAcademy Link Status\n\n` +
           `Public Key: \`${mapping.publicKey}\`\n` +
           `Status: ${status}\n` +
           `Notifications: ${notifications}\n` +
@@ -205,7 +214,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       const mapping = await this.telegramRepo.findByTelegramId(telegramId);
 
       if (!mapping) {
-        await ctx.reply("❌ No QuickEx account is linked.");
+        await ctx.reply("❌ No  RustAcademy account is linked.");
         return;
       }
 
@@ -215,7 +224,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       ctx.session.linkingPublicKey = undefined;
 
       await ctx.reply(
-        "✅ Your QuickEx account has been disconnected.\n\n" +
+        "✅ Your  RustAcademy account has been disconnected.\n\n" +
           "You will no longer receive notifications here.\n" +
           "Use /start to link again anytime.",
       );
@@ -229,7 +238,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       const mapping = await this.telegramRepo.findByTelegramId(telegramId);
 
       if (!mapping) {
-        await ctx.reply("❌ No QuickEx account linked. Use /start first.");
+        await ctx.reply("❌ No  RustAcademy account linked. Use /start first.");
         return;
       }
 
@@ -252,7 +261,7 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
       const mapping = await this.telegramRepo.findByTelegramId(telegramId);
       if (!mapping) {
-        await ctx.reply("❌ No QuickEx account linked. Use /start first.");
+        await ctx.reply("❌ No  RustAcademy account linked. Use /start first.");
         return;
       }
 
@@ -285,12 +294,14 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
       const mapping = await this.telegramRepo.findByTelegramId(telegramId);
       if (!mapping) {
-        await ctx.reply("❌ No QuickEx account linked. Use /start first.");
+        await ctx.reply("❌ No  RustAcademy account linked. Use /start first.");
         return;
       }
 
       await this.telegramRepo.setEnabled(telegramId, true);
-      await ctx.reply("✅ Notifications enabled! You'll now receive real-time alerts.");
+      await ctx.reply(
+        "✅ Notifications enabled! You'll now receive real-time alerts.",
+      );
     });
 
     // /disable command - Disable notifications temporarily
@@ -300,19 +311,21 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
       const mapping = await this.telegramRepo.findByTelegramId(telegramId);
       if (!mapping) {
-        await ctx.reply("❌ No QuickEx account linked. Use /start first.");
+        await ctx.reply("❌ No  RustAcademy account linked. Use /start first.");
         return;
       }
 
       await this.telegramRepo.setEnabled(telegramId, false);
-      await ctx.reply("🔕 Notifications disabled. Use /enable to turn them back on.");
+      await ctx.reply(
+        "🔕 Notifications disabled. Use /enable to turn them back on.",
+      );
     });
 
     // /help command
     this.bot.command("help", async (ctx) => {
       await ctx.reply(
-        `📖 QuickEx Bot Commands\n\n` +
-          `/start - Link your QuickEx account\n` +
+        `📖  RustAcademy Bot Commands\n\n` +
+          `/start - Link your  RustAcademy account\n` +
           `/status - Check linkage status\n` +
           `/unlink - Disconnect account\n` +
           `/settings - Notification settings\n` +
@@ -344,9 +357,13 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
       const emoji = this.getEmojiForEvent(metadata?.eventType as string);
       const formattedMessage = `${emoji} *${title}*\n\n${body}`;
 
-      const result = await this.bot.telegram.sendMessage(telegramId, formattedMessage, {
-        parse_mode: "Markdown",
-      });
+      const result = await this.bot.telegram.sendMessage(
+        telegramId,
+        formattedMessage,
+        {
+          parse_mode: "Markdown",
+        },
+      );
 
       return result.message_id;
     } catch (error) {
@@ -365,9 +382,9 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
 
     const emojiMap: Record<string, string> = {
       "payment.received": "💰",
-      "EscrowDeposited": "🔒",
-      "EscrowWithdrawn": "🔓",
-      "EscrowRefunded": "↩️",
+      EscrowDeposited: "🔒",
+      EscrowWithdrawn: "🔓",
+      EscrowRefunded: "↩️",
       "username.claimed": "✅",
       "recurring.payment.executed": "🔄",
       "recurring.payment.failed": "❌",
@@ -380,14 +397,19 @@ export class TelegramBotService implements OnModuleInit, OnModuleDestroy {
   /**
    * Verify a user with the verification code
    */
-  async verifyUser(telegramId: number, verificationCode: string): Promise<boolean> {
+  async verifyUser(
+    telegramId: number,
+    verificationCode: string,
+  ): Promise<boolean> {
     const mapping = await this.telegramRepo.findByTelegramId(telegramId);
 
     if (!mapping || !mapping.verificationCode) {
       return false;
     }
 
-    if (mapping.verificationCode.toUpperCase() === verificationCode.toUpperCase()) {
+    if (
+      mapping.verificationCode.toUpperCase() === verificationCode.toUpperCase()
+    ) {
       await this.telegramRepo.markAsVerified(telegramId);
       return true;
     }

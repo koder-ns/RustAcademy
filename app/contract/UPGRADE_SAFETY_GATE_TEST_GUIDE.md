@@ -27,42 +27,50 @@
 **Test Steps**:
 
 1. **No Window Set**
+
    ```rust
    let result = client.try_start_upgrade(&gs.admin, &2u32);
    assert!(result.is_err(), "start_upgrade must fail when no window is set");
    ```
+
    - Expected: `InvalidAmount` ("upgrade window not active")
 
 2. **Before Window**
+
    ```rust
    let now = gs.env.ledger().timestamp();
    client.set_upgrade_window(&gs.admin, &(now + 1000), &(now + 2000))?;
-   
+
    let result = client.try_start_upgrade(&gs.admin, &2u32);
    assert!(result.is_err(), "start_upgrade must fail before window start");
    ```
+
    - Expected: `InvalidAmount`
 
 3. **Within Window**
+
    ```rust
    gs.env.ledger().with_mut(|li| {
        li.timestamp = now + 1500;
    });
-   
+
    client.start_upgrade(&gs.admin, &2u32)
        .expect("start_upgrade should succeed during window");
    ```
+
    - Expected: `Ok(())` + `UpgradeStarted` event emitted
 
 4. **After Window**
+
    ```rust
    gs.env.ledger().with_mut(|li| {
        li.timestamp = now + 2500;
    });
-   
+
    let result = client.try_start_upgrade(&gs.admin, &3u32);
    assert!(result.is_err(), "start_upgrade must fail after window end");
    ```
+
    - Expected: `InvalidAmount`
 
 **Acceptance Criterion**: ✅ AC1 – Upgrades are blocked outside the allowed window.
@@ -77,16 +85,17 @@
 
 **Invariants Checked**:
 
-| # | Invariant | Check | Line |
-|---|-----------|-------|------|
-| 1 | Fee bounds | `fee_bps <= 10_000` | storage.rs:287 |
-| 2 | Version set | `version == CURRENT` | storage.rs:292 |
-| 3 | Admin init | `admin != None` | storage.rs:297 |
-| 4 | Counter valid | u64 (implicit) | storage.rs:301 |
+| #   | Invariant     | Check                | Line           |
+| --- | ------------- | -------------------- | -------------- |
+| 1   | Fee bounds    | `fee_bps <= 10_000`  | storage.rs:287 |
+| 2   | Version set   | `version == CURRENT` | storage.rs:292 |
+| 3   | Admin init    | `admin != None`      | storage.rs:297 |
+| 4   | Counter valid | u64 (implicit)       | storage.rs:301 |
 
 **Test Steps**:
 
 1. **Setup Golden State**
+
    ```rust
    let (gs, _) = build_golden_state();
    // Deploys legacy v0 contract with:
@@ -97,31 +106,38 @@
    ```
 
 2. **Upgrade to Current**
+
    ```rust
    let client = upgrade_to_current(&gs.env, &gs.contract_id);
    ```
 
 3. **Set Unbounded Window** (0, 0 = always active)
+
    ```rust
    client.set_upgrade_window(&gs.admin, &0u64, &0u64)?;
    ```
 
 4. **Initiate Upgrade**
+
    ```rust
    client.start_upgrade(&gs.admin, &2u32)?;
    ```
 
 5. **Run Migration**
+
    ```rust
    let version = client.migrate(&gs.admin)?;
    assert_eq!(version, CURRENT_CONTRACT_VERSION);
    ```
+
    - This internally calls `assert_post_upgrade_invariants()`
 
 6. **Complete Upgrade** (Re-validates invariants)
+
    ```rust
    client.complete_upgrade(&gs.admin, &2u32)?;
    ```
+
    - Expected: All invariants pass; no panic
 
 7. **Verify Contract State**
@@ -158,7 +174,7 @@ if fee_cfg.fee_bps > 10_000 {
 
 // In admin.rs
 if let Err(_msg) = storage::assert_post_upgrade_invariants(env) {
-    env.panic_with_error(QuickexError::InternalError);
+    env.panic_with_error( RustAcademyError::InternalError);
     // ↑ Deterministic panic; all storage rolled back
 }
 ```
@@ -200,11 +216,13 @@ Time: t2 (after migration)
 **Test Steps**:
 
 1. **Clear Event Log**
+
    ```rust
    gs.env.events().all();  // Reset event counter
    ```
 
 2. **Set Window & Start Upgrade**
+
    ```rust
    client.set_upgrade_window(&gs.admin, &0u64, &0u64)?;
    client.start_upgrade(&gs.admin, &2u32)?;
@@ -212,11 +230,13 @@ Time: t2 (after migration)
    ```
 
 3. **Run Migration**
+
    ```rust
    client.migrate(&gs.admin)?;
    ```
 
 4. **Complete Upgrade**
+
    ```rust
    client.complete_upgrade(&gs.admin, &2u32)?;
    // → Event: UpgradeCompleted emitted
@@ -225,7 +245,7 @@ Time: t2 (after migration)
 5. **Verify Event Emission** (SDK-dependent)
    ```rust
    // In real indexer:
-   // SELECT * FROM events 
+   // SELECT * FROM events
    // WHERE type IN ('UpgradeStarted', 'UpgradeCompleted')
    // AND topics[1] = 'TOPIC_ADMIN'
    // ORDER BY timestamp
@@ -235,7 +255,7 @@ Time: t2 (after migration)
 
 ```sql
 -- Track all upgrades
-SELECT 
+SELECT
     admin,
     old_version,
     new_version,
@@ -270,12 +290,14 @@ LIMIT 1;
 **Test Steps**:
 
 1. **First Start**
+
    ```rust
    client.set_upgrade_window(&gs.admin, &0u64, &0u64)?;
    client.start_upgrade(&gs.admin, &2u32)?;  // ✓ Succeeds
    ```
 
 2. **Second Start (Should Fail)**
+
    ```rust
    let result = client.try_start_upgrade(&gs.admin, &3u32);
    assert!(result.is_err(), "start_upgrade must fail when already in progress");
@@ -283,10 +305,11 @@ LIMIT 1;
    ```
 
 3. **Complete & Retry**
+
    ```rust
    client.migrate(&gs.admin)?;
    client.complete_upgrade(&gs.admin, &2u32)?;
-   
+
    // Now a new start is allowed
    client.start_upgrade(&gs.admin, &3u32)?;  // ✓ Succeeds
    ```
@@ -304,6 +327,7 @@ LIMIT 1;
 **Test Steps**:
 
 1. **Non-Admin Set Window**
+
    ```rust
    let non_admin = Address::generate(&gs.env);
    let result = client.try_set_upgrade_window(&non_admin, &0u64, &0u64);
@@ -337,19 +361,19 @@ struct GoldenState {
     bob: Address,
     arbiter: Address,
     token: Address,
-    
+
     // 4 escrows covering all lifecycle states
     commitment_pending: BytesN<32>,
     amount_pending: i128,
-    
+
     commitment_disputed: BytesN<32>,
     amount_disputed: i128,
-    
+
     commitment_spent: BytesN<32>,
     amount_spent: i128,
-    
+
     commitment_refunded: BytesN<32>,
-    
+
     // Config
     fee_bps: u32,
 }
@@ -374,9 +398,9 @@ fn build_golden_state() -> (Env, GoldenState) {
 Simulates WASM swap and returns client (line 249–252):
 
 ```rust
-fn upgrade_to_current<'a>(env: &'a Env, contract_id: &Address) -> QuickexContractClient<'a> {
-    env.register_at(contract_id, QuickexContract, ());
-    QuickexContractClient::new(env, contract_id)
+fn upgrade_to_current<'a>(env: &'a Env, contract_id: &Address) ->  RustAcademyContractClient<'a> {
+    env.register_at(contract_id,  RustAcademyContract, ());
+     RustAcademyContractClient::new(env, contract_id)
 }
 ```
 
@@ -387,7 +411,7 @@ fn upgrade_to_current<'a>(env: &'a Env, contract_id: &Address) -> QuickexContrac
 ### Run All Upgrade Safety Gate Tests
 
 ```bash
-cd app/contract/contracts/quickex
+cd app/contract/contracts/ RustAcademy
 cargo test upgrade_safety_gate_ -- --nocapture
 ```
 
@@ -404,7 +428,7 @@ test upgrade_safety_gate_non_admin_blocked ... ok
 
 test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured
 
-   Doc-tests quickex: 0 passed; 0 failed; 0 ignored; 0 measured
+   Doc-tests  RustAcademy: 0 passed; 0 failed; 0 ignored; 0 measured
 ```
 
 ### Run Individual Test
@@ -428,6 +452,7 @@ RUST_BACKTRACE=1 cargo test upgrade_safety_gate_ -- --nocapture
 **Cause**: `start_upgrade()` called outside window or no window set.
 
 **Fix**:
+
 ```rust
 // Set window BEFORE calling start_upgrade
 client.set_upgrade_window(&admin, &0u64, &0u64)?;  // 0, 0 = always active
@@ -439,6 +464,7 @@ client.start_upgrade(&admin, &2u32)?;
 **Cause**: Called `start_upgrade()` twice without `complete_upgrade()`.
 
 **Fix**:
+
 ```rust
 // Complete before starting new upgrade
 client.complete_upgrade(&admin, &2u32)?;
@@ -450,6 +476,7 @@ client.start_upgrade(&admin, &3u32)?;
 **Cause**: Caller is not admin.
 
 **Fix**:
+
 ```rust
 // Use admin address, not a test address
 client.start_upgrade(&admin, &2u32)?;  // ✓ Correct
@@ -461,6 +488,7 @@ client.start_upgrade(&admin, &2u32)?;  // ✓ Correct
 **Cause**: Post-upgrade invariants violated (corrupted migration).
 
 **Fix**:
+
 ```rust
 // Check that migration didn't corrupt state:
 // - fee_bps <= 10_000
@@ -492,8 +520,8 @@ These tests should run in CI/CD pipeline:
 
 ## References
 
-- **Test Code**: `app/contract/contracts/quickex/src/upgrade_test.rs` (lines 660–820)
-- **Implementation**: `app/contract/contracts/quickex/src/admin.rs`, `storage.rs`, `events.rs`
+- **Test Code**: `app/contract/contracts/ RustAcademy/src/upgrade_test.rs` (lines 660–820)
+- **Implementation**: `app/contract/contracts/ RustAcademy/src/admin.rs`, `storage.rs`, `events.rs`
 - **Full Spec**: `app/contract/docs/UPGRADE_SAFETY_GATE.md`
 - **API Reference**: `app/contract/UPGRADE_SAFETY_GATE_QUICK_REFERENCE.md`
 

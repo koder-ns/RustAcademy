@@ -1,11 +1,11 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from "@nestjs/common";
 
-import { SupabaseService } from '../supabase/supabase.service';
+import { SupabaseService } from "../supabase/supabase.service";
 import {
   IncomingTransaction,
   UnmatchedTransaction,
   UnmatchedStatus,
-} from './types/auto-match.types';
+} from "./types/auto-match.types";
 
 /** Paginated result returned by {@link UnmatchedQueueRepository.listPending}. */
 export interface UnmatchedPage {
@@ -42,7 +42,7 @@ export class UnmatchedQueueRepository {
   ): Promise<UnmatchedTransaction | null> {
     const { data, error } = await this.supabase
       .getClient()
-      .from('unmatched_transactions')
+      .from("unmatched_transactions")
       .upsert(
         {
           tx_hash: tx.txHash,
@@ -58,7 +58,7 @@ export class UnmatchedQueueRepository {
           best_candidate_link_id: bestCandidateLinkId,
           best_confidence: bestConfidence,
         },
-        { onConflict: 'tx_hash', ignoreDuplicates: true },
+        { onConflict: "tx_hash", ignoreDuplicates: true },
       )
       .select()
       .maybeSingle();
@@ -70,7 +70,7 @@ export class UnmatchedQueueRepository {
       return null;
     }
 
-    return (data as UnmatchedTransaction | null);
+    return data as UnmatchedTransaction | null;
   }
 
   /**
@@ -84,14 +84,16 @@ export class UnmatchedQueueRepository {
 
     const { data, error, count } = await this.supabase
       .getClient()
-      .from('unmatched_transactions')
-      .select('*', { count: 'exact' })
-      .eq('status', UnmatchedStatus.Pending)
-      .order('ingested_at', { ascending: false })
+      .from("unmatched_transactions")
+      .select("*", { count: "exact" })
+      .eq("status", UnmatchedStatus.Pending)
+      .order("ingested_at", { ascending: false })
       .range(offset, offset + effectiveLimit - 1);
 
     if (error) {
-      this.logger.error(`Failed to list unmatched transactions: ${error.message}`);
+      this.logger.error(
+        `Failed to list unmatched transactions: ${error.message}`,
+      );
       return { items: [], total: 0, hasMore: false };
     }
 
@@ -107,34 +109,38 @@ export class UnmatchedQueueRepository {
   async findById(id: string): Promise<UnmatchedTransaction | null> {
     const { data, error } = await this.supabase
       .getClient()
-      .from('unmatched_transactions')
-      .select('*')
-      .eq('id', id)
+      .from("unmatched_transactions")
+      .select("*")
+      .eq("id", id)
       .maybeSingle();
 
     if (error) {
-      this.logger.error(`Failed to find unmatched transaction ${id}: ${error.message}`);
+      this.logger.error(
+        `Failed to find unmatched transaction ${id}: ${error.message}`,
+      );
       return null;
     }
 
-    return (data as UnmatchedTransaction | null);
+    return data as UnmatchedTransaction | null;
   }
 
   /** Look up a single row by Stellar transaction hash. */
   async findByTxHash(txHash: string): Promise<UnmatchedTransaction | null> {
     const { data, error } = await this.supabase
       .getClient()
-      .from('unmatched_transactions')
-      .select('*')
-      .eq('tx_hash', txHash)
+      .from("unmatched_transactions")
+      .select("*")
+      .eq("tx_hash", txHash)
       .maybeSingle();
 
     if (error) {
-      this.logger.error(`Failed to find unmatched tx by hash ${txHash}: ${error.message}`);
+      this.logger.error(
+        `Failed to find unmatched tx by hash ${txHash}: ${error.message}`,
+      );
       return null;
     }
 
-    return (data as UnmatchedTransaction | null);
+    return data as UnmatchedTransaction | null;
   }
 
   /**
@@ -149,44 +155,52 @@ export class UnmatchedQueueRepository {
   async resolve(id: string, resolvedBy: string, note?: string): Promise<void> {
     const { error } = await this.supabase
       .getClient()
-      .from('unmatched_transactions')
+      .from("unmatched_transactions")
       .update({
         status: UnmatchedStatus.Resolved,
         resolved_by: resolvedBy,
         resolved_at: new Date().toISOString(),
         resolution_note: note ?? null,
       })
-      .eq('id', id)
-      .eq('status', UnmatchedStatus.Pending);
+      .eq("id", id)
+      .eq("status", UnmatchedStatus.Pending);
 
     if (error) {
-      this.logger.error(`Failed to resolve unmatched transaction ${id}: ${error.message}`);
-      throw new Error(`Could not resolve unmatched transaction ${id}: ${error.message}`);
+      this.logger.error(
+        `Failed to resolve unmatched transaction ${id}: ${error.message}`,
+      );
+      throw new Error(
+        `Could not resolve unmatched transaction ${id}: ${error.message}`,
+      );
     }
   }
 
   /**
    * Dismiss an entry — the operator has determined this transaction does not
-   * correspond to any QuickEx payment link and requires no further action.
+   * correspond to any  RustAcademy payment link and requires no further action.
    *
    * @throws Error if the database update fails.
    */
   async dismiss(id: string, resolvedBy: string, note?: string): Promise<void> {
     const { error } = await this.supabase
       .getClient()
-      .from('unmatched_transactions')
+      .from("unmatched_transactions")
       .update({
         status: UnmatchedStatus.Dismissed,
         resolved_by: resolvedBy,
         resolved_at: new Date().toISOString(),
         resolution_note: note ?? null,
       })
-      .eq('id', id)
-      .eq('status', UnmatchedStatus.Pending);
+      .eq("id", id)
+      .eq("status", UnmatchedStatus.Pending);
 
     if (error) {
-      this.logger.error(`Failed to dismiss unmatched transaction ${id}: ${error.message}`);
-      throw new Error(`Could not dismiss unmatched transaction ${id}: ${error.message}`);
+      this.logger.error(
+        `Failed to dismiss unmatched transaction ${id}: ${error.message}`,
+      );
+      throw new Error(
+        `Could not dismiss unmatched transaction ${id}: ${error.message}`,
+      );
     }
   }
 }

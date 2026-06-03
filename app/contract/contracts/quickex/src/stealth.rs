@@ -42,7 +42,7 @@
 use soroban_sdk::{token, Address, Bytes, BytesN, Env};
 
 use crate::{
-    errors::QuickexError,
+    errors:: RustAcademyError,
     events,
     storage::{get_stealth_escrow, put_stealth_escrow},
     types::{EscrowStatus, StealthDepositParams, StealthEscrowEntry},
@@ -100,7 +100,7 @@ pub fn derive_stealth_address(
 pub fn register_ephemeral_key(
     env: &Env,
     params: StealthDepositParams,
-) -> Result<BytesN<32>, QuickexError> {
+) -> Result<BytesN<32>,  RustAcademyError> {
     let StealthDepositParams {
         sender,
         token,
@@ -113,11 +113,11 @@ pub fn register_ephemeral_key(
     } = params;
 
     if amount_due <= 0 || amount_paid <= 0 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
 
     if amount_paid > amount_due {
-        return Err(QuickexError::Overpayment);
+        return Err( RustAcademyError::Overpayment);
     }
 
     sender.require_auth();
@@ -129,12 +129,12 @@ pub fn register_ephemeral_key(
     let expected_stealth = derive_stealth_address(env, &spend_pub, &shared_secret);
 
     if expected_stealth != stealth_address {
-        return Err(QuickexError::StealthAddressMismatch);
+        return Err( RustAcademyError::StealthAddressMismatch);
     }
 
     // Reject duplicate stealth addresses (replay protection).
     if get_stealth_escrow(env, &stealth_address).is_some() {
-        return Err(QuickexError::StealthAddressAlreadyUsed);
+        return Err( RustAcademyError::StealthAddressAlreadyUsed);
     }
 
     // Transfer funds from sender to contract.
@@ -199,18 +199,18 @@ pub fn stealth_withdraw(
     eph_pub: BytesN<32>,
     spend_pub: BytesN<32>,
     stealth_address: BytesN<32>,
-) -> Result<bool, QuickexError> {
+) -> Result<bool,  RustAcademyError> {
     recipient.require_auth();
 
     let mut entry =
-        get_stealth_escrow(env, &stealth_address).ok_or(QuickexError::StealthEscrowNotFound)?;
+        get_stealth_escrow(env, &stealth_address).ok_or( RustAcademyError::StealthEscrowNotFound)?;
 
     if entry.status != EscrowStatus::Pending {
-        return Err(QuickexError::AlreadySpent);
+        return Err( RustAcademyError::AlreadySpent);
     }
 
     if entry.expires_at > 0 && env.ledger().timestamp() >= entry.expires_at {
-        return Err(QuickexError::EscrowExpired);
+        return Err( RustAcademyError::EscrowExpired);
     }
 
     // Verify the caller knows the correct spend_pub for this stealth address.
@@ -218,7 +218,7 @@ pub fn stealth_withdraw(
     let expected_stealth = derive_stealth_address(env, &spend_pub, &shared_secret);
 
     if expected_stealth != stealth_address {
-        return Err(QuickexError::StealthAddressMismatch);
+        return Err( RustAcademyError::StealthAddressMismatch);
     }
 
     // Mark spent before transfer (checks-effects-interactions).

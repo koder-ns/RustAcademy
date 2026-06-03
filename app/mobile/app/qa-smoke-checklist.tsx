@@ -20,52 +20,62 @@ const CHECKLIST: ChecklistItem[] = [
   {
     key: "deep-links",
     label: "Deep Links",
-    description: "Verify quickex:// and https://quickex.to links open the app and route to the correct screen.",
+    description:
+      "Verify  RustAcademy:// and https:// RustAcademy.to links open the app and route to the correct screen.",
   },
   {
     key: "wallet-connect",
     label: "Wallet Connect",
-    description: "Connect a Stellar wallet (Freighter, Lobstr, etc.) and verify the connection persists across app restarts.",
+    description:
+      "Connect a Stellar wallet (Freighter, Lobstr, etc.) and verify the connection persists across app restarts.",
   },
   {
     key: "pay-flow",
     label: "Payment Flow",
-    description: "Send a test payment via QR scan, payment link, and wallet-to-wallet transfer. Verify transaction history updates.",
+    description:
+      "Send a test payment via QR scan, payment link, and wallet-to-wallet transfer. Verify transaction history updates.",
   },
   {
     key: "push-notifications",
     label: "Push Notifications",
-    description: "Receive and tap a push notification. Verify it routes to the correct transaction/escrow/listing detail screen.",
+    description:
+      "Receive and tap a push notification. Verify it routes to the correct transaction/escrow/listing detail screen.",
   },
   {
     key: "network-guard",
     label: "Network Guard",
-    description: "Switch wallet to mainnet and verify the network mismatch warning appears. Switch back to testnet and confirm the warning clears.",
+    description:
+      "Switch wallet to mainnet and verify the network mismatch warning appears. Switch back to testnet and confirm the warning clears.",
   },
   {
     key: "offline-mode",
     label: "Offline Resilience",
-    description: "Enable airplane mode. Verify offline banner displays and the app does not crash. Reconnect and verify normal operation resumes.",
+    description:
+      "Enable airplane mode. Verify offline banner displays and the app does not crash. Reconnect and verify normal operation resumes.",
   },
   {
     key: "biometric-lock",
     label: "Biometric Lock",
-    description: "Enable biometric lock in settings. Lock the app and verify it re-prompts for authentication on resume.",
+    description:
+      "Enable biometric lock in settings. Lock the app and verify it re-prompts for authentication on resume.",
   },
   {
     key: "contacts-sync",
     label: "Contacts Sync",
-    description: "Add, edit, and delete a contact. Verify changes are reflected immediately and persist after app restart.",
+    description:
+      "Add, edit, and delete a contact. Verify changes are reflected immediately and persist after app restart.",
   },
   {
     key: "payment-link-gen",
     label: "Payment Link Generation",
-    description: "Generate a payment link with various amounts and assets. Verify the link opens the payment confirmation screen.",
+    description:
+      "Generate a payment link with various amounts and assets. Verify the link opens the payment confirmation screen.",
   },
   {
     key: "escrow-flow",
     label: "Escrow Flow",
-    description: "Create an escrow transaction, verify funding, and complete the release flow on testnet.",
+    description:
+      "Create an escrow transaction, verify funding, and complete the release flow on testnet.",
   },
 ];
 
@@ -104,8 +114,17 @@ export default function QaSmokeChecklistScreen() {
           </Text>
         </View>
 
-        <View style={[styles.buildInfo, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <BuildInfoRow label="Environment" value={APP_ENVIRONMENT} theme={theme} />
+        <View
+          style={[
+            styles.buildInfo,
+            { backgroundColor: theme.surface, borderColor: theme.border },
+          ]}
+        >
+          <BuildInfoRow
+            label="Environment"
+            value={APP_ENVIRONMENT}
+            theme={theme}
+          />
           <BuildInfoRow label="Network" value={STELLAR_NETWORK} theme={theme} />
           <BuildInfoRow label="Version" value={APP_VERSION} theme={theme} />
           <BuildInfoRow label="Build" value={BUILD_METADATA} theme={theme} />
@@ -119,16 +138,16 @@ export default function QaSmokeChecklistScreen() {
               style={[
                 styles.checkItem,
                 {
-                  backgroundColor: isChecked ? theme.status.success + "15" : theme.surface,
+                  backgroundColor: isChecked
+                    ? theme.status.success + "15"
+                    : theme.surface,
                   borderColor: isChecked ? theme.status.success : theme.border,
                 },
               ]}
               onPress={() => toggleItem(item.key)}
             >
               <View style={styles.checkbox}>
-                <Text style={{ fontSize: 18 }}>
-                  {isChecked ? "✅" : "⬜"}
-                </Text>
+                <Text style={{ fontSize: 18 }}>{isChecked ? "✅" : "⬜"}</Text>
               </View>
               <View style={styles.checkContent}>
                 <Text
@@ -157,7 +176,10 @@ export default function QaSmokeChecklistScreen() {
 
         {checked.size > 0 && (
           <Pressable
-            style={[styles.resetButton, { backgroundColor: theme.status.error }]}
+            style={[
+              styles.resetButton,
+              { backgroundColor: theme.status.error },
+            ]}
             onPress={() => setChecked(new Set())}
           >
             <Text style={styles.resetButtonText}>Reset All</Text>

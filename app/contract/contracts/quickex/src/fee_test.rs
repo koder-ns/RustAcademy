@@ -1,4 +1,4 @@
-use crate::{types::FeeConfig, QuickexContract, QuickexContractClient};
+use crate::{types::FeeConfig,  RustAcademyContract,  RustAcademyContractClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token, Address, Bytes, Env,
@@ -7,7 +7,7 @@ use soroban_sdk::{
 fn setup_test(
     env: &Env,
 ) -> (
-    QuickexContractClient<'_>,
+     RustAcademyContractClient<'_>,
     Address,
     Address,
     Address,
@@ -18,8 +18,8 @@ fn setup_test(
     let owner = Address::generate(env);
     let recipient = Address::generate(env);
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(env, &contract_id);
 
     client.initialize(&admin);
 
@@ -80,7 +80,7 @@ fn test_withdrawal_with_fee() {
     // Commitment is recomputed from recipient, amount, and salt.
     // Wait, the commitment is recomputed from recipient during withdrawal in `escrow::withdraw`.
     // So the recipient must be the one whose address was used to create the commitment.
-    // In `QuickexContract::deposit`, the commitment is created using `owner`.
+    // In ` RustAcademyContract::deposit`, the commitment is created using `owner`.
     // Wait, let's check `escrow::deposit`:
     // `let commitment = commitment::create_amount_commitment(env, owner.clone(), amount, salt)?;`
     // And `escrow::withdraw`:

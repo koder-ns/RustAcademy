@@ -29,7 +29,13 @@ const CARD_BG = "rgba(255,255,255,0.04)";
 const CARD_BORDER = "rgba(255,255,255,0.08)";
 
 type OgType = "payment" | "profile" | "default";
-type PaymentState = "ACTIVE" | "EXPIRED" | "PAID" | "REFUNDED" | "DRAFT" | "UNKNOWN";
+type PaymentState =
+  | "ACTIVE"
+  | "EXPIRED"
+  | "PAID"
+  | "REFUNDED"
+  | "DRAFT"
+  | "UNKNOWN";
 
 interface OgParams {
   type: OgType;
@@ -45,7 +51,10 @@ interface OgParams {
 
 function sanitizeText(v: string | null, maxLen = 64): string {
   if (!v) return "";
-  return v.replace(/[^\w\s\-_.#@]/g, "").slice(0, maxLen).trim();
+  return v
+    .replace(/[^\w\s\-_.#@]/g, "")
+    .slice(0, maxLen)
+    .trim();
 }
 
 function sanitizeAmount(v: string | null): string {
@@ -57,11 +66,18 @@ function sanitizeAmount(v: string | null): string {
 
 function sanitizeAsset(v: string | null): string {
   if (!v) return "XLM";
-  return v.replace(/[^A-Z0-9]/gi, "").slice(0, 12).toUpperCase() || "XLM";
+  return (
+    v
+      .replace(/[^A-Z0-9]/gi, "")
+      .slice(0, 12)
+      .toUpperCase() || "XLM"
+  );
 }
 
 function isValidState(v: string | null): v is PaymentState {
-  return ["ACTIVE", "EXPIRED", "PAID", "REFUNDED", "DRAFT", "UNKNOWN"].includes(v ?? "");
+  return ["ACTIVE", "EXPIRED", "PAID", "REFUNDED", "DRAFT", "UNKNOWN"].includes(
+    v ?? "",
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -189,10 +205,24 @@ function renderDefaultImage() {
       >
         ⚡
       </div>
-      <div style={{ fontSize: 64, fontWeight: 900, color: TEXT_PRIMARY, marginBottom: 16 }}>
-        QuickEx
+      <div
+        style={{
+          fontSize: 64,
+          fontWeight: 900,
+          color: TEXT_PRIMARY,
+          marginBottom: 16,
+        }}
+      >
+        RustAcademy
       </div>
-      <div style={{ fontSize: 28, color: TEXT_SECONDARY, textAlign: "center", maxWidth: 700 }}>
+      <div
+        style={{
+          fontSize: 28,
+          color: TEXT_SECONDARY,
+          textAlign: "center",
+          maxWidth: 700,
+        }}
+      >
         Privacy-focused payments on Stellar
       </div>
     </div>
@@ -251,8 +281,17 @@ function renderPaymentImage(params: OgParams) {
         }}
       >
         {/* Site name */}
-        <div style={{ fontSize: 22, color: TEXT_SECONDARY, marginBottom: 32, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ color: ACCENT }}>⚡</span> QuickEx
+        <div
+          style={{
+            fontSize: 22,
+            color: TEXT_SECONDARY,
+            marginBottom: 32,
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span style={{ color: ACCENT }}>⚡</span> RustAcademy
         </div>
 
         {/* State badge */}
@@ -273,7 +312,14 @@ function renderPaymentImage(params: OgParams) {
 
         {/* Main content */}
         {isUnavailable ? (
-          <div style={{ fontSize: 40, fontWeight: 900, color: TEXT_PRIMARY, textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: 40,
+              fontWeight: 900,
+              color: TEXT_PRIMARY,
+              textAlign: "center",
+            }}
+          >
             This payment link is {label.toLowerCase()}
           </div>
         ) : (
@@ -288,12 +334,13 @@ function renderPaymentImage(params: OgParams) {
                   marginBottom: 8,
                 }}
               >
-                {amount}{" "}
-                <span style={{ color: ACCENT }}>{asset}</span>
+                {amount} <span style={{ color: ACCENT }}>{asset}</span>
               </div>
             )}
             {username && (
-              <div style={{ fontSize: 32, color: TEXT_SECONDARY, marginTop: 8 }}>
+              <div
+                style={{ fontSize: 32, color: TEXT_SECONDARY, marginTop: 8 }}
+              >
                 to{" "}
                 <span style={{ color: TEXT_PRIMARY, fontWeight: 700 }}>
                   @{username}
@@ -372,7 +419,14 @@ function renderProfileImage(params: OgParams) {
       </div>
 
       {/* Username */}
-      <div style={{ fontSize: 60, fontWeight: 900, color: TEXT_PRIMARY, marginBottom: 16 }}>
+      <div
+        style={{
+          fontSize: 60,
+          fontWeight: 900,
+          color: TEXT_PRIMARY,
+          marginBottom: 16,
+        }}
+      >
         @{username ?? "unknown"}
       </div>
 
@@ -395,7 +449,7 @@ function renderProfileImage(params: OgParams) {
           gap: 10,
         }}
       >
-        <span style={{ color: ACCENT }}>⚡</span> QuickEx · Stellar Network
+        <span style={{ color: ACCENT }}>⚡</span> RustAcademy · Stellar Network
       </div>
     </div>
   );

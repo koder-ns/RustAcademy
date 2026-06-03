@@ -3,11 +3,11 @@
 //! Provides replay protection for any signature-based flow by enforcing:
 //!
 //! 1. **Per-signer nonce uniqueness** — each `(signer, nonce)` pair can only be
-//!    consumed once. Replaying the same nonce fails with [`QuickexError::NonceAlreadyUsed`].
+//!    consumed once. Replaying the same nonce fails with [` RustAcademyError::NonceAlreadyUsed`].
 //!
 //! 2. **Expiry window** — the signed message carries a `valid_until` ledger
 //!    timestamp. Submitting after that timestamp fails with
-//!    [`QuickexError::SignatureExpired`].
+//!    [` RustAcademyError::SignatureExpired`].
 //!
 //! 3. **Domain separation** — the payload that callers sign must include the
 //!    contract's own address and the network passphrase so that a signature
@@ -36,7 +36,7 @@
 
 use soroban_sdk::{contracttype, Address, Env};
 
-use crate::errors::QuickexError;
+use crate::errors:: RustAcademyError;
 use crate::storage::{LEDGER_THRESHOLD, SIX_MONTHS_IN_LEDGERS};
 
 // ---------------------------------------------------------------------------
@@ -65,23 +65,23 @@ pub enum NonceKey {
 ///
 /// | Error | Condition |
 /// |-------|-----------|
-/// | [`QuickexError::NonceAlreadyUsed`] | `(signer, nonce)` already consumed |
-/// | [`QuickexError::SignatureExpired`] | `env.ledger().timestamp() >= valid_until` |
+/// | [` RustAcademyError::NonceAlreadyUsed`] | `(signer, nonce)` already consumed |
+/// | [` RustAcademyError::SignatureExpired`] | `env.ledger().timestamp() >= valid_until` |
 pub fn verify_and_consume(
     env: &Env,
     signer: &Address,
     nonce: u64,
     valid_until: u64,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     // 1. Expiry check — reject if the window has closed.
     if env.ledger().timestamp() >= valid_until {
-        return Err(QuickexError::SignatureExpired);
+        return Err( RustAcademyError::SignatureExpired);
     }
 
     // 2. Replay check — reject if this nonce was already consumed.
     let key = NonceKey::Used(signer.clone(), nonce);
     if env.storage().persistent().has(&key) {
-        return Err(QuickexError::NonceAlreadyUsed);
+        return Err( RustAcademyError::NonceAlreadyUsed);
     }
 
     // 3. Consume — mark as used with a 6-month TTL.

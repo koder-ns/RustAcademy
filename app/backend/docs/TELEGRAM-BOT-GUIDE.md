@@ -2,7 +2,7 @@
 
 ## Overview
 
-QuickEx now supports real-time notifications via Telegram! Users can link their Telegram accounts to receive instant alerts for:
+RustAcademy now supports real-time notifications via Telegram! Users can link their Telegram accounts to receive instant alerts for:
 
 - 💰 Payments received
 - 🔒 Escrow deposits, withdrawals, and refunds
@@ -57,6 +57,7 @@ npm run dev
 ```
 
 You should see in the logs:
+
 ```
 Telegram bot started successfully
 ```
@@ -65,50 +66,50 @@ Telegram bot started successfully
 
 ### Linking Accounts
 
-Users can link their QuickEx account to Telegram by:
+Users can link their RustAcademy account to Telegram by:
 
 1. **Starting a conversation with the bot**
    - Search for your bot on Telegram (use the username you created)
    - Click "Start" or send `/start`
 
 2. **Sending their public key**
-   - The bot will prompt for their QuickEx public key
+   - The bot will prompt for their RustAcademy public key
    - User sends their Stellar public key (starts with `G...`)
 
 3. **Verification**
    - The bot generates a verification code
-   - User enters this code in the QuickEx app/website
+   - User enters this code in the RustAcademy app/website
    - Once verified, notifications are enabled!
 
 ### Bot Commands
 
 Users can interact with the bot using these commands:
 
-| Command | Description |
-|---------|-------------|
-| `/start` | Begin linking account or view status |
-| `/status` | Check current linkage status |
-| `/unlink` | Disconnect Telegram from QuickEx |
-| `/settings` | View notification settings |
+| Command         | Description                           |
+| --------------- | ------------------------------------- |
+| `/start`        | Begin linking account or view status  |
+| `/status`       | Check current linkage status          |
+| `/unlink`       | Disconnect Telegram from RustAcademy  |
+| `/settings`     | View notification settings            |
 | `/min <amount>` | Set minimum amount threshold (in XLM) |
-| `/enable` | Enable notifications |
-| `/disable` | Temporarily disable notifications |
-| `/help` | Show help message |
-| `/cancel` | Cancel current operation |
+| `/enable`       | Enable notifications                  |
+| `/disable`      | Temporarily disable notifications     |
+| `/help`         | Show help message                     |
+| `/cancel`       | Cancel current operation              |
 
 ### Example Conversation Flow
 
 ```
 User: /start
 
-Bot: 👋 Welcome to QuickEx Notifications Bot!
+Bot: 👋 Welcome to  RustAcademy Notifications Bot!
 
      I'll send you real-time alerts for:
      • 💰 Payments received
      • 🔒 Escrow deposits, withdrawals, and refunds
 
-     To link your QuickEx account:
-     1. Copy your QuickEx public key (starts with G...)
+     To link your  RustAcademy account:
+     1. Copy your  RustAcademy public key (starts with G...)
      2. Send it to me in the next message
 
      Or use /cancel anytime to abort.
@@ -117,7 +118,7 @@ User: GDQERHRWJYV7JHRP5V7DWJVI6Y5ABZP3YRH7DKYJRBEGJQKE6IQEOSY2
 
 Bot: 🔐 Verification Required
 
-     To confirm you own this QuickEx account, please visit:
+     To confirm you own this  RustAcademy account, please visit:
      `GDQERHRWJYV7JHRP5V7DWJVI6Y5ABZP3YRH7DKYJRBEGJQKE6IQEOSY2`
 
      And enter this verification code:
@@ -125,9 +126,9 @@ Bot: 🔐 Verification Required
 
      Once verified, I'll start sending you notifications!
 
-[User verifies on QuickEx platform]
+[User verifies on  RustAcademy platform]
 
-Bot: ✅ Your account has been verified! You'll now receive 
+Bot: ✅ Your account has been verified! You'll now receive
      real-time notifications for all activity.
 ```
 
@@ -136,11 +137,13 @@ Bot: ✅ Your account has been verified! You'll now receive
 The integration provides REST APIs for programmatic management:
 
 ### Check Linkage Status
+
 ```http
 GET /telegram/status/:telegramId
 ```
 
 ### Verify Account Linkage
+
 ```http
 POST /telegram/verify/:telegramId
 Content-Type: application/json
@@ -151,6 +154,7 @@ Content-Type: application/json
 ```
 
 ### Update Settings
+
 ```http
 PUT /telegram/settings/:telegramId
 Content-Type: application/json
@@ -162,6 +166,7 @@ Content-Type: application/json
 ```
 
 ### Unlink Account
+
 ```http
 DELETE /telegram/link/:telegramId
 ```
@@ -169,6 +174,7 @@ DELETE /telegram/link/:telegramId
 ## Notification Examples
 
 ### Payment Received
+
 ```
 💰 Payment Received
 
@@ -181,6 +187,7 @@ From: `GDQERHT...`
 ```
 
 ### Escrow Deposit
+
 ```
 🔒 Escrow Deposit Confirmed
 
@@ -195,9 +202,9 @@ Commitment: `commit123...`
 
 ### Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `TELEGRAM_BOT_TOKEN` | Yes | Bot token from BotFather |
+| Variable             | Required | Description              |
+| -------------------- | -------- | ------------------------ |
+| `TELEGRAM_BOT_TOKEN` | Yes      | Bot token from BotFather |
 
 ### Default Settings
 
@@ -211,7 +218,8 @@ Commitment: `commit123...`
 
 **Problem**: Logs show "TELEGRAM_BOT_TOKEN not set"
 
-**Solution**: 
+**Solution**:
+
 - Verify the environment variable is set correctly
 - Check for typos in the token
 - Ensure no extra whitespace
@@ -221,6 +229,7 @@ Commitment: `commit123...`
 **Problem**: Verification code doesn't work
 
 **Solution**:
+
 - Codes are case-insensitive
 - Check that the user is entering the code in the app, not Telegram
 - Verify the database migration was applied successfully
@@ -230,6 +239,7 @@ Commitment: `commit123...`
 **Problem**: Bot is running but users don't receive notifications
 
 **Solution**:
+
 1. Check user's linkage status: `GET /telegram/status/:telegramId`
 2. Verify user is marked as `isVerified: true`
 3. Check `enabled: true` in settings
@@ -239,6 +249,7 @@ Commitment: `commit123...`
 ### Rate limiting
 
 Telegram has rate limits:
+
 - ~30 messages per second
 - Broadcasts: max 100 recipients at once
 
@@ -287,6 +298,7 @@ npm run test:int -- telegram
 ### Monitoring
 
 Monitor these metrics:
+
 - Active Telegram mappings count
 - Notification delivery success rate
 - Average delivery latency
@@ -311,6 +323,7 @@ Users can filter which events trigger notifications by updating their preference
 ### Analytics
 
 Track popular features:
+
 - Most common minimum amount settings
 - Peak notification times
 - User retention after enabling notifications
@@ -318,6 +331,7 @@ Track popular features:
 ## Support
 
 For issues or questions:
+
 - Check the bot logs for error messages
 - Review the `telegram_notification_log` table
 - Test with the provided API endpoints

@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -14,24 +14,24 @@ import {
   Max,
   Min,
   ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+} from "class-validator";
+import { Type } from "class-transformer";
 
 export class ContractRegistryEntryDto {
-  @ApiProperty({ example: 'quickex' })
+  @ApiProperty({ example: " RustAcademy" })
   @IsString()
   @IsNotEmpty()
   @Matches(/^[a-z0-9_-]+$/i)
   name: string;
 
-  @ApiProperty({ example: 'CD2J6K7T3YJ77QXZP3EXAMPLE' })
+  @ApiProperty({ example: "CD2J6K7T3YJ77QXZP3EXAMPLE" })
   @IsString()
   @IsNotEmpty()
   contractId: string;
 
   @ApiPropertyOptional({
-    example: 'CD2J6K7T3YJ77QXZP3OLDEXAMPLE',
-    description: 'Previous contract ID for dual-read during transition window',
+    example: "CD2J6K7T3YJ77QXZP3OLDEXAMPLE",
+    description: "Previous contract ID for dual-read during transition window",
   })
   @IsOptional()
   @IsString()
@@ -39,7 +39,8 @@ export class ContractRegistryEntryDto {
 
   @ApiPropertyOptional({
     example: 47_000_000,
-    description: 'Ledger number after which to stop reading from previous contract ID',
+    description:
+      "Ledger number after which to stop reading from previous contract ID",
   })
   @IsOptional()
   @IsInt()
@@ -47,14 +48,15 @@ export class ContractRegistryEntryDto {
   effectiveLedger?: number;
 
   @ApiPropertyOptional({
-    example: '2026-06-02T12:00:00Z',
-    description: 'ISO 8601 timestamp after which to stop reading from previous contract ID',
+    example: "2026-06-02T12:00:00Z",
+    description:
+      "ISO 8601 timestamp after which to stop reading from previous contract ID",
   })
   @IsOptional()
   @IsISO8601()
   effectiveTime?: string;
 
-  @ApiProperty({ example: 'abcdef1234567890' })
+  @ApiProperty({ example: "abcdef1234567890" })
   @IsString()
   @IsNotEmpty()
   wasmHash: string;
@@ -66,19 +68,19 @@ export class ContractRegistryEntryDto {
   @Max(100_000)
   contractVersion?: number;
 
-  @ApiPropertyOptional({ example: { source: 'testnet-deploy' } })
+  @ApiPropertyOptional({ example: { source: "testnet-deploy" } })
   @IsOptional()
   @IsObject()
   metadata?: Record<string, unknown>;
 }
 
 export class PublishContractRegistryDto {
-  @ApiProperty({ example: 'Test SDF Network ; September 2015' })
+  @ApiProperty({ example: "Test SDF Network ; September 2015" })
   @IsString()
   @IsNotEmpty()
   networkPassphrase: string;
 
-  @ApiPropertyOptional({ example: 'deploy-2026-05-30T18:00:00Z' })
+  @ApiPropertyOptional({ example: "deploy-2026-05-30T18:00:00Z" })
   @IsOptional()
   @IsString()
   deploymentId?: string;
@@ -93,7 +95,7 @@ export class PublishContractRegistryDto {
 }
 
 export class RollbackContractRegistryDto {
-  @ApiProperty({ example: 'quickex' })
+  @ApiProperty({ example: " RustAcademy" })
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -105,7 +107,7 @@ export class RollbackContractRegistryDto {
 }
 
 export class ContractRegistryResponseDto {
-  @ApiProperty({ example: 'testnet' })
+  @ApiProperty({ example: "testnet" })
   network: string;
 
   @ApiProperty({ example: 'W/"contract-registry-testnet-2"' })
@@ -120,9 +122,9 @@ export class ContractRegistryResponseDto {
 
   @ApiProperty({
     example: {
-      quickex: {
-        id: 'CD2J6K7T3YJ77QXZP3EXAMPLE',
-        wasmHash: 'abcdef1234567890',
+      RustAcademy: {
+        id: "CD2J6K7T3YJ77QXZP3EXAMPLE",
+        wasmHash: "abcdef1234567890",
         version: 1,
       },
     },

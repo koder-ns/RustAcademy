@@ -31,7 +31,7 @@ export function Header() {
       >
         <Link
           href="/"
-          aria-label="QuickEx home"
+          aria-label=" RustAcademy home"
           className={`flex shrink-0 items-center gap-2 lg:mr-4 ${NAV_LINK_CLASS}`}
         >
           <div
@@ -41,7 +41,7 @@ export function Header() {
             Q
           </div>
           <span className="text-xl font-bold tracking-tight text-white">
-            QuickEx
+            RustAcademy
           </span>
         </Link>
 

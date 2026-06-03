@@ -31,9 +31,12 @@ describe("Soroban Contract Flow (e2e)", () => {
 
   beforeAll(async () => {
     // 1. Guard check to ensure we only run when authorized keys are provided
-    if (!process.env.E2E_WALLET_SECRET || !process.env.QUICKEX_CONTRACT_ID) {
+    if (
+      !process.env.E2E_WALLET_SECRET ||
+      !process.env.RustAcademy_CONTRACT_ID
+    ) {
       throw new Error(
-        "Skipping E2E: Missing E2E_WALLET_SECRET or QUICKEX_CONTRACT_ID. Ensure this runs in gated CI.",
+        "Skipping E2E: Missing E2E_WALLET_SECRET or  RustAcademy_CONTRACT_ID. Ensure this runs in gated CI.",
       );
     }
 
@@ -47,7 +50,7 @@ describe("Soroban Contract Flow (e2e)", () => {
 
     sorobanRpc = new rpc.Server("https://soroban-testnet.stellar.org");
     e2eKeypair = Keypair.fromSecret(process.env.E2E_WALLET_SECRET);
-    contractId = process.env.QUICKEX_CONTRACT_ID;
+    contractId = process.env.RustAcademy_CONTRACT_ID;
 
     // 2. Validate network passphrase and metadata
     const network = await sorobanRpc.getNetwork();

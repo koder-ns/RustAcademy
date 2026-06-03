@@ -1,6 +1,6 @@
 # Test snapshots
 
-This directory holds **ledger/auth snapshots** produced when running the QuickEx contract tests (e.g. via `cargo test` or Soroban test tooling). Layout mirrors the test modules:
+This directory holds **ledger/auth snapshots** produced when running the RustAcademy contract tests (e.g. via `cargo test` or Soroban test tooling). Layout mirrors the test modules:
 
 - **test/** — snapshots for `src/test.rs` (escrow, privacy, withdraw, refund, upgrade)
 - **commitment_test/** — snapshots for `src/commitment_test.rs`

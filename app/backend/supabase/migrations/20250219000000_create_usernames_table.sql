@@ -1,4 +1,4 @@
--- Usernames table for quickex.to/yourname
+-- Usernames table for  RustAcademy.to/yourname
 -- Uniqueness is enforced at the database to avoid race conditions on concurrent creation.
 
 CREATE TABLE IF NOT EXISTS usernames (
@@ -19,6 +19,6 @@ ALTER TABLE usernames
   ADD CONSTRAINT usernames_username_lowercase
   CHECK (username = lower(username));
 
-COMMENT ON TABLE usernames IS 'Registered usernames (quickex.to/yourname). Username is stored normalized (lowercase).';
+COMMENT ON TABLE usernames IS 'Registered usernames ( RustAcademy.to/yourname). Username is stored normalized (lowercase).';
 COMMENT ON COLUMN usernames.username IS 'Normalized username (lowercase, 3-32 chars, [a-z0-9_]).';
 COMMENT ON COLUMN usernames.public_key IS 'Stellar public key (G...) of the owner.';

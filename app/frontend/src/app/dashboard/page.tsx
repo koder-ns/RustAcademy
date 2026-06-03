@@ -210,7 +210,10 @@ function DashboardContent() {
       <div className="fixed bottom-[-20%] right-[-30%] h-[50%] w-[50%] rounded-full bg-purple-500/5 blur-[100px]" />
 
       <aside className="fixed left-0 top-0 z-20 hidden h-screen w-72 flex-col border-r border-white/5 bg-black/20 backdrop-blur-3xl md:flex">
-        <nav className="flex-1 space-y-2 px-4 py-20" aria-label="Dashboard navigation">
+        <nav
+          className="flex-1 space-y-2 px-4 py-20"
+          aria-label="Dashboard navigation"
+        >
           <Link
             href="/dashboard"
             aria-current="page"
@@ -239,11 +242,14 @@ function DashboardContent() {
         </nav>
       </aside>
 
-      <main id="dashboard-main" className="relative z-10 p-4 sm:p-6 md:ml-72 md:p-12">
+      <main
+        id="dashboard-main"
+        className="relative z-10 p-4 sm:p-6 md:ml-72 md:p-12"
+      >
         <header className="mb-10 flex flex-col gap-6 md:mb-16 md:flex-row md:items-start md:justify-between">
           <div>
             <nav className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-neutral-400 md:mb-4">
-              <span>QuickEx</span>
+              <span> RustAcademy</span>
               <span>/</span>
               <span className="text-neutral-100">Dashboard</span>
             </nav>
@@ -337,9 +343,12 @@ function DashboardContent() {
         >
           <div className="flex flex-col justify-between gap-4 border-b border-white/5 p-6 sm:flex-row sm:p-10">
             <div>
-              <h2 className="text-2xl font-semibold text-white">Activity Feed</h2>
+              <h2 className="text-2xl font-semibold text-white">
+                Activity Feed
+              </h2>
               <p className="mt-1 text-sm text-neutral-200">
-                Direct payment history, with actions and notification deep links.
+                Direct payment history, with actions and notification deep
+                links.
               </p>
             </div>
 

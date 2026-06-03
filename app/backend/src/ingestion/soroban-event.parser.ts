@@ -2,7 +2,7 @@ import { Logger } from "@nestjs/common";
 import { xdr, scValToNative, Address } from "@stellar/stellar-sdk";
 
 import type {
-  QuickExContractEvent,
+  RustAcademyContractEvent,
   SorobanEventType,
   EscrowDepositedEvent,
   EscrowWithdrawnEvent,
@@ -15,9 +15,9 @@ import type {
   StealthWithdrawnEvent,
 } from "./types/contract-event.types";
 import {
-  QUICKEX_EVENT_SCHEMA_CONTRACTS,
-  QUICKEX_EVENT_TOPICS,
-  type QuickExEventTopic,
+  RustAcademy_EVENT_SCHEMA_CONTRACTS,
+  RustAcademy_EVENT_TOPICS,
+  type RustAcademyEventTopic,
 } from "./event-schema";
 
 /** Maximum schema version this indexer understands. */
@@ -46,7 +46,7 @@ export interface RawHorizonContractEvent {
 
 interface TopicLayout {
   eventName: SorobanEventType;
-  topicNamespace: QuickExEventTopic | "LEGACY";
+  topicNamespace: RustAcademyEventTopic | "LEGACY";
   indexedOffset: number;
 }
 
@@ -54,7 +54,7 @@ interface TopicLayout {
  * Parses raw Horizon Soroban contract event records into typed domain events.
  *
  * Canonical topic layout:
- *  Topic[0] = stable QuickEx testnet namespace (for example TOPIC_ESCROW)
+ *  Topic[0] = stable  RustAcademy testnet namespace (for example TOPIC_ESCROW)
  *  Topic[1] = event name symbol
  *  Topic[2+] = indexed fields (commitment, owner, admin, etc.)
  *
@@ -75,7 +75,7 @@ export class SorobanEventParser {
    * Returns null when the event is unrecognised, malformed, or carries an
    * unsupported schema version.
    */
-  parse(raw: RawHorizonContractEvent): QuickExContractEvent | null {
+  parse(raw: RawHorizonContractEvent): RustAcademyContractEvent | null {
     try {
       const topics = raw.topic.map((t) => xdr.ScVal.fromXDR(t, "base64"));
       const dataVal = xdr.ScVal.fromXDR(raw.value.xdr, "base64");
@@ -417,26 +417,27 @@ export class SorobanEventParser {
     if (!first) return null;
 
     const canonicalTopics = new Set<string>(
-      Object.values(QUICKEX_EVENT_TOPICS),
+      Object.values(RustAcademy_EVENT_TOPICS),
     );
     if (canonicalTopics.has(first)) {
       const second = topics[1] ? this.decodeSymbol(topics[1]) : null;
-      if (!second || !(second in QUICKEX_EVENT_SCHEMA_CONTRACTS)) return null;
+      if (!second || !(second in RustAcademy_EVENT_SCHEMA_CONTRACTS))
+        return null;
 
       const contract =
-        QUICKEX_EVENT_SCHEMA_CONTRACTS[
-          second as keyof typeof QUICKEX_EVENT_SCHEMA_CONTRACTS
+        RustAcademy_EVENT_SCHEMA_CONTRACTS[
+          second as keyof typeof RustAcademy_EVENT_SCHEMA_CONTRACTS
         ];
       if (contract.topic !== first) return null;
 
       return {
         eventName: second as SorobanEventType,
-        topicNamespace: first as QuickExEventTopic,
+        topicNamespace: first as RustAcademyEventTopic,
         indexedOffset: 2,
       };
     }
 
-    if (first in QUICKEX_EVENT_SCHEMA_CONTRACTS) {
+    if (first in RustAcademy_EVENT_SCHEMA_CONTRACTS) {
       return {
         eventName: first as SorobanEventType,
         topicNamespace: "LEGACY",
@@ -452,8 +453,8 @@ export class SorobanEventParser {
     schemaVersion: number,
   ): boolean {
     const contract =
-      QUICKEX_EVENT_SCHEMA_CONTRACTS[
-        eventName as keyof typeof QUICKEX_EVENT_SCHEMA_CONTRACTS
+      RustAcademy_EVENT_SCHEMA_CONTRACTS[
+        eventName as keyof typeof RustAcademy_EVENT_SCHEMA_CONTRACTS
       ];
 
     return (contract.compatibleVersions as readonly number[]).includes(
@@ -511,5 +512,4 @@ export class SorobanEventParser {
     }
     return 0n;
   }
-
 }

@@ -4,14 +4,17 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { AppConfigService } from "../config";
 import { HORIZON_BASE_URLS } from "../config/stellar.config";
 import { MetricsService } from "../metrics/metrics.service";
-import { SorobanEventParser, RawHorizonContractEvent } from "./soroban-event.parser";
+import {
+  SorobanEventParser,
+  RawHorizonContractEvent,
+} from "./soroban-event.parser";
 import { IndexerCheckpointRepository } from "./indexer-checkpoint.repository";
 import { EscrowEventRepository } from "./escrow-event.repository";
 import { PrivacyEventRepository } from "./privacy-event.repository";
 import { AdminEventRepository } from "./admin-event.repository";
 import { StealthEventRepository } from "./stealth-event.repository";
 import type {
-  QuickExContractEvent,
+  RustAcademyContractEvent,
   EscrowEvent,
   AdminEvent,
   StealthEvent,
@@ -106,10 +109,19 @@ export class SorobanEventIndexerService {
       this.logger.log(
         `Contract ${contractId}: ledger range [${effectiveFrom}, ${toLedger}] already indexed; skipping.`,
       );
-      return { fromLedger, toLedger, processed: 0, persisted: 0, skippedUnknownSchema: 0 };
+      return {
+        fromLedger,
+        toLedger,
+        processed: 0,
+        persisted: 0,
+        skippedUnknownSchema: 0,
+      };
     }
 
-    const inDualReadWindow = this.isInDualReadWindow(effectiveFrom, dualReadConfig);
+    const inDualReadWindow = this.isInDualReadWindow(
+      effectiveFrom,
+      dualReadConfig,
+    );
     const logSuffix = inDualReadWindow ? " (dual-read mode)" : "";
 
     this.logger.log(
@@ -149,7 +161,13 @@ export class SorobanEventIndexerService {
         `processed=${processed} persisted=${persisted} skippedUnknownSchema=${skippedUnknownSchema}`,
     );
 
-    return { fromLedger: effectiveFrom, toLedger, processed, persisted, skippedUnknownSchema };
+    return {
+      fromLedger: effectiveFrom,
+      toLedger,
+      processed,
+      persisted,
+      skippedUnknownSchema,
+    };
   }
 
   private async indexContractWithCursor(
@@ -157,7 +175,11 @@ export class SorobanEventIndexerService {
     fromLedger: number,
     toLedger: number,
     cursor: string | undefined,
-  ): Promise<{ processed: number; persisted: number; skippedUnknownSchema: number }> {
+  ): Promise<{
+    processed: number;
+    persisted: number;
+    skippedUnknownSchema: number;
+  }> {
     let processed = 0;
     let persisted = 0;
     let skippedUnknownSchema = 0;
@@ -203,7 +225,10 @@ export class SorobanEventIndexerService {
     return { processed, persisted, skippedUnknownSchema };
   }
 
-  private isInDualReadWindow(currentLedger: number, config?: DualReadConfig): boolean {
+  private isInDualReadWindow(
+    currentLedger: number,
+    config?: DualReadConfig,
+  ): boolean {
     if (!config?.previousContractId || !config?.effectiveLedger) {
       return false;
     }
@@ -218,7 +243,10 @@ export class SorobanEventIndexerService {
    * Returns the ledger to start from, taking the stored checkpoint into account.
    * If a checkpoint exists and is ahead of `fromLedger`, we resume from checkpoint+1.
    */
-  private async resolveStartLedger(contractId: string, fromLedger: number): Promise<number> {
+  private async resolveStartLedger(
+    contractId: string,
+    fromLedger: number,
+  ): Promise<number> {
     const last = await this.checkpointRepo.getLastLedger(contractId);
     if (last !== null && last >= fromLedger) {
       return last + 1;
@@ -235,7 +263,10 @@ export class SorobanEventIndexerService {
     fromLedger: number,
     toLedger: number,
     cursor?: string,
-  ): Promise<{ records: RawHorizonContractEvent[]; nextCursor: string | undefined }> {
+  ): Promise<{
+    records: RawHorizonContractEvent[];
+    nextCursor: string | undefined;
+  }> {
     const url = new URL(`${this.horizonUrl}/contract_events`);
     url.searchParams.set("contract_id", contractId);
     url.searchParams.set("start_ledger", String(fromLedger));
@@ -261,13 +292,13 @@ export class SorobanEventIndexerService {
     const records = body._embedded?.records ?? [];
     const nextHref = body._links?.next?.href;
     const nextCursor = nextHref
-      ? new URL(nextHref).searchParams.get("cursor") ?? undefined
+      ? (new URL(nextHref).searchParams.get("cursor") ?? undefined)
       : undefined;
 
     return { records, nextCursor };
   }
 
-  private async persistEvent(event: QuickExContractEvent): Promise<void> {
+  private async persistEvent(event: RustAcademyContractEvent): Promise<void> {
     switch (event.eventType) {
       case "EscrowDeposited":
       case "EscrowWithdrawn":
@@ -287,7 +318,9 @@ export class SorobanEventIndexerService {
         await this.stealthRepo.upsertEvent(event as StealthEvent);
         break;
       default:
-        this.logger.debug(`Event ${(event as QuickExContractEvent).eventType} not persisted.`);
+        this.logger.debug(
+          `Event ${(event as RustAcademyContractEvent).eventType} not persisted.`,
+        );
     }
   }
 }

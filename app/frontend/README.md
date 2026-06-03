@@ -1,55 +1,177 @@
-# QuickEx Frontend
 
-The web dashboard and payment link generator for the QuickEx platform. Built with Next.js 15, Tailwind CSS, and the App Router.
 
-## Getting Started
 
-### Prerequisites
+# 🦀 RustAcademy Web
+> Next.js frontend for RustAcademy — Learn Rust, earn XLM, build Web3.
 
-- Node.js 18+
-- pnpm
+## Overview
 
-### Installation
+RustAcademy Web provides the learner, tutor, and community experience for the platform.
 
-From the root of the monorepo:
+Users can:
+
+* Browse Rust courses
+* Complete coding challenges
+* Chat with the AI Mentor
+* Join community discussions
+* Manage rewards and certifications
+* Connect Stellar wallets
+* Track XP, streaks, and achievements
+
+---
+
+## Features
+
+### 🎓 Learning Platform
+
+* Course catalog
+* Lesson player
+* Interactive coding environment
+* Progress tracking
+* Quiz system
+* Task submissions
+
+### 🤖 AI Mentor
+
+* Rust tutoring
+* Soroban assistance
+* Code explanations
+* Error debugging
+* Personalized recommendations
+
+### 🧑‍🏫 Tutor Portal
+
+* Course creation
+* Task management
+* Submission reviews
+* Earnings dashboard
+
+### 🗣️ Community
+
+* Social feed
+* Comments & reactions
+* Study groups
+* Direct messaging
+
+### 💰 Wallet & Rewards
+
+* Freighter integration
+* Reward tracking
+* Certificate viewing
+* Badge collection
+
+---
+
+## Tech Stack
+
+* Next.js 15
+* TypeScript
+* Tailwind CSS v4
+* shadcn/ui
+* Zustand
+* TanStack Query
+* Framer Motion
+* Monaco Editor
+* Socket.io Client
+* Stellar SDK
+
+---
+
+## Folder Structure
+
+```bash
+src/
+├── app/
+├── components/
+├── hooks/
+├── lib/
+├── providers/
+├── store/
+├── types/
+└── styles/
+```
+
+---
+
+## Environment Variables
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_WS_URL=ws://localhost:4000
+
+NEXT_PUBLIC_STELLAR_NETWORK=testnet
+
+NEXT_PUBLIC_REWARD_POOL_CONTRACT_ID=
+NEXT_PUBLIC_CERTIFICATE_CONTRACT_ID=
+NEXT_PUBLIC_BADGE_CONTRACT_ID=
+NEXT_PUBLIC_REPUTATION_CONTRACT_ID=
+```
+
+---
+
+## Development
 
 ```bash
 pnpm install
+
+pnpm dev
 ```
 
-### Development
-
-Run the development server:
+Runs on:
 
 ```bash
-pnpm turbo run dev --filter=app/frontend
+http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the result.
+---
 
-### Environment Variables
+## Build
 
-Create a `.env.local` file in this directory:
-
-```env
-NEXT_PUBLIC_STELLAR_NETWORK=testnet  # 'testnet' or 'mainnet'
+```bash
+pnpm build
+pnpm start
 ```
 
-## Structure
+---
 
-- `src/app`: App Router pages (Landing, Dashboard, Generator)
-- `src/components`: Shared React components (NetworkBadge, QRPreview)
-- `src/styles`: Global CSS and Tailwind configuration
+## Testing
 
-## Scripts
+```bash
+pnpm test
+```
 
-- `dev`: Start development server
-- `build`: Build production bundle
-- `lint`: Run ESLint
-- `type-check`: Run TypeScript compilation check
+---
 
-## Performance notes
+## Key User Flows
 
-- Added route-based skeleton loaders for `/dashboard` and `/marketplace`.
-- Prefetched likely next routes and mock data from the landing page to improve time-to-interactive.
-- Added memoized mock caches for analytics and marketplace calls to reduce repeated client work during navigation.
+### Learner Journey
+
+```text
+Register
+  ↓
+Connect Wallet
+  ↓
+Enroll in Course
+  ↓
+Complete Tasks
+  ↓
+AI/Tutor Review
+  ↓
+Earn XLM
+  ↓
+Receive NFT Certificate
+```
+
+---
+
+## Deployment
+
+Recommended:
+
+* Frontend → Vercel
+* Assets → Cloudflare R2
+
+
+
+
+

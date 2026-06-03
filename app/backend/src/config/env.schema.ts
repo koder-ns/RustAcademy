@@ -95,7 +95,7 @@ export const envSchema = Joi.object({
     .empty("")
     .optional()
     .description(
-      "Comma-separated list of allowed CORS origins (e.g. https://quickex.to,https://app.quickex.to). " +
+      "Comma-separated list of allowed CORS origins (e.g. https:// RustAcademy.to,https://app. RustAcademy.to). " +
         "Required in production when no wildcard is desired.",
     ),
 
@@ -103,7 +103,7 @@ export const envSchema = Joi.object({
     .empty("")
     .optional()
     .description(
-      "Vercel project slug (e.g. quickex-frontend). " +
+      "Vercel project slug (e.g.  RustAcademy-frontend). " +
         "When set, all preview URLs matching https://<slug>-*.vercel.app are allowed.",
     ),
 
@@ -141,7 +141,7 @@ export const envSchema = Joi.object({
     ),
 
   // Stellar ingestion (optional; omit to disable)
-  QUICKEX_CONTRACT_ID: Joi.string()
+  RustAcademy_CONTRACT_ID: Joi.string()
     .empty("")
     .optional()
     .description(
@@ -161,7 +161,9 @@ export const envSchema = Joi.object({
   SENDGRID_FROM_EMAIL: Joi.string()
     .empty("")
     .optional()
-    .description("From address for SendGrid emails (e.g. noreply@quickex.to)"),
+    .description(
+      "From address for SendGrid emails (e.g. noreply@ RustAcademy.to)",
+    ),
 
   // Expo push channel
   EXPO_ACCESS_TOKEN: Joi.string()
@@ -281,7 +283,7 @@ export const envSchema = Joi.object({
   SENTRY_RELEASE: Joi.string()
     .empty("")
     .optional()
-    .description("Sentry release identifier (e.g. quickex-backend@1.2.3)"),
+    .description("Sentry release identifier (e.g.  RustAcademy-backend@1.2.3)"),
 
   SENTRY_TRACES_SAMPLE_RATE: Joi.number()
     .min(0)
@@ -349,13 +351,17 @@ export const envSchema = Joi.object({
     .integer()
     .min(1)
     .default(100)
-    .description("Maximum allowed lag in ledgers before blocking risky operations"),
+    .description(
+      "Maximum allowed lag in ledgers before blocking risky operations",
+    ),
   INDEXER_LAG_GUARD_ENABLED: Joi.boolean()
     .default(true)
     .description("Whether the indexer lag guard is enabled"),
   INDEXER_LAG_GUARD_OVERRIDE: Joi.boolean()
     .default(false)
-    .description("Admin override to disable lag guard temporarily (for emergencies)"),
+    .description(
+      "Admin override to disable lag guard temporarily (for emergencies)",
+    ),
 });
 
 /**
@@ -384,7 +390,7 @@ export interface EnvConfig {
   CACHE_TTL_MS: number;
   FEATURE_FLAGS_CACHE_TTL_MS: number;
   FEATURE_FLAGS_BOOTSTRAP_JSON?: string;
-  QUICKEX_CONTRACT_ID?: string;
+  RustAcademy_CONTRACT_ID?: string;
   SENDGRID_API_KEY?: string;
   SENDGRID_FROM_EMAIL?: string;
   EXPO_ACCESS_TOKEN?: string;

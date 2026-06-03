@@ -45,17 +45,17 @@ mod types;
 #[cfg(test)]
 mod upgrade_test;
 
-use errors::QuickexError;
+use errors:: RustAcademyError;
 use storage::*;
 use types::{
     DeploymentMetadata, EscrowEntry, EscrowStatus, FeeConfig, OracleFeeConfig, PerAssetFeeConfig,
     PrivacyAwareEscrowView, Role, StealthDepositParams,
 };
 
-/// QuickEx Privacy Contract
+///  RustAcademy Privacy Contract
 ///
 /// Soroban smart contract providing escrow, privacy controls, and X-Ray-style amount
-/// commitments for the QuickEx platform. See the contract README for main flows.
+/// commitments for the  RustAcademy platform. See the contract README for main flows.
 ///
 /// ## Asset Support
 ///
@@ -79,11 +79,11 @@ use types::{
 /// Disputed --> Refunded: resolve_dispute() [arbiter decides for owner]
 /// ```
 #[contract]
-pub struct QuickexContract;
+pub struct  RustAcademyContract;
 
 #[contractimpl]
 #[allow(clippy::too_many_arguments)]
-impl QuickexContract {
+impl  RustAcademyContract {
     /// Withdraw escrowed funds by proving commitment ownership.
     ///
     /// The caller (`to`) must authorize; the commitment is recomputed from `to`, `amount`, and `salt`
@@ -112,12 +112,12 @@ impl QuickexContract {
         _commitment: BytesN<32>,
         to: Address,
         salt: Bytes,
-    ) -> Result<bool, QuickexError> {
+    ) -> Result<bool,  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::Withdrawal) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::withdraw(&env, amount, to, salt)
@@ -126,7 +126,7 @@ impl QuickexContract {
     /// Set a numeric privacy level for an account (legacy/level-based API).
     ///
     /// Records the level in storage and appends it to the account's privacy history.
-    /// For boolean on/off privacy, prefer [`set_privacy`](QuickexContract::set_privacy).
+    /// For boolean on/off privacy, prefer [`set_privacy`]( RustAcademyContract::set_privacy).
     ///
     /// # Arguments
     /// * `env` - The contract environment
@@ -170,7 +170,7 @@ impl QuickexContract {
     /// # Errors
     /// * `ContractPaused` - Contract is currently paused
     /// * `PrivacyAlreadySet` - Privacy state is already at the requested value
-    pub fn set_privacy(env: Env, owner: Address, enabled: bool) -> Result<(), QuickexError> {
+    pub fn set_privacy(env: Env, owner: Address, enabled: bool) -> Result<(),  RustAcademyError> {
         admin::require_initialized(&env)?;
         privacy::set_privacy(&env, owner, enabled)
     }
@@ -213,15 +213,15 @@ impl QuickexContract {
         salt: Bytes,
         timeout_secs: u64,
         arbiter: Option<Address>,
-    ) -> Result<BytesN<32>, QuickexError> {
+    ) -> Result<BytesN<32>,  RustAcademyError> {
         if storage::is_emergency_mode(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::Deposit) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::deposit(&env, token, amount, owner, salt, timeout_secs, arbiter)
@@ -245,7 +245,7 @@ impl QuickexContract {
         salt: Bytes,
         timeout_secs: u64,
         arbiter: Option<Address>,
-    ) -> Result<BytesN<32>, QuickexError> {
+    ) -> Result<BytesN<32>,  RustAcademyError> {
         escrow_id::derive_escrow_id(&env, &token, amount, &owner, &salt, timeout_secs, &arbiter)
     }
 
@@ -276,7 +276,7 @@ impl QuickexContract {
         owner: Address,
         amount: i128,
         salt: Bytes,
-    ) -> Result<BytesN<32>, QuickexError> {
+    ) -> Result<BytesN<32>,  RustAcademyError> {
         commitment::create_amount_commitment(&env, owner, amount, salt)
     }
 
@@ -325,7 +325,7 @@ impl QuickexContract {
     ///
     /// Transfers `amount` from `from` to the contract and stores an escrow keyed by
     /// `commitment`. The depositor must authorize. Use when the commitment was created
-    /// off-chain or via [`create_amount_commitment`](QuickexContract::create_amount_commitment).
+    /// off-chain or via [`create_amount_commitment`]( RustAcademyContract::create_amount_commitment).
     ///
     /// # Arguments
     /// * `env` - The contract environment
@@ -348,15 +348,15 @@ impl QuickexContract {
         commitment: BytesN<32>,
         timeout_secs: u64,
         arbiter: Option<Address>,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         if storage::is_emergency_mode(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::DepositWithCommitment) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::deposit_with_commitment(
@@ -370,11 +370,11 @@ impl QuickexContract {
         )
     }
     /// Activate emergency mode (irreversible). Only admin can call. Emits event.
-    pub fn activate_emergency_mode(env: Env, caller: Address) -> Result<(), QuickexError> {
+    pub fn activate_emergency_mode(env: Env, caller: Address) -> Result<(),  RustAcademyError> {
         // Only admin can activate
-        let admin = get_admin(&env).ok_or(QuickexError::Unauthorized)?;
+        let admin = get_admin(&env).ok_or( RustAcademyError::Unauthorized)?;
         if caller != admin {
-            return Err(QuickexError::Unauthorized);
+            return Err( RustAcademyError::Unauthorized);
         }
         if storage::is_emergency_mode(&env) {
             return Ok(()); // Already set
@@ -414,12 +414,12 @@ impl QuickexContract {
         salt: Bytes,
         timeout_secs: u64,
         arbiter: Option<Address>,
-    ) -> Result<BytesN<32>, QuickexError> {
+    ) -> Result<BytesN<32>,  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::Deposit) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::deposit_partial(
@@ -457,12 +457,12 @@ impl QuickexContract {
         commitment: BytesN<32>,
         payer: Address,
         payment_amount: i128,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::Deposit) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::partial_payment(&env, commitment, payer, payment_amount)
@@ -483,12 +483,12 @@ impl QuickexContract {
     /// * `AlreadySpent` - Escrow is already in a terminal state
     /// * `EscrowNotExpired` - Escrow has no expiry or has not yet expired
     /// * `InvalidOwner` - Caller is not the original owner
-    pub fn refund(env: Env, commitment: BytesN<32>, caller: Address) -> Result<(), QuickexError> {
+    pub fn refund(env: Env, commitment: BytesN<32>, caller: Address) -> Result<(),  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::Refund) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
 
         hook::assert_not_reentrant(&env)?;
@@ -498,7 +498,7 @@ impl QuickexContract {
     /// Cleanup terminal escrow entries to reclaim storage deposits.
     ///
     /// Only escrows in `Spent` or `Refunded` status can be removed.
-    pub fn cleanup_escrow(env: Env, commitment: BytesN<32>) -> Result<(), QuickexError> {
+    pub fn cleanup_escrow(env: Env, commitment: BytesN<32>) -> Result<(),  RustAcademyError> {
         admin::require_initialized(&env)?;
         escrow::cleanup_escrow(&env, commitment)
     }
@@ -506,7 +506,7 @@ impl QuickexContract {
     /// Extend the storage TTL of an escrow record.
     ///
     /// Any user can call this to keep an escrow from being archived.
-    pub fn extend_escrow_ttl(env: Env, commitment: BytesN<32>) -> Result<(), QuickexError> {
+    pub fn extend_escrow_ttl(env: Env, commitment: BytesN<32>) -> Result<(),  RustAcademyError> {
         admin::require_initialized(&env)?;
         escrow::extend_escrow_ttl(&env, commitment)
     }
@@ -524,9 +524,9 @@ impl QuickexContract {
     /// * `CommitmentNotFound` - No escrow exists for the commitment
     /// * `NoArbiter` - No arbiter assigned to the escrow
     /// * `InvalidDisputeState` - Escrow is not in `Pending` status
-    pub fn dispute(env: Env, commitment: BytesN<32>) -> Result<(), QuickexError> {
+    pub fn dispute(env: Env, commitment: BytesN<32>) -> Result<(),  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::dispute(&env, commitment)
@@ -554,9 +554,9 @@ impl QuickexContract {
         commitment: BytesN<32>,
         resolve_for_owner: bool,
         recipient: Address,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::resolve_dispute(&env, caller, commitment, resolve_for_owner, recipient)
@@ -583,9 +583,9 @@ impl QuickexContract {
         caller: Address,
         commitment: BytesN<32>,
         resolve_for_owner: bool,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::vote_for_dispute(&env, caller, commitment, resolve_for_owner)
@@ -609,9 +609,9 @@ impl QuickexContract {
         env: Env,
         commitment: BytesN<32>,
         recipient: Address,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         hook::assert_not_reentrant(&env)?;
         escrow::resolve_dispute_multi_sig(&env, commitment, recipient)
@@ -627,7 +627,7 @@ impl QuickexContract {
     ///
     /// # Errors
     /// * `AlreadyInitialized` - Contract has already been initialized
-    pub fn initialize(env: Env, admin: Address) -> Result<(), QuickexError> {
+    pub fn initialize(env: Env, admin: Address) -> Result<(),  RustAcademyError> {
         admin::initialize(&env, admin)
     }
 
@@ -663,7 +663,7 @@ impl QuickexContract {
     ///
     /// This entrypoint is intended to be called immediately after upgrading the contract WASM
     /// whenever the new release introduces storage or schema changes.
-    pub fn migrate(env: Env, caller: Address) -> Result<u32, QuickexError> {
+    pub fn migrate(env: Env, caller: Address) -> Result<u32,  RustAcademyError> {
         admin::migrate(&env, &caller)
     }
 
@@ -678,9 +678,9 @@ impl QuickexContract {
     ///
     /// # Errors
     /// * `Unauthorized` - Caller is not the admin, or admin not set
-    pub fn set_paused(env: Env, caller: Address, new_state: bool) -> Result<(), QuickexError> {
+    pub fn set_paused(env: Env, caller: Address, new_state: bool) -> Result<(),  RustAcademyError> {
         if storage::is_emergency_mode(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         admin::set_paused(&env, caller, new_state)
     }
@@ -703,9 +703,9 @@ impl QuickexContract {
     ///
     /// # Errors
     /// * `Unauthorized` - Caller is not the admin, or admin not set
-    pub fn pause_features(env: Env, caller: Address, mask: u64) -> Result<(), QuickexError> {
+    pub fn pause_features(env: Env, caller: Address, mask: u64) -> Result<(),  RustAcademyError> {
         if storage::is_emergency_mode(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         admin::set_pause_flags(&env, &caller, mask, 0)
     }
@@ -720,9 +720,9 @@ impl QuickexContract {
     ///
     /// # Errors
     /// * `Unauthorized` - Caller is not the admin, or admin not set
-    pub fn unpause_features(env: Env, caller: Address, mask: u64) -> Result<(), QuickexError> {
+    pub fn unpause_features(env: Env, caller: Address, mask: u64) -> Result<(),  RustAcademyError> {
         if storage::is_emergency_mode(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         admin::set_pause_flags(&env, &caller, 0, mask)
     }
@@ -738,9 +738,9 @@ impl QuickexContract {
     ///
     /// # Errors
     /// * `Unauthorized` - Caller is not the admin, or admin not set
-    pub fn set_admin(env: Env, caller: Address, new_admin: Address) -> Result<(), QuickexError> {
+    pub fn set_admin(env: Env, caller: Address, new_admin: Address) -> Result<(),  RustAcademyError> {
         if storage::is_emergency_mode(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         admin::set_admin(&env, caller, new_admin)
     }
@@ -765,14 +765,14 @@ impl QuickexContract {
     }
 
     /// Register an external hook contract to receive escrow lifecycle callbacks.
-    pub fn register_hook(env: Env, hook_contract: Address) -> Result<(), QuickexError> {
+    pub fn register_hook(env: Env, hook_contract: Address) -> Result<(),  RustAcademyError> {
         admin::require_initialized(&env)?;
         hook::assert_not_reentrant(&env)?;
         hook::register_hook(&env, hook_contract)
     }
 
     /// Unregister a hook contract.
-    pub fn unregister_hook(env: Env, hook_contract: Address) -> Result<(), QuickexError> {
+    pub fn unregister_hook(env: Env, hook_contract: Address) -> Result<(),  RustAcademyError> {
         admin::require_initialized(&env)?;
         hook::assert_not_reentrant(&env)?;
         hook::unregister_hook(&env, hook_contract)
@@ -788,7 +788,7 @@ impl QuickexContract {
         env: Env,
         caller: Address,
         config: FeeConfig,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         hook::assert_not_reentrant(&env)?;
         admin::set_fee_config(&env, &caller, config)
     }
@@ -799,7 +799,7 @@ impl QuickexContract {
         caller: Address,
         token: Address,
         config: PerAssetFeeConfig,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         hook::assert_not_reentrant(&env)?;
         admin::set_per_asset_fee(&env, &caller, token, config)
     }
@@ -814,7 +814,7 @@ impl QuickexContract {
         env: Env,
         caller: Address,
         config: OracleFeeConfig,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         hook::assert_not_reentrant(&env)?;
         admin::set_oracle_fee_config(&env, &caller, config)
     }
@@ -834,7 +834,7 @@ impl QuickexContract {
         env: Env,
         caller: Address,
         wallet: Address,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         hook::assert_not_reentrant(&env)?;
         admin::set_platform_wallet(&env, &caller, wallet)
     }
@@ -844,7 +844,7 @@ impl QuickexContract {
         env: Env,
         caller: Address,
         new_collector: Address,
-    ) -> Result<u32, QuickexError> {
+    ) -> Result<u32,  RustAcademyError> {
         hook::assert_not_reentrant(&env)?;
         admin::rotate_fee_collector(&env, &caller, new_collector)
     }
@@ -986,12 +986,12 @@ impl QuickexContract {
     pub fn register_ephemeral_key(
         env: Env,
         params: StealthDepositParams,
-    ) -> Result<BytesN<32>, QuickexError> {
+    ) -> Result<BytesN<32>,  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::Deposit) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
         stealth::register_ephemeral_key(&env, params)
     }
@@ -1023,12 +1023,12 @@ impl QuickexContract {
         eph_pub: BytesN<32>,
         spend_pub: BytesN<32>,
         stealth_address: BytesN<32>,
-    ) -> Result<bool, QuickexError> {
+    ) -> Result<bool,  RustAcademyError> {
         if admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if is_feature_paused(&env, PauseFlag::Withdrawal) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
         stealth::stealth_withdraw(&env, recipient, eph_pub, spend_pub, stealth_address)
     }
@@ -1059,13 +1059,13 @@ impl QuickexContract {
     /// * `Unauthorized` - Caller is not the admin, or admin not set
     ///
     /// # Security
-    /// Updates the contract's executable code. Call [`migrate`](QuickexContract::migrate)
+    /// Updates the contract's executable code. Call [`migrate`]( RustAcademyContract::migrate)
     /// afterwards if the new release requires storage migration.
     pub fn upgrade(
         env: Env,
         caller: Address,
         new_wasm_hash: BytesN<32>,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         admin::require_admin(&env, &caller)?;
 
         storage::set_wasm_hash(&env, &new_wasm_hash);
@@ -1096,7 +1096,7 @@ impl QuickexContract {
         caller: Address,
         start: u64,
         end: u64,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         admin::set_upgrade_window(&env, &caller, start, end)
     }
 
@@ -1122,7 +1122,7 @@ impl QuickexContract {
     /// # Errors
     /// * `InvalidAmount` - (repurposed) upgrade window not active
     /// * `ContractPaused` - (repurposed) upgrade already in progress
-    pub fn start_upgrade(env: Env, caller: Address, new_version: u32) -> Result<(), QuickexError> {
+    pub fn start_upgrade(env: Env, caller: Address, new_version: u32) -> Result<(),  RustAcademyError> {
         admin::start_upgrade(&env, &caller, new_version)
     }
 
@@ -1145,7 +1145,7 @@ impl QuickexContract {
         env: Env,
         caller: Address,
         new_version: u32,
-    ) -> Result<u32, QuickexError> {
+    ) -> Result<u32,  RustAcademyError> {
         admin::complete_upgrade(&env, &caller, new_version)
     }
 
@@ -1159,7 +1159,7 @@ impl QuickexContract {
         caller: Address,
         target: Address,
         role: Role,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         admin::grant_role(&env, caller, target, role)
     }
 
@@ -1169,7 +1169,7 @@ impl QuickexContract {
         caller: Address,
         target: Address,
         role: Role,
-    ) -> Result<(), QuickexError> {
+    ) -> Result<(),  RustAcademyError> {
         admin::revoke_role(&env, caller, target, role)
     }
 

@@ -1,6 +1,6 @@
 # Vercel Deployment Guide
 
-This guide covers deploying the QuickEx frontend to Vercel with Preview Deployments for PRs and Production deployments from the main branch.
+This guide covers deploying the RustAcademy frontend to Vercel with Preview Deployments for PRs and Production deployments from the main branch.
 
 ## Prerequisites
 
@@ -21,6 +21,7 @@ This guide covers deploying the QuickEx frontend to Vercel with Preview Deployme
 ### 2. Configure Project Settings
 
 #### Framework Preset
+
 - **Framework**: Next.js
 - **Root Directory**: `app/frontend`
 - **Build Command**: `npm run build`
@@ -28,20 +29,23 @@ This guide covers deploying the QuickEx frontend to Vercel with Preview Deployme
 - **Install Command**: `npm install`
 
 #### Environment Variables
+
 Add the following environment variables in Vercel project settings:
 
 **Production (main branch):**
+
 ```
-NEXT_PUBLIC_QUICKEX_API_URL=https://api.quickex.to
-NEXT_PUBLIC_SITE_URL=https://quickex.to
+NEXT_PUBLIC_ RustAcademy_API_URL=https://api. RustAcademy.to
+NEXT_PUBLIC_SITE_URL=https:// RustAcademy.to
 NEXT_PUBLIC_STELLAR_NETWORK=mainnet
 NEXT_PUBLIC_ERROR_REPORTING_ENABLED=true
 NEXT_PUBLIC_APP_VERSION=1.0.0
 ```
 
 **Preview (all PRs):**
+
 ```
-NEXT_PUBLIC_QUICKEX_API_URL=https://api-staging.quickex.to
+NEXT_PUBLIC_ RustAcademy_API_URL=https://api-staging. RustAcademy.to
 NEXT_PUBLIC_STELLAR_NETWORK=testnet
 NEXT_PUBLIC_ERROR_REPORTING_ENABLED=true
 NEXT_PUBLIC_APP_VERSION=1.0.0-preview
@@ -56,6 +60,7 @@ Preview deployments are automatically enabled by Vercel when you connect a GitHu
 ### Preview Deployments (Per PR)
 
 Every pull request to the main branch automatically triggers:
+
 1. **CI Checks**: Type checking and linting (via GitHub Actions)
 2. **Build**: Next.js production build
 3. **Preview Deployment**: Unique URL for testing
@@ -65,6 +70,7 @@ Every pull request to the main branch automatically triggers:
 ### Production Deployments (Main Branch)
 
 Merging to main branch triggers:
+
 1. **CI Checks**: All checks must pass
 2. **Build**: Production-optimized build
 3. **Deployment**: Automatic deployment to production
@@ -86,7 +92,7 @@ The `.github/workflows/frontend-ci.yml` workflow runs on every PR and push to ma
 Add these secrets to your GitHub repository settings:
 
 ```
-NEXT_PUBLIC_QUICKEX_API_URL
+NEXT_PUBLIC_ RustAcademy_API_URL
 NEXT_PUBLIC_SITE_URL
 NEXT_PUBLIC_STELLAR_NETWORK
 NEXT_PUBLIC_ERROR_REPORTING_ENABLED
@@ -98,7 +104,7 @@ NEXT_PUBLIC_APP_VERSION
 ### Production Domain
 
 1. Go to **Settings** → **Domains**
-2. Add your custom domain (e.g., `quickex.to`)
+2. Add your custom domain (e.g., ` RustAcademy.to`)
 3. Configure DNS records as instructed by Vercel
 4. Enable automatic HTTPS
 
@@ -120,11 +126,13 @@ The deployment is configured to prevent mixed-content issues:
 ### Testing Wallet Integration
 
 **Preview Environment:**
+
 - Testnet wallet connections
 - Testnet transactions
 - Staging backend API
 
 **Production Environment:**
+
 - Mainnet wallet connections
 - Mainnet transactions
 - Production backend API
@@ -156,6 +164,7 @@ If a production deployment causes issues:
 ### Build Failures
 
 **Issue**: Build fails during deployment
+
 - Check the build logs in Vercel
 - Ensure all environment variables are set
 - Verify dependencies are compatible
@@ -164,6 +173,7 @@ If a production deployment causes issues:
 ### Preview Deployment Issues
 
 **Issue**: Preview deployment not working
+
 - Check that PR is from a forked repository (may need approval)
 - Verify environment variables for Preview environment
 - Check GitHub Actions CI status
@@ -171,6 +181,7 @@ If a production deployment causes issues:
 ### Mixed Content Warnings
 
 **Issue**: Browser shows mixed-content warnings
+
 - Ensure all `NEXT_PUBLIC_*` URLs use HTTPS
 - Check that wallet provider URLs use HTTPS
 - Verify no hardcoded HTTP URLs in codebase
@@ -179,6 +190,7 @@ If a production deployment causes issues:
 ### Environment Variable Issues
 
 **Issue**: App not loading due to missing environment variables
+
 - Verify all required variables are set in Vercel
 - Check variable names match exactly (case-sensitive)
 - Ensure Preview and Production environments are configured separately
@@ -204,22 +216,26 @@ The deployment includes:
 ## Acceptance Criteria Validation
 
 ✅ **Every PR generates a working preview URL**
+
 - Preview deployments are automatic
 - CI checks run before deployment
 - Preview URL is unique per PR
 
 ✅ **Main deploys automatically to production**
+
 - Merging to main triggers production deployment
 - All CI checks must pass
 - Custom domain updates automatically
 
 ✅ **App loads and can complete core flows in both environments**
+
 - Preview uses testnet configuration
 - Production uses mainnet configuration
 - Wallet integrations work in both
 - No mixed-content issues
 
 ✅ **Documentation with Vercel URL**
+
 - This guide provides complete setup instructions
 - Environment variables are documented
 - Troubleshooting guide included
@@ -234,6 +250,7 @@ The deployment includes:
 ## Support
 
 For deployment issues:
+
 1. Check Vercel deployment logs
 2. Review GitHub Actions CI status
 3. Consult troubleshooting section above

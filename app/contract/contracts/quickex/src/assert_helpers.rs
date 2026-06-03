@@ -1,4 +1,4 @@
-//! Custom assertion helpers for QuickEx-specific types.
+//! Custom assertion helpers for  RustAcademy-specific types.
 //!
 //! Reduces boilerplate in test assertions for [`EscrowStatus`], commitment
 //! verification, and contract error matching.
@@ -27,7 +27,7 @@
 //! assert_escrow_disputed(&ctx.client, &commitment);
 //!
 //! // Error assertion
-//! assert_qx_err(ctx.client.try_deposit(&...), QuickexError::ContractPaused);
+//! assert_qx_err(ctx.client.try_deposit(&...),  RustAcademyError::ContractPaused);
 //!
 //! // Commitment validity
 //! assert_commitment_valid(&ctx.client, &commitment, &owner, amount, &salt);
@@ -35,7 +35,7 @@
 
 use soroban_sdk::{Address, Bytes, BytesN, ConversionError, InvokeError};
 
-use crate::{errors::QuickexError, types::EscrowStatus, QuickexContractClient};
+use crate::{errors:: RustAcademyError, types::EscrowStatus,  RustAcademyContractClient};
 
 // -----------------------------------------------------------------------
 // Escrow status assertions
@@ -46,7 +46,7 @@ use crate::{errors::QuickexError, types::EscrowStatus, QuickexContractClient};
 /// Panics with a descriptive message if the status does not match.
 #[allow(dead_code)]
 pub fn assert_escrow_status(
-    client: &QuickexContractClient<'_>,
+    client: & RustAcademyContractClient<'_>,
     commitment: &BytesN<32>,
     expected: EscrowStatus,
 ) {
@@ -60,31 +60,31 @@ pub fn assert_escrow_status(
 
 /// Assert that an escrow is in `Pending` state.
 #[allow(dead_code)]
-pub fn assert_escrow_pending(client: &QuickexContractClient<'_>, commitment: &BytesN<32>) {
+pub fn assert_escrow_pending(client: & RustAcademyContractClient<'_>, commitment: &BytesN<32>) {
     assert_escrow_status(client, commitment, EscrowStatus::Pending);
 }
 
 /// Assert that an escrow is in `Spent` state.
 #[allow(dead_code)]
-pub fn assert_escrow_spent(client: &QuickexContractClient<'_>, commitment: &BytesN<32>) {
+pub fn assert_escrow_spent(client: & RustAcademyContractClient<'_>, commitment: &BytesN<32>) {
     assert_escrow_status(client, commitment, EscrowStatus::Spent);
 }
 
 /// Assert that an escrow is in `Refunded` state.
 #[allow(dead_code)]
-pub fn assert_escrow_refunded(client: &QuickexContractClient<'_>, commitment: &BytesN<32>) {
+pub fn assert_escrow_refunded(client: & RustAcademyContractClient<'_>, commitment: &BytesN<32>) {
     assert_escrow_status(client, commitment, EscrowStatus::Refunded);
 }
 
 /// Assert that an escrow is in `Disputed` state.
 #[allow(dead_code)]
-pub fn assert_escrow_disputed(client: &QuickexContractClient<'_>, commitment: &BytesN<32>) {
+pub fn assert_escrow_disputed(client: & RustAcademyContractClient<'_>, commitment: &BytesN<32>) {
     assert_escrow_status(client, commitment, EscrowStatus::Disputed);
 }
 
 /// Assert that no escrow entry exists for the given commitment.
 #[allow(dead_code)]
-pub fn assert_escrow_not_found(client: &QuickexContractClient<'_>, commitment: &BytesN<32>) {
+pub fn assert_escrow_not_found(client: & RustAcademyContractClient<'_>, commitment: &BytesN<32>) {
     let actual = client.get_commitment_state(commitment);
     assert_eq!(
         actual, None,
@@ -99,7 +99,7 @@ pub fn assert_escrow_not_found(client: &QuickexContractClient<'_>, commitment: &
 /// Assert that a commitment verifies correctly for the given `(owner, amount, salt)`.
 #[allow(dead_code)]
 pub fn assert_commitment_valid(
-    client: &QuickexContractClient<'_>,
+    client: & RustAcademyContractClient<'_>,
     commitment: &BytesN<32>,
     owner: &Address,
     amount: i128,
@@ -114,7 +114,7 @@ pub fn assert_commitment_valid(
 /// Assert that a commitment does NOT verify for the given `(owner, amount, salt)`.
 #[allow(dead_code)]
 pub fn assert_commitment_invalid(
-    client: &QuickexContractClient<'_>,
+    client: & RustAcademyContractClient<'_>,
     commitment: &BytesN<32>,
     owner: &Address,
     amount: i128,
@@ -130,18 +130,18 @@ pub fn assert_commitment_invalid(
 // Contract error assertion
 // -----------------------------------------------------------------------
 
-/// Assert that a `try_*` client call returns the expected [`QuickexError`].
+/// Assert that a `try_*` client call returns the expected [` RustAcademyError`].
 ///
 /// Panics with a clear message if the call succeeds or returns a different error.
 ///
 /// # Example
 /// ```rust
-/// assert_qx_err(ctx.client.try_withdraw(&...), QuickexError::EscrowExpired);
+/// assert_qx_err(ctx.client.try_withdraw(&...),  RustAcademyError::EscrowExpired);
 /// ```
 #[allow(dead_code)]
 pub fn assert_qx_err<T>(
-    result: Result<Result<T, ConversionError>, Result<QuickexError, InvokeError>>,
-    expected: QuickexError,
+    result: Result<Result<T, ConversionError>, Result< RustAcademyError, InvokeError>>,
+    expected:  RustAcademyError,
 ) {
     match result {
         Err(Ok(actual)) => assert_eq!(
@@ -149,7 +149,7 @@ pub fn assert_qx_err<T>(
             "wrong contract error: expected {expected:?}, got {actual:?}",
         ),
         _ => {
-            panic!("expected contract error {expected:?}, but call did not return a QuickexError",)
+            panic!("expected contract error {expected:?}, but call did not return a  RustAcademyError",)
         }
     }
 }

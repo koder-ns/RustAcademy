@@ -63,7 +63,7 @@ describe("WebhookProvider", () => {
           method: "POST",
           headers: expect.objectContaining({
             "Content-Type": "application/json",
-            "X-QuickEx-Event": "payment.received",
+            "X- RustAcademy-Event": "payment.received",
           }),
         }),
       );
@@ -83,7 +83,7 @@ describe("WebhookProvider", () => {
 
       const call = mockFetch.mock.calls[0];
       const headers = call[1].headers;
-      const signature = headers["X-QuickEx-Signature"];
+      const signature = headers["X- RustAcademy-Signature"];
 
       expect(signature).toMatch(/^sha256=[a-f0-9]{64}$/);
     });
@@ -102,7 +102,7 @@ describe("WebhookProvider", () => {
 
       const call = mockFetch.mock.calls[0];
       const headers = call[1].headers;
-      const signature = headers["X-QuickEx-Signature"];
+      const signature = headers["X- RustAcademy-Signature"];
 
       expect(signature).toBe("");
     });
@@ -137,8 +137,8 @@ describe("WebhookProvider", () => {
       const call = mockFetch.mock.calls[0];
       const headers = call[1].headers;
 
-      expect(headers["X-QuickEx-Delivery"]).toMatch(/^wh_\d+_[a-z0-9]+$/);
-      expect(headers["X-QuickEx-Timestamp"]).toMatch(
+      expect(headers["X- RustAcademy-Delivery"]).toMatch(/^wh_\d+_[a-z0-9]+$/);
+      expect(headers["X- RustAcademy-Timestamp"]).toMatch(
         /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
       );
     });
@@ -186,8 +186,8 @@ describe("WebhookProvider", () => {
       const call = mockFetch.mock.calls[0];
       const body = call[1].body;
       const headers = call[1].headers;
-      const signature = headers["X-QuickEx-Signature"];
-      const timestamp = headers["X-QuickEx-Timestamp"];
+      const signature = headers["X- RustAcademy-Signature"];
+      const timestamp = headers["X- RustAcademy-Timestamp"];
 
       const isValid = WebhookProvider.verifySignature(
         body,

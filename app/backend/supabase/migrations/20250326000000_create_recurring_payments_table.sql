@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS recurring_payment_links (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   
   -- Link identification
-  username TEXT,  -- Optional: quickex.to/username route
+  username TEXT,  -- Optional:  RustAcademy.to/username route
   destination TEXT,  -- Optional: direct Stellar public key (G...)
   
   -- Payment details
@@ -79,7 +79,7 @@ CREATE TRIGGER recurring_payment_links_updated_at_trigger
   EXECUTE FUNCTION update_recurring_link_updated_at();
 
 COMMENT ON TABLE recurring_payment_links IS 'Recurring payment link configurations (subscriptions)';
-COMMENT ON COLUMN recurring_payment_links.username IS 'Optional username route (quickex.to/username)';
+COMMENT ON COLUMN recurring_payment_links.username IS 'Optional username route ( RustAcademy.to/username)';
 COMMENT ON COLUMN recurring_payment_links.destination IS 'Optional Stellar public key for direct routing';
 COMMENT ON COLUMN recurring_payment_links.frequency IS 'Payment frequency: daily, weekly, monthly, yearly';
 COMMENT ON COLUMN recurring_payment_links.status IS 'Link status: active, paused, completed, cancelled';

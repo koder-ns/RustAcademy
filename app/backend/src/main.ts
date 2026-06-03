@@ -22,9 +22,9 @@ import { GlobalHttpExceptionFilter } from "./common/filters/global-http-exceptio
 import { mapValidationErrors } from "./common/utils/validation-error.mapper";
 import { SentryExceptionFilter, SentryService } from "./sentry";
 import { MetricsService } from "./metrics/metrics.service";
-import { 
+import {
   sanitizeErrorMessage,
-  createConfigSummary 
+  createConfigSummary,
 } from "./common/utils/redaction.util";
 
 /**
@@ -39,10 +39,10 @@ function validateCriticalConfig(
 
   // Database is required
   if (!config.supabaseUrl) {
-    errors.push('SUPABASE_URL is required');
+    errors.push("SUPABASE_URL is required");
   }
   if (!config.supabaseAnonKey) {
-    errors.push('SUPABASE_ANON_KEY is required');
+    errors.push("SUPABASE_ANON_KEY is required");
   }
 
   // Network is required
@@ -58,17 +58,19 @@ function validateCriticalConfig(
 
   // If there are critical errors, fail fast
   if (errors.length > 0) {
-    const errorMessage = `Critical configuration errors:\n${errors.map(e => `  - ${e}`).join('\n')}`;
+    const errorMessage = `Critical configuration errors:\n${errors.map((e) => `  - ${e}`).join("\n")}`;
     logger.error(errorMessage);
     throw new Error(sanitizeErrorMessage(errorMessage));
   }
 
   // Log warnings for optional but important configurations
   if (!config.isPaymentSigningConfigured) {
-    logger.warn('STELLAR_SECRET_KEY not configured - payment signing disabled (read-only mode)');
+    logger.warn(
+      "STELLAR_SECRET_KEY not configured - payment signing disabled (read-only mode)",
+    );
   }
 
-  logger.log('Critical configuration validated successfully');
+  logger.log("Critical configuration validated successfully");
 }
 
 async function bootstrap() {
@@ -141,9 +143,9 @@ async function bootstrap() {
 
   // Swagger setup
   const swaggerConfig = new DocumentBuilder()
-    .setTitle("QuickEx Backend")
+    .setTitle(" RustAcademy Backend")
     .setDescription(
-      "QuickEx API documentation - A Stellar-based exchange platform. " +
+      " RustAcademy API documentation - A Stellar-based exchange platform. " +
         `Currently connected to: ${configService.network}`,
     )
     .setVersion("v1")
@@ -152,11 +154,17 @@ async function bootstrap() {
     .addTag("links", "Payment link validation and metadata endpoints")
     .addTag("transactions", "Stellar transaction and payment history")
     .addTag("scam-alerts", "Fraud detection and link scanning")
-    .addTag("analytics", "Dashboard analytics, time-series insights, and report exports")
+    .addTag(
+      "analytics",
+      "Dashboard analytics, time-series insights, and report exports",
+    )
     .addTag("metrics", "Application performance and health metrics")
     .addTag("stellar", "Verified assets, path preview, Soroban preflight")
     .addTag("contracts", "Contract registry publication and discovery")
-    .addTag("developer", "Developer self-service: ping, webhook testing, key management, health score")
+    .addTag(
+      "developer",
+      "Developer self-service: ping, webhook testing, key management, health score",
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

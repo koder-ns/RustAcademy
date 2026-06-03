@@ -50,7 +50,7 @@ export class UpsertNotificationPreferenceDto {
   @IsString()
   pushToken?: string;
 
-  @ApiPropertyOptional({ example: "https://example.com/hooks/quickex" })
+  @ApiPropertyOptional({ example: "https://example.com/hooks/ RustAcademy" })
   @IsOptional()
   @IsUrl()
   webhookUrl?: string;

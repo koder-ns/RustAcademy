@@ -1,7 +1,7 @@
 "use client";
 
 import CreateAPIKeyModal from "@/components/CreateAPIKeyModal";
-import { getQuickexApiBase } from "@/lib/api";
+import { get RustAcademyApiBase } from "@/lib/api";
 import {
   type ApiKey,
   type NewKeyForm,
@@ -20,7 +20,7 @@ type UsageSummary = {
 // ---------------------------------------------------------------------------
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${getQuickexApiBase()}${path}`, {
+  const res = await fetch(`${get RustAcademyApiBase()}${path}`, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
@@ -220,7 +220,7 @@ export default function DeveloperSettings() {
               <div>
                 <h2 className="text-xl font-bold">API Keys</h2>
                 <p className="text-sm text-neutral-500 mt-1">
-                  Manage keys used to authenticate requests to the QuickEx API.
+                  Manage keys used to authenticate requests to the  RustAcademy API.
                 </p>
               </div>
               <button
@@ -402,7 +402,7 @@ export default function DeveloperSettings() {
                 { scope: "links:read",        desc: "Fetch and query payment links. Cannot create or modify." },
                 { scope: "links:write",       desc: "Create and update payment links. Includes links:read." },
                 { scope: "transactions:read", desc: "Read transaction history from the Horizon API." },
-                { scope: "usernames:read",    desc: "Look up registered QuickEx usernames." },
+                { scope: "usernames:read",    desc: "Look up registered  RustAcademy usernames." },
               ].map(({ scope, desc }) => (
                 <div
                   key={scope}

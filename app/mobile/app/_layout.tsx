@@ -32,7 +32,7 @@ import {
 } from "../services/notification-routing";
 
 // ── Theme System v2 ──────────────────────────────────────────────────────────
-import { QuickExThemeProvider, useTheme } from "../src/theme/ThemeContext";
+import { RustAcademyThemeProvider, useTheme } from "../src/theme/ThemeContext";
 import { invalidateOldCache } from "../services/cache";
 
 function useDeepLinkHandler(
@@ -43,17 +43,17 @@ function useDeepLinkHandler(
     function handleURL(event: { url: string }) {
       const result = resolveDeepLink(event.url);
 
-      if ('route' in result) {
+      if ("route" in result) {
         onRoute(result.route);
         return;
       }
 
-      if ('error' in result) {
+      if ("error" in result) {
         onError(result.error, event.url);
       }
     }
 
-    const subscription = Linking.addEventListener('url', handleURL);
+    const subscription = Linking.addEventListener("url", handleURL);
 
     // Handle cold-start deep link
     Linking.getInitialURL().then((url: string | null) => {
@@ -66,21 +66,25 @@ function useDeepLinkHandler(
 
 function useNotificationTapRouting(onRoute: (route: DeepLinkRoute) => void) {
   useEffect(() => {
-    function routeResponse(response: Notifications.NotificationResponse | null | undefined) {
+    function routeResponse(
+      response: Notifications.NotificationResponse | null | undefined,
+    ) {
       const payload = parsePushNotificationPayload(
         response?.notification?.request?.content?.data,
       );
       if (!payload) return;
-      routeFromPushPayload({ push: (route: DeepLinkRoute) => onRoute(route) } as any, payload);
+      routeFromPushPayload(
+        { push: (route: DeepLinkRoute) => onRoute(route) } as any,
+        payload,
+      );
     }
 
     Notifications.getLastNotificationResponseAsync()
       .then(routeResponse)
       .catch(() => {});
 
-    const subscription = Notifications.addNotificationResponseReceivedListener(
-      routeResponse,
-    );
+    const subscription =
+      Notifications.addNotificationResponseReceivedListener(routeResponse);
 
     return () => subscription.remove();
   }, [onRoute]);
@@ -100,9 +104,9 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QuickExThemeProvider>
+    <RustAcademyThemeProvider>
       <ThemeBridge />
-    </QuickExThemeProvider>
+    </RustAcademyThemeProvider>
   );
 }
 
@@ -125,10 +129,10 @@ function ThemeBridge() {
         notification: theme.status.error,
       },
       fonts: {
-        regular: { fontFamily: 'System', fontWeight: '400' as const },
-        medium: { fontFamily: 'System', fontWeight: '500' as const },
-        bold: { fontFamily: 'System', fontWeight: '700' as const },
-        heavy: { fontFamily: 'System', fontWeight: '800' as const },
+        regular: { fontFamily: "System", fontWeight: "400" as const },
+        medium: { fontFamily: "System", fontWeight: "500" as const },
+        bold: { fontFamily: "System", fontWeight: "700" as const },
+        heavy: { fontFamily: "System", fontWeight: "800" as const },
       },
     }),
     [theme, isDark],
@@ -144,7 +148,8 @@ function ThemeBridge() {
               <WalletSyncBridge />
               {/* Dev-only global poller: ensures polling runs on web during development
                 even if the wallet screen isn't active. */}
-              {typeof process !== 'undefined' && process.env.NODE_ENV !== "production" ? (
+              {typeof process !== "undefined" &&
+              process.env.NODE_ENV !== "production" ? (
                 // start polling for demo address used by send_test_payment.js
                 // eslint-disable-next-line react/jsx-no-useless-fragment
                 <DevPoller />
@@ -163,9 +168,15 @@ function ThemeBridge() {
 function AppShell() {
   const router = useRouter();
   const { isAppLocked, isReady, settings, unlockApp } = useSecurity();
-  const { isLoading: onboardingLoading, hasCompletedOnboarding } = useOnboarding();
-  const [pendingDeepLink, setPendingDeepLink] = useState<DeepLinkRoute | null>(null);
-  const [pendingLinkError, setPendingLinkError] = useState<{ message: string; url: string } | null>(null);
+  const { isLoading: onboardingLoading, hasCompletedOnboarding } =
+    useOnboarding();
+  const [pendingDeepLink, setPendingDeepLink] = useState<DeepLinkRoute | null>(
+    null,
+  );
+  const [pendingLinkError, setPendingLinkError] = useState<{
+    message: string;
+    url: string;
+  } | null>(null);
 
   const canRouteDeepLink = !onboardingLoading && hasCompletedOnboarding;
 
@@ -184,7 +195,7 @@ function AppShell() {
 
     if (pendingLinkError) {
       router.replace({
-        pathname: '/link-error',
+        pathname: "/link-error",
         params: {
           message: pendingLinkError.message,
           url: pendingLinkError.url,
@@ -210,7 +221,7 @@ function AppShell() {
     (message: string, url: string) => {
       if (canRouteDeepLink) {
         router.replace({
-          pathname: '/link-error',
+          pathname: "/link-error",
           params: { message, url },
         });
         return;

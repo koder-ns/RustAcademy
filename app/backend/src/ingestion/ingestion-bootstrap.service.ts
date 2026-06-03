@@ -3,7 +3,7 @@ import { StellarIngestionService } from "./stellar-ingestion.service";
 import { ContractRegistryService } from "../contracts/contract-registry.service";
 
 /**
- * Reads the QUICKEX_CONTRACT_ID environment variable and starts streaming
+ * Reads the  RustAcademy_CONTRACT_ID environment variable and starts streaming
  * once the NestJS application is ready, with optional dual-read support.
  *
  * If no contract ID is configured the service logs a warning and skips.
@@ -18,11 +18,11 @@ export class IngestionBootstrapService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
-    const contractId = process.env["QUICKEX_CONTRACT_ID"];
+    const contractId = process.env[" RustAcademy_CONTRACT_ID"];
 
     if (!contractId) {
       this.logger.warn(
-        "QUICKEX_CONTRACT_ID is not set; Stellar ingestion will NOT start. " +
+        " RustAcademy_CONTRACT_ID is not set; Stellar ingestion will NOT start. " +
           "Set this env var to enable event streaming.",
       );
       return;
@@ -32,16 +32,21 @@ export class IngestionBootstrapService implements OnModuleInit {
 
     try {
       const registryData = await this.registry.getRegistry();
-      const quickexEntry = registryData.data.quickex as Record<string, unknown>;
+      const RustAcademyEntry = registryData.data.RustAcademy as Record<
+        string,
+        unknown
+      >;
 
-      if (quickexEntry && quickexEntry.previousContractId) {
+      if (RustAcademyEntry && RustAcademyEntry.previousContractId) {
         this.logger.log(
-          `Contract registry has dual-read config; starting with previous contract ${quickexEntry.previousContractId}`,
+          `Contract registry has dual-read config; starting with previous contract ${RustAcademyEntry.previousContractId}`,
         );
         await this.ingestion.startStreamingWithDualRead({
           contractId,
-          previousContractId: quickexEntry.previousContractId as string,
-          effectiveLedger: quickexEntry.effectiveLedger as number | undefined,
+          previousContractId: RustAcademyEntry.previousContractId as string,
+          effectiveLedger: RustAcademyEntry.effectiveLedger as
+            | number
+            | undefined,
         });
       } else {
         await this.ingestion.startStreaming(contractId);

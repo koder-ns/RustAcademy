@@ -128,8 +128,13 @@ export class AppConfigService {
    * Sourced from the CORS_ALLOWED_ORIGINS env var (comma-separated).
    */
   get corsAllowedOrigins(): string[] {
-    const raw = this.configService.get('CORS_ALLOWED_ORIGINS', { infer: true });
-    return raw ? raw.split(',').map((o) => o.trim()).filter(Boolean) : [];
+    const raw = this.configService.get("CORS_ALLOWED_ORIGINS", { infer: true });
+    return raw
+      ? raw
+          .split(",")
+          .map((o) => o.trim())
+          .filter(Boolean)
+      : [];
   }
 
   /**
@@ -137,7 +142,7 @@ export class AppConfigService {
    * When set, https://<slug>-*.vercel.app origins are permitted.
    */
   get corsVercelProject(): string | undefined {
-    return this.configService.get('CORS_VERCEL_PROJECT', { infer: true });
+    return this.configService.get("CORS_VERCEL_PROJECT", { infer: true });
   }
 
   /**
@@ -195,10 +200,10 @@ export class AppConfigService {
   }
 
   /**
-   * QuickEx Soroban contract id (optional). Used for ingestion and soroban preflight.
+   *  RustAcademy Soroban contract id (optional). Used for ingestion and soroban preflight.
    */
-  get quickexContractId(): string | undefined {
-    return this.configService.get("QUICKEX_CONTRACT_ID", { infer: true });
+  get RustAcademyContractId(): string | undefined {
+    return this.configService.get(" RustAcademy_CONTRACT_ID", { infer: true });
   }
 
   /**
@@ -255,7 +260,9 @@ export class AppConfigService {
    * Indexer lag threshold in ledgers
    */
   get indexerLagThresholdLedgers(): number {
-    return this.configService.get("INDEXER_LAG_THRESHOLD_LEDGERS", { infer: true });
+    return this.configService.get("INDEXER_LAG_THRESHOLD_LEDGERS", {
+      infer: true,
+    });
   }
 
   /**
@@ -269,6 +276,8 @@ export class AppConfigService {
    * Admin override to disable lag guard temporarily
    */
   get indexerLagGuardOverride(): boolean {
-    return this.configService.get("INDEXER_LAG_GUARD_OVERRIDE", { infer: true });
+    return this.configService.get("INDEXER_LAG_GUARD_OVERRIDE", {
+      infer: true,
+    });
   }
 }

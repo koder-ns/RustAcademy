@@ -2,7 +2,7 @@
  * Auto-Match Engine – Domain Types
  *
  * Models the full lifecycle of automatically matching an incoming Stellar
- * payment to an open QuickEx payment link:
+ * payment to an open  RustAcademy payment link:
  *
  *   IncomingTransaction  ──▶  score against PaymentLink[]
  *                         ──▶  MatchResult (AutoMatch | ReviewRequired | Unmatched)
@@ -34,10 +34,10 @@ export interface PaymentLink {
 }
 
 export enum PaymentLinkStatus {
-  Open = 'open',
-  Paid = 'paid',
-  Expired = 'expired',
-  Cancelled = 'cancelled',
+  Open = "open",
+  Paid = "paid",
+  Expired = "expired",
+  Cancelled = "cancelled",
 }
 
 // ─── Incoming Transactions ────────────────────────────────────────────────────
@@ -99,17 +99,17 @@ export enum MatchDecision {
    * confidence ≥ AUTO_MATCH_THRESHOLD.
    * The engine marks the link as "paid" and fires a webhook automatically.
    */
-  AutoMatch = 'auto_match',
+  AutoMatch = "auto_match",
   /**
    * confidence ≥ REVIEW_THRESHOLD but < AUTO_MATCH_THRESHOLD.
    * The transaction is queued in `unmatched_transactions` for operator review.
    */
-  ReviewRequired = 'review_required',
+  ReviewRequired = "review_required",
   /**
    * No candidate scored above the minimum threshold.
    * The transaction is stored as unmatched with no suggested link.
    */
-  Unmatched = 'unmatched',
+  Unmatched = "unmatched",
 }
 
 /** Final outcome for a single incoming transaction after processing. */
@@ -151,9 +151,9 @@ export interface UnmatchedTransaction {
 }
 
 export enum UnmatchedStatus {
-  Pending = 'pending',
-  Resolved = 'resolved',
-  Dismissed = 'dismissed',
+  Pending = "pending",
+  Resolved = "resolved",
+  Dismissed = "dismissed",
 }
 
 // ─── Webhook / Event Payload ───────────────────────────────────────────────────

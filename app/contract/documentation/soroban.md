@@ -1,6 +1,6 @@
 # Soroban Contract Developer Guide
 
-This document is the single source of truth for building, testing, and deploying the QuickEx Soroban contract.
+This document is the single source of truth for building, testing, and deploying the RustAcademy Soroban contract.
 
 ## Prerequisites
 
@@ -61,7 +61,7 @@ cargo build --target wasm32-unknown-unknown --profile release-with-logs
 Expected contract artifact path:
 
 ```text
-target/wasm32-unknown-unknown/release/quickex.wasm
+target/wasm32-unknown-unknown/release/ RustAcademy.wasm
 ```
 
 ## Test
@@ -113,7 +113,7 @@ In another terminal:
 cd app/contract
 
 stellar contract deploy \
-  --wasm target/wasm32v1-none/release/quickex.wasm \
+  --wasm target/wasm32v1-none/release/ RustAcademy.wasm \
   --source default
 ```
 
@@ -136,7 +136,7 @@ Record the result in [environment-registry.toml](environment-registry.toml).
 cd app/contract
 
 stellar contract deploy \
-  --wasm target/wasm32v1-none/release/quickex.wasm \
+  --wasm target/wasm32v1-none/release/ RustAcademy.wasm \
   --source test \
   --network testnet
 ```
@@ -168,7 +168,7 @@ Mainnet promotion also requires the registry entry to be reviewed and approved.
 cd app/contract
 
 stellar contract deploy \
-  --wasm target/wasm32v1-none/release/quickex.wasm \
+  --wasm target/wasm32v1-none/release/ RustAcademy.wasm \
   --source main \
   --network mainnet
 ```

@@ -1,7 +1,14 @@
 import * as Linking from "expo-linking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { Alert, Pressable, StyleSheet, Text, View, ScrollView } from "react-native";
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useSecurity } from "@/hooks/use-security";
@@ -26,8 +33,12 @@ export default function PaymentConfirmationScreen() {
   const { theme } = useTheme();
   const { isConnected } = useNetworkStatus();
   const { authenticateForSensitiveAction } = useSecurity();
-  const backendUrl = process.env.EXPO_PUBLIC_API_URL || "https://api.quickex.com";
-  const { isReady, error: registryError } = useContractRegistry(["Escrow"], backendUrl);
+  const backendUrl =
+    process.env.EXPO_PUBLIC_API_URL || "https://api. RustAcademy.com";
+  const { isReady, error: registryError } = useContractRegistry(
+    ["Escrow"],
+    backendUrl,
+  );
   const params = useLocalSearchParams<{
     username: string;
     amount: string;
@@ -44,8 +55,11 @@ export default function PaymentConfirmationScreen() {
   const numAmount = parseFloat(amount || "0");
 
   // State for multi-asset swap
-  const [selectedSourceAsset, setSelectedSourceAsset] = React.useState<string | null>(null);
-  const [selectedSwapPath, setSelectedSwapPath] = React.useState<PathPreviewRow | null>(null);
+  const [selectedSourceAsset, setSelectedSourceAsset] = React.useState<
+    string | null
+  >(null);
+  const [selectedSwapPath, setSelectedSwapPath] =
+    React.useState<PathPreviewRow | null>(null);
   const [slippageTolerance, setSlippageTolerance] = React.useState(1.0); // 1.0% default
 
   // Fetch swap options from backend (only if we have a valid destination asset)
@@ -60,14 +74,14 @@ export default function PaymentConfirmationScreen() {
 
   // Filter swap options to exclude the destination asset itself
   const availableSwapOptions = (swapOptions || []).filter(
-    (opt) => opt.destinationAsset === asset && opt.sourceAsset !== asset
+    (opt) => opt.destinationAsset === asset && opt.sourceAsset !== asset,
   );
 
   const handlePayWithWallet = async () => {
     if (isConnected === false) {
       Alert.alert(
         "Offline Mode",
-        "You cannot send payments while offline. Please connect to the internet and try again."
+        "You cannot send payments while offline. Please connect to the internet and try again.",
       );
       return;
     }
@@ -76,7 +90,10 @@ export default function PaymentConfirmationScreen() {
       Alert.alert(
         "Quote Expired",
         "The exchange rate has expired. Please refresh the quote before paying.",
-        [{ text: "Refresh Now", onPress: () => void refetch() }, { text: "Cancel", style: "cancel" }]
+        [
+          { text: "Refresh Now", onPress: () => void refetch() },
+          { text: "Cancel", style: "cancel" },
+        ],
       );
       return;
     }
@@ -94,14 +111,17 @@ export default function PaymentConfirmationScreen() {
 
     // Build the Stellar URI with multi-asset support
     let stellarUri: string;
-    
+
     if (selectedSwapPath && selectedSourceAsset) {
       // Path payment: user selected a different source asset
       // Apply slippage tolerance to the source amount
       const sourceAmountBase = parseFloat(selectedSwapPath.sourceAmount);
-      const sendMax = (sourceAmountBase * (1 + slippageTolerance / 100)).toFixed(7);
-      const strippedSendMax = sendMax.replace(/\.?0+$/, '');
-      
+      const sendMax = (
+        sourceAmountBase *
+        (1 + slippageTolerance / 100)
+      ).toFixed(7);
+      const strippedSendMax = sendMax.replace(/\.?0+$/, "");
+
       stellarUri = `web+stellar:pay?destination=${username}&amount=${amount}&asset_code=${asset}${memo ? `&memo=${encodeURIComponent(memo)}` : ""}&sendAsset=${selectedSourceAsset}&sendAmount=${strippedSendMax}`;
     } else {
       // Direct payment with destination asset
@@ -121,13 +141,18 @@ export default function PaymentConfirmationScreen() {
   };
 
   const [savingContact, setSavingContact] = React.useState(false);
-  
-if (registryError) {
+
+  if (registryError) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center' }]}>
-        <ErrorState 
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: theme.background, justifyContent: "center" },
+        ]}
+      >
+        <ErrorState
           title="Security Alert"
-          message={registryError} 
+          message={registryError}
           actionLabel="Go Back"
           onAction={() => router.back()}
         />
@@ -137,9 +162,20 @@ if (registryError) {
 
   if (!isReady) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center' }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          { backgroundColor: theme.background, justifyContent: "center" },
+        ]}
+      >
         <ActivityIndicator size="large" color={theme.primary} />
-        <Text style={{ color: theme.textSecondary, textAlign: 'center', marginTop: 10 }}>
+        <Text
+          style={{
+            color: theme.textSecondary,
+            textAlign: "center",
+            marginTop: 10,
+          }}
+        >
           Verifying secure contracts...
         </Text>
       </SafeAreaView>
@@ -148,11 +184,30 @@ if (registryError) {
 
   if (!isValid) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: theme.background }]}
+      >
         <View style={[styles.content, { justifyContent: "center", flex: 1 }]}>
-          <View style={[styles.errorCard, { backgroundColor: theme.status.errorBg }]}>
-            <Text style={[styles.errorIcon, { color: theme.status.error, backgroundColor: theme.status.errorBg }]}>!</Text>
-            <Text style={[styles.errorTitle, { color: theme.textPrimary }]}>Invalid Payment Link</Text>
+          <View
+            style={[
+              styles.errorCard,
+              { backgroundColor: theme.status.errorBg },
+            ]}
+          >
+            <Text
+              style={[
+                styles.errorIcon,
+                {
+                  color: theme.status.error,
+                  backgroundColor: theme.status.errorBg,
+                },
+              ]}
+            >
+              !
+            </Text>
+            <Text style={[styles.errorTitle, { color: theme.textPrimary }]}>
+              Invalid Payment Link
+            </Text>
             <Text style={[styles.errorBody, { color: theme.textSecondary }]}>
               This payment link is missing required information. Please try
               scanning again or check the link.
@@ -162,7 +217,11 @@ if (registryError) {
             style={styles.secondaryBtn}
             onPress={() => router.replace("/")}
           >
-            <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>Go Back</Text>
+            <Text
+              style={[styles.secondaryBtnText, { color: theme.textSecondary }]}
+            >
+              Go Back
+            </Text>
           </Pressable>
         </View>
       </SafeAreaView>
@@ -174,7 +233,7 @@ if (registryError) {
     if (isConnected === false) {
       Alert.alert(
         "Offline Mode",
-        "Saving contacts is unavailable while offline."
+        "Saving contacts is unavailable while offline.",
       );
       return;
     }
@@ -187,7 +246,10 @@ if (registryError) {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
-      Alert.alert("Contact saved!", "Recipient has been added to your contacts.");
+      Alert.alert(
+        "Contact saved!",
+        "Recipient has been added to your contacts.",
+      );
     } catch (e) {
       Alert.alert("Failed to save contact");
     } finally {
@@ -196,27 +258,42 @@ if (registryError) {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <ScrollView
+        style={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
-          <Text style={[styles.heading, { color: theme.textPrimary }]}>Confirm Payment</Text>
+          <Text style={[styles.heading, { color: theme.textPrimary }]}>
+            Confirm Payment
+          </Text>
           <Text style={[styles.subheading, { color: theme.textSecondary }]}>
-            {isConnected === false ? "Read-only mode: payment is disabled" : "Review the details below before paying"}
+            {isConnected === false
+              ? "Read-only mode: payment is disabled"
+              : "Review the details below before paying"}
           </Text>
 
           <View style={[styles.card, { backgroundColor: theme.surface }]}>
             <Row label="Recipient" value={`@${username}`} />
-            <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+            <View
+              style={[styles.divider, { backgroundColor: theme.divider }]}
+            />
             <Row label="Amount" value={`${amount} ${asset}`} highlight />
             {memo ? (
               <>
-                <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+                <View
+                  style={[styles.divider, { backgroundColor: theme.divider }]}
+                />
                 <Row label="Memo" value={memo} />
               </>
             ) : null}
             {isPrivate ? (
               <>
-                <View style={[styles.divider, { backgroundColor: theme.divider }]} />
+                <View
+                  style={[styles.divider, { backgroundColor: theme.divider }]}
+                />
                 <Row label="Privacy" value="X-Ray enabled" />
               </>
             ) : null}
@@ -226,11 +303,34 @@ if (registryError) {
           {(availableSwapOptions.length > 0 || swapError) && (
             <View style={styles.swapSection}>
               {swapError ? (
-                <View style={[styles.errorBanner, { backgroundColor: theme.status.errorBg }]}>
-                  <Text style={[styles.errorBannerText, { color: theme.status.error }]}>⚠ {swapError}</Text>
-                  {swapError.includes('Liquidity') && (
-                    <Pressable style={{ marginTop: 8 }} onPress={() => void refetch()}>
-                      <Text style={{ color: theme.buttonPrimaryBg, fontWeight: '700', fontSize: 13 }}>Retry Search</Text>
+                <View
+                  style={[
+                    styles.errorBanner,
+                    { backgroundColor: theme.status.errorBg },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.errorBannerText,
+                      { color: theme.status.error },
+                    ]}
+                  >
+                    ⚠ {swapError}
+                  </Text>
+                  {swapError.includes("Liquidity") && (
+                    <Pressable
+                      style={{ marginTop: 8 }}
+                      onPress={() => void refetch()}
+                    >
+                      <Text
+                        style={{
+                          color: theme.buttonPrimaryBg,
+                          fontWeight: "700",
+                          fontSize: 13,
+                        }}
+                      >
+                        Retry Search
+                      </Text>
                     </Pressable>
                   )}
                 </View>
@@ -253,25 +353,71 @@ if (registryError) {
           {/* Show cost comparison if swap is selected */}
           {selectedSwapPath && (
             <>
-              <View style={[styles.costComparisonCard, { backgroundColor: theme.surface }]}>
-                <Text style={[styles.costComparisonTitle, { color: theme.textPrimary }]}>Payment Summary</Text>
+              <View
+                style={[
+                  styles.costComparisonCard,
+                  { backgroundColor: theme.surface },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.costComparisonTitle,
+                    { color: theme.textPrimary },
+                  ]}
+                >
+                  Payment Summary
+                </Text>
                 <View style={styles.costRow}>
-                  <Text style={[styles.costLabel, { color: theme.textSecondary }]}>You pay:</Text>
-                  <Text style={[styles.costValue, { color: theme.textPrimary }]}>
-                    {selectedSwapPath.sourceAmount} {selectedSwapPath.sourceAsset}
+                  <Text
+                    style={[styles.costLabel, { color: theme.textSecondary }]}
+                  >
+                    You pay:
+                  </Text>
+                  <Text
+                    style={[styles.costValue, { color: theme.textPrimary }]}
+                  >
+                    {selectedSwapPath.sourceAmount}{" "}
+                    {selectedSwapPath.sourceAsset}
                   </Text>
                 </View>
-                <View style={[styles.costDivider, { backgroundColor: theme.divider }]} />
+                <View
+                  style={[
+                    styles.costDivider,
+                    { backgroundColor: theme.divider },
+                  ]}
+                />
                 <View style={styles.costRow}>
-                  <Text style={[styles.costLabel, { color: theme.textSecondary }]}>Exchange rate:</Text>
-                  <Text style={[styles.costValue, { color: theme.textPrimary }]}>{selectedSwapPath.rateDescription}</Text>
+                  <Text
+                    style={[styles.costLabel, { color: theme.textSecondary }]}
+                  >
+                    Exchange rate:
+                  </Text>
+                  <Text
+                    style={[styles.costValue, { color: theme.textPrimary }]}
+                  >
+                    {selectedSwapPath.rateDescription}
+                  </Text>
                 </View>
                 {selectedSwapPath.hopCount > 0 && (
                   <>
-                    <View style={[styles.costDivider, { backgroundColor: theme.divider }]} />
+                    <View
+                      style={[
+                        styles.costDivider,
+                        { backgroundColor: theme.divider },
+                      ]}
+                    />
                     <View style={styles.costRow}>
-                      <Text style={[styles.costLabel, { color: theme.textSecondary }]}>Path:</Text>
-                      <Text style={[styles.costValue, { color: theme.textPrimary }]}>
+                      <Text
+                        style={[
+                          styles.costLabel,
+                          { color: theme.textSecondary },
+                        ]}
+                      >
+                        Path:
+                      </Text>
+                      <Text
+                        style={[styles.costValue, { color: theme.textPrimary }]}
+                      >
                         {selectedSwapPath.hopCount === 1
                           ? "1 intermediary"
                           : `${selectedSwapPath.hopCount} intermediaries`}
@@ -298,31 +444,45 @@ if (registryError) {
       </ScrollView>
 
       <View style={styles.actions}>
-        <Pressable 
+        <Pressable
           style={[
-            styles.primaryBtn, 
+            styles.primaryBtn,
             { backgroundColor: theme.buttonPrimaryBg },
-            isConnected === false && { opacity: 0.5 }
-          ]} 
+            isConnected === false && { opacity: 0.5 },
+          ]}
           onPress={handlePayWithWallet}
           disabled={isConnected === false}
         >
-          <Text style={[styles.primaryBtnText, { color: theme.buttonPrimaryText }]}>
-            {isConnected === false ? "Offline: Payment Disabled" : "Pay with Wallet"}
+          <Text
+            style={[styles.primaryBtnText, { color: theme.buttonPrimaryText }]}
+          >
+            {isConnected === false
+              ? "Offline: Payment Disabled"
+              : "Pay with Wallet"}
           </Text>
         </Pressable>
         <Pressable
           style={styles.secondaryBtn}
           onPress={() => router.replace("/")}
         >
-          <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>Cancel</Text>
+          <Text
+            style={[styles.secondaryBtnText, { color: theme.textSecondary }]}
+          >
+            Cancel
+          </Text>
         </Pressable>
         <Pressable
           style={[styles.secondaryBtn, { marginTop: 8 }]}
           onPress={handleSaveContact}
           disabled={savingContact || isConnected === false}
         >
-          <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }, isConnected === false && { opacity: 0.5 }]}>
+          <Text
+            style={[
+              styles.secondaryBtnText,
+              { color: theme.textSecondary },
+              isConnected === false && { opacity: 0.5 },
+            ]}
+          >
             {savingContact ? "Saving..." : "Save Recipient as Contact"}
           </Text>
         </Pressable>
@@ -343,8 +503,16 @@ function Row({
   const { theme } = useTheme();
   return (
     <View style={styles.row}>
-      <Text style={[styles.rowLabel, { color: theme.textSecondary }]}>{label}</Text>
-      <Text style={[styles.rowValue, { color: theme.textPrimary }, highlight && styles.rowValueHighlight]}>
+      <Text style={[styles.rowLabel, { color: theme.textSecondary }]}>
+        {label}
+      </Text>
+      <Text
+        style={[
+          styles.rowValue,
+          { color: theme.textPrimary },
+          highlight && styles.rowValueHighlight,
+        ]}
+      >
         {value}
       </Text>
     </View>
@@ -428,7 +596,7 @@ const styles = StyleSheet.create({
     height: 1,
     marginVertical: 8,
   },
-  actions: { 
+  actions: {
     gap: 12,
     padding: 24,
     paddingTop: 12,

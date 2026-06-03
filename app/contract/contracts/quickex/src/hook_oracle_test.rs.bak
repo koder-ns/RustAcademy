@@ -3,7 +3,7 @@
 
 use crate::{
     types::{FeeConfig, HookEventKind, OracleFeeConfig},
-    QuickexContract, QuickexContractClient,
+     RustAcademyContract,  RustAcademyContractClient,
 };
 use soroban_sdk::{
     contract, contractimpl,
@@ -68,7 +68,7 @@ impl MaliciousHookContract {
             .persistent()
             .get(&Symbol::short("target"))
             .unwrap();
-        let client = QuickexContractClient::new(&env, &target);
+        let client =  RustAcademyContractClient::new(&env, &target);
         let random_hook = Address::generate(&env);
         let _ = client.register_hook(&random_hook);
         Err(())
@@ -110,7 +110,7 @@ impl MockOracleContract {
 fn setup<'a>(
     env: &'a Env,
 ) -> (
-    QuickexContractClient<'a>,
+     RustAcademyContractClient<'a>,
     Address,
     Address,
     Address,
@@ -120,8 +120,8 @@ fn setup<'a>(
     let platform_wallet = Address::generate(env);
     let owner = Address::generate(env);
     let recipient = Address::generate(env);
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(env, &contract_id);
 
     client.initialize(&admin);
     (client, admin, platform_wallet, owner, recipient)

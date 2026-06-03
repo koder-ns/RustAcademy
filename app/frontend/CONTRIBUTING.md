@@ -1,6 +1,6 @@
-# Contributing to QuickEx Frontend
+# Contributing to RustAcademy Frontend
 
-Thank you for your interest in contributing to the QuickEx frontend!
+Thank you for your interest in contributing to the RustAcademy frontend!
 
 ## Development Workflow
 

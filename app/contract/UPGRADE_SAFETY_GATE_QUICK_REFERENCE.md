@@ -5,23 +5,29 @@
 ## API Summary
 
 ### 1. Set Upgrade Window (Admin)
+
 ```rust
-set_upgrade_window(env, caller, start_epoch, end_epoch) -> Result<(), QuickexError>
+set_upgrade_window(env, caller, start_epoch, end_epoch) -> Result<(),  RustAcademyError>
 ```
+
 - `start_epoch`: Ledger timestamp when upgrades allowed (0 = no window)
 - `end_epoch`: Ledger timestamp when upgrades blocked (0 = no upper bound)
 - **Error**: `InsufficientRole` if not admin
 
 ### 2. Get Upgrade Window
+
 ```rust
 get_upgrade_window(env) -> (u64, u64)
 ```
+
 - Returns `(start, end)` tuple
 
 ### 3. Start Upgrade (Admin) – **Window Gated**
+
 ```rust
-start_upgrade(env, caller, new_version) -> Result<(), QuickexError>
+start_upgrade(env, caller, new_version) -> Result<(),  RustAcademyError>
 ```
+
 - **Must be called during active window** (AC1)
 - Sets `UpgradeInProgress = true`
 - Emits: `UpgradeStarted { admin, old_version, new_version, ... }`
@@ -31,17 +37,21 @@ start_upgrade(env, caller, new_version) -> Result<(), QuickexError>
   - `InsufficientRole`: Not admin
 
 ### 4. Update WASM
+
 ```rust
-upgrade(env, caller, new_wasm_hash) -> Result<(), QuickexError>
+upgrade(env, caller, new_wasm_hash) -> Result<(),  RustAcademyError>
 ```
+
 - Swaps contract code (no storage changes)
 - Emits: `ContractUpgraded { admin, new_wasm_hash, ... }`
 - **Error**: `InsufficientRole` if not admin
 
 ### 5. Complete Upgrade (Admin)
+
 ```rust
-complete_upgrade(env, caller, new_version) -> Result<u32, QuickexError>
+complete_upgrade(env, caller, new_version) -> Result<u32,  RustAcademyError>
 ```
+
 - Calls `migrate()` + validates invariants (AC2)
 - **Panics if invariants fail** → rolls back atomically
 - Sets `UpgradeInProgress = false`
@@ -71,27 +81,28 @@ Day 2 @ 14:15: admin.complete_upgrade(2u32)
 
 ## Error Codes (Repurposed)
 
-| Error | Code | Meaning |
-|-------|------|---------|
-| `InvalidAmount` | 100 | Upgrade window not active |
-| `ContractPaused` | 300 | Upgrade already in-progress |
-| `InternalError` | 900 | Invariants failed post-upgrade |
+| Error            | Code | Meaning                        |
+| ---------------- | ---- | ------------------------------ |
+| `InvalidAmount`  | 100  | Upgrade window not active      |
+| `ContractPaused` | 300  | Upgrade already in-progress    |
+| `InternalError`  | 900  | Invariants failed post-upgrade |
 
 ---
 
 ## Storage Keys
 
-| Key | Type | Purpose |
-|-----|------|---------|
-| `UpgradeWindowStart` | u64 | Epoch when upgrades allowed |
-| `UpgradeWindowEnd` | u64 | Epoch when upgrades blocked |
-| `UpgradeInProgress` | bool | Currently mid-upgrade? |
+| Key                  | Type | Purpose                     |
+| -------------------- | ---- | --------------------------- |
+| `UpgradeWindowStart` | u64  | Epoch when upgrades allowed |
+| `UpgradeWindowEnd`   | u64  | Epoch when upgrades blocked |
+| `UpgradeInProgress`  | bool | Currently mid-upgrade?      |
 
 ---
 
 ## Events (Indexer Filter)
 
 ### UpgradeStarted
+
 ```
 topic[0] = "TOPIC_ADMIN"
 topic[1] = "UpgradeStarted"
@@ -108,6 +119,7 @@ Data: {
 ```
 
 ### UpgradeCompleted
+
 ```
 topic[0] = "TOPIC_ADMIN"
 topic[1] = "UpgradeCompleted"
@@ -138,13 +150,13 @@ Post-upgrade checks that **must** hold:
 
 ## Test Coverage
 
-| Test | What | Lines |
-|------|------|-------|
-| `blocks_upgrade_outside_window` | AC1 window gating | 660–703 |
-| `post_upgrade_invariants_enforced` | AC2 invariant checks | 705–737 |
-| `emits_events` | AC3 event tracking | 739–770 |
-| `blocks_double_start` | Safety: no concurrent upgrades | 772–798 |
-| `non_admin_blocked` | Security: admin-only | 800–820 |
+| Test                               | What                           | Lines   |
+| ---------------------------------- | ------------------------------ | ------- |
+| `blocks_upgrade_outside_window`    | AC1 window gating              | 660–703 |
+| `post_upgrade_invariants_enforced` | AC2 invariant checks           | 705–737 |
+| `emits_events`                     | AC3 event tracking             | 739–770 |
+| `blocks_double_start`              | Safety: no concurrent upgrades | 772–798 |
+| `non_admin_blocked`                | Security: admin-only           | 800–820 |
 
 **Run**: `cargo test upgrade_safety_gate_`
 

@@ -6,13 +6,13 @@
 --                            manual operator review.
 
 -- ─── payment_links ────────────────────────────────────────────────────────────
--- Stores payment links created by QuickEx users. The auto-match engine queries
+-- Stores payment links created by  RustAcademy users. The auto-match engine queries
 -- this table to find candidate links for each incoming Stellar transaction.
 
 CREATE TABLE IF NOT EXISTS payment_links (
   id                    UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
 
-  -- The QuickEx user who owns this link (the payee).
+  -- The  RustAcademy user who owns this link (the payee).
   owner_public_key      TEXT        NOT NULL,
 
   -- Stellar account that will receive the funds (usually the same as owner).

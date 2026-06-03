@@ -39,4 +39,4 @@ CREATE INDEX IF NOT EXISTS escrow_events_owner_idx ON escrow_events (owner);
 CREATE INDEX IF NOT EXISTS escrow_events_event_type_idx ON escrow_events (event_type);
 CREATE INDEX IF NOT EXISTS escrow_events_ledger_sequence_idx ON escrow_events (ledger_sequence);
 
-COMMENT ON TABLE escrow_events IS 'Domain events ingested from the QuickEx Soroban contract.';
+COMMENT ON TABLE escrow_events IS 'Domain events ingested from the  RustAcademy Soroban contract.';

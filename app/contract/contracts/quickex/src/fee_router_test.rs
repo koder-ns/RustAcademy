@@ -1,16 +1,16 @@
-use crate::{types::PerAssetFeeConfig, EscrowStatus, QuickexContract, QuickexContractClient};
+use crate::{types::PerAssetFeeConfig, EscrowStatus,  RustAcademyContract,  RustAcademyContractClient};
 use soroban_sdk::{
     testutils::{Address as _, Ledger},
     token, Address, Bytes, Env,
 };
 
-fn setup<'a>() -> (Env, QuickexContractClient<'a>, Address) {
+fn setup<'a>() -> (Env,  RustAcademyContractClient<'a>, Address) {
     let env = Env::default();
     env.mock_all_auths();
     env.ledger().with_mut(|li| li.timestamp = 1_000);
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
     client.initialize(&admin);

@@ -1,5 +1,5 @@
 use crate::{
-    errors::QuickexError,
+    errors:: RustAcademyError,
     events::{
         EVENT_COMPATIBILITY, EVENT_SCHEMAS, EVENT_SCHEMA_VERSION, EVENT_TOPIC_ADMIN,
         EVENT_TOPIC_ESCROW, EVENT_TOPIC_PRIVACY,
@@ -8,7 +8,7 @@ use crate::{
         put_escrow, DataKey, PauseFlag, CURRENT_CONTRACT_VERSION, LEGACY_CONTRACT_VERSION,
         PRIVACY_ENABLED_KEY,
     },
-    EscrowEntry, EscrowStatus, QuickexContract, QuickexContractClient,
+    EscrowEntry, EscrowStatus,  RustAcademyContract,  RustAcademyContractClient,
 };
 
 use soroban_sdk::{
@@ -19,7 +19,7 @@ use soroban_sdk::{
     Address, Bytes, BytesN, ConversionError, Env, InvokeError, Map, Symbol, TryIntoVal, Val, Vec,
 };
 
-/// QuickEx contract integration tests.
+///  RustAcademy contract integration tests.
 ///
 /// ## Upgrade / regression suite
 ///
@@ -95,13 +95,13 @@ fn test_emergency_mode_blocks_risky_entry_points_and_allows_safe_paths() {
 }
 
 #[contract]
-pub struct LegacyQuickexContract;
+pub struct Legacy RustAcademyContract;
 
 #[contractimpl]
-impl LegacyQuickexContract {
-    pub fn initialize(env: Env, admin: Address) -> Result<(), QuickexError> {
+impl Legacy RustAcademyContract {
+    pub fn initialize(env: Env, admin: Address) -> Result<(),  RustAcademyError> {
         if crate::storage::get_admin(&env).is_some() {
-            return Err(QuickexError::AlreadyInitialized);
+            return Err( RustAcademyError::AlreadyInitialized);
         }
 
         crate::storage::set_admin(&env, &admin);
@@ -118,23 +118,23 @@ impl LegacyQuickexContract {
         salt: Bytes,
         timeout_secs: u64,
         arbiter: Option<Address>,
-    ) -> Result<BytesN<32>, QuickexError> {
+    ) -> Result<BytesN<32>,  RustAcademyError> {
         if crate::admin::is_paused(&env) {
-            return Err(QuickexError::ContractPaused);
+            return Err( RustAcademyError::ContractPaused);
         }
         if crate::storage::is_feature_paused(&env, PauseFlag::Deposit) {
-            return Err(QuickexError::OperationPaused);
+            return Err( RustAcademyError::OperationPaused);
         }
 
         crate::escrow::deposit(&env, token, amount, owner, salt, timeout_secs, arbiter)
     }
 }
 
-fn setup<'a>() -> (Env, QuickexContractClient<'a>) {
+fn setup<'a>() -> (Env,  RustAcademyContractClient<'a>) {
     let env = Env::default();
     env.mock_all_auths();
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
     (env, client)
 }
 
@@ -332,7 +332,7 @@ fn test_set_privacy_already_set_fails() {
 
     // Enabling again without disabling first must fail.
     let result = client.try_set_privacy(&account, &true);
-    assert_contract_error(result, QuickexError::PrivacyAlreadySet);
+    assert_contract_error(result,  RustAcademyError::PrivacyAlreadySet);
 }
 
 /// Regression suite: privacy toggle — ensures upgrades do not break set_privacy/get_privacy.
@@ -361,8 +361,8 @@ fn create_test_token(env: &Env) -> Address {
 }
 
 fn assert_contract_error<T>(
-    result: Result<Result<T, ConversionError>, Result<QuickexError, InvokeError>>,
-    expected: QuickexError,
+    result: Result<Result<T, ConversionError>, Result< RustAcademyError, InvokeError>>,
+    expected:  RustAcademyError,
 ) {
     match result {
         Err(Ok(actual)) => assert_eq!(actual, expected),
@@ -495,7 +495,7 @@ fn test_double_withdrawal_fails() {
     assert!(first_result.is_ok());
     assert_eq!(first_result.unwrap(), Ok(true));
     let second_result = client.try_withdraw(&token, &amount, &commitment, &to, &salt);
-    assert_contract_error(second_result, QuickexError::AlreadySpent);
+    assert_contract_error(second_result,  RustAcademyError::AlreadySpent);
 }
 
 #[test]
@@ -518,7 +518,7 @@ fn test_invalid_salt_fails() {
 
     env.mock_all_auths();
     let result = client.try_withdraw(&token, &amount, &commitment, &to, &wrong_salt);
-    assert_contract_error(result, QuickexError::CommitmentNotFound);
+    assert_contract_error(result,  RustAcademyError::CommitmentNotFound);
 }
 
 #[test]
@@ -549,7 +549,7 @@ fn test_invalid_amount_fails() {
     env.mock_all_auths();
 
     let result = client.try_withdraw(&token, &wrong_amount, &commitment, &to, &salt);
-    assert_contract_error(result, QuickexError::CommitmentNotFound);
+    assert_contract_error(result,  RustAcademyError::CommitmentNotFound);
 }
 
 #[test]
@@ -570,7 +570,7 @@ fn test_zero_amount_fails() {
     env.mock_all_auths();
 
     let result = client.try_withdraw(&token, &amount, &commitment, &to, &salt);
-    assert_contract_error(result, QuickexError::InvalidAmount);
+    assert_contract_error(result,  RustAcademyError::InvalidAmount);
 }
 
 #[test]
@@ -591,7 +591,7 @@ fn test_negative_amount_fails() {
     env.mock_all_auths();
 
     let result = client.try_withdraw(&token, &amount, &commitment, &to, &salt);
-    assert_contract_error(result, QuickexError::InvalidAmount);
+    assert_contract_error(result,  RustAcademyError::InvalidAmount);
 }
 
 #[test]
@@ -611,7 +611,7 @@ fn test_nonexistent_commitment_fails() {
 
     env.mock_all_auths();
     let result = client.try_withdraw(&token, &amount, &commitment, &to, &salt);
-    assert_contract_error(result, QuickexError::CommitmentNotFound);
+    assert_contract_error(result,  RustAcademyError::CommitmentNotFound);
 }
 
 /// Regression suite: privacy get/set — default off, enable, disable.
@@ -740,29 +740,29 @@ fn test_health_check() {
 #[test]
 fn test_canonical_error_code_ranges() {
     // Validation failures (100-199)
-    assert_eq!(QuickexError::InvalidAmount as u32, 100);
-    assert_eq!(QuickexError::InvalidSalt as u32, 101);
-    assert_eq!(QuickexError::InvalidPrivacyLevel as u32, 102);
+    assert_eq!( RustAcademyError::InvalidAmount as u32, 100);
+    assert_eq!( RustAcademyError::InvalidSalt as u32, 101);
+    assert_eq!( RustAcademyError::InvalidPrivacyLevel as u32, 102);
 
     // Auth/admin failures (200-299)
-    assert_eq!(QuickexError::Unauthorized as u32, 200);
-    assert_eq!(QuickexError::AlreadyInitialized as u32, 201);
-    assert_eq!(QuickexError::InsufficientRole as u32, 202);
+    assert_eq!( RustAcademyError::Unauthorized as u32, 200);
+    assert_eq!( RustAcademyError::AlreadyInitialized as u32, 201);
+    assert_eq!( RustAcademyError::InsufficientRole as u32, 202);
 
     // State/escrow/commitment violations (300-399)
-    assert_eq!(QuickexError::ContractPaused as u32, 300);
-    assert_eq!(QuickexError::PrivacyAlreadySet as u32, 301);
-    assert_eq!(QuickexError::CommitmentNotFound as u32, 302);
-    assert_eq!(QuickexError::CommitmentAlreadyExists as u32, 303);
-    assert_eq!(QuickexError::AlreadySpent as u32, 304);
-    assert_eq!(QuickexError::InvalidCommitment as u32, 305);
-    assert_eq!(QuickexError::CommitmentMismatch as u32, 306);
-    assert_eq!(QuickexError::EscrowExpired as u32, 307);
-    assert_eq!(QuickexError::EscrowNotExpired as u32, 308);
-    assert_eq!(QuickexError::InvalidOwner as u32, 309);
+    assert_eq!( RustAcademyError::ContractPaused as u32, 300);
+    assert_eq!( RustAcademyError::PrivacyAlreadySet as u32, 301);
+    assert_eq!( RustAcademyError::CommitmentNotFound as u32, 302);
+    assert_eq!( RustAcademyError::CommitmentAlreadyExists as u32, 303);
+    assert_eq!( RustAcademyError::AlreadySpent as u32, 304);
+    assert_eq!( RustAcademyError::InvalidCommitment as u32, 305);
+    assert_eq!( RustAcademyError::CommitmentMismatch as u32, 306);
+    assert_eq!( RustAcademyError::EscrowExpired as u32, 307);
+    assert_eq!( RustAcademyError::EscrowNotExpired as u32, 308);
+    assert_eq!( RustAcademyError::InvalidOwner as u32, 309);
 
     // Internal/unexpected conditions (900-999)
-    assert_eq!(QuickexError::InternalError as u32, 900);
+    assert_eq!( RustAcademyError::InternalError as u32, 900);
 }
 
 /// Regression suite: deposit with commitment — create escrow (golden path).
@@ -781,8 +781,8 @@ fn test_deposit() {
 
     token_client.mint(&user, &1000);
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let commitment = BytesN::from_array(&env, &[1; 32]);
 
@@ -806,8 +806,8 @@ fn test_event_snapshot_escrow_deposited_schema() {
     let token_client = token::StellarAssetClient::new(&env, &token_id);
     token_client.mint(&user, &1000);
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let commitment = BytesN::from_array(&env, &[7; 32]);
     client.deposit_with_commitment(&user, &token_id, &250, &commitment, &0, &None);
@@ -1066,7 +1066,7 @@ fn test_initialize_twice_fails() {
 
     // Try to initialize again - should fail
     let result = client.try_initialize(&admin2);
-    assert_contract_error(result, QuickexError::AlreadyInitialized);
+    assert_contract_error(result,  RustAcademyError::AlreadyInitialized);
 }
 
 #[test]
@@ -1074,8 +1074,8 @@ fn test_initialize_detects_partial_admin_only_state_as_already_initialized() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     // Simulate a partial state where legacy code wrote admin but did not set
     // the explicit initialized flag.
@@ -1086,7 +1086,7 @@ fn test_initialize_detects_partial_admin_only_state_as_already_initialized() {
 
     let new_admin = Address::generate(&env);
     let result = client.try_initialize(&new_admin);
-    assert_contract_error(result, QuickexError::AlreadyInitialized);
+    assert_contract_error(result,  RustAcademyError::AlreadyInitialized);
 
     // Ensure no implicit admin change happened on failed re-init.
     assert_eq!(client.get_admin(), Some(existing_admin));
@@ -1098,7 +1098,7 @@ fn test_config_mutation_before_initialize_fails_deterministically() {
     let caller = Address::generate(&env);
 
     let result = client.try_set_fee_config(&caller, &crate::types::FeeConfig { fee_bps: 100 });
-    assert_contract_error(result, QuickexError::Unauthorized);
+    assert_contract_error(result,  RustAcademyError::Unauthorized);
 }
 
 #[test]
@@ -1113,7 +1113,7 @@ fn test_set_privacy_same_value_fails() {
     assert_eq!(first, Ok(Ok(())));
 
     let second = client.try_set_privacy(&account, &true);
-    assert_contract_error(second, QuickexError::PrivacyAlreadySet);
+    assert_contract_error(second,  RustAcademyError::PrivacyAlreadySet);
 }
 
 // fn test_deposit_with_commitment_fails_when_paused() {
@@ -1128,7 +1128,7 @@ fn test_set_privacy_same_value_fails() {
 //     client.set_paused(&admin, &true);
 
 //     let result = client.try_deposit_with_commitment(&user, &token, &amount, &commitment, &0);
-//     assert_contract_error(result, QuickexError::ContractPaused);
+//     assert_contract_error(result,  RustAcademyError::ContractPaused);
 // }
 
 #[test]
@@ -1147,8 +1147,8 @@ fn test_deposit_with_commitment_fails_when_paused() {
 
     token_client.mint(&user, &1000);
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let commitment = BytesN::from_array(&env, &[1; 32]);
 
@@ -1156,7 +1156,7 @@ fn test_deposit_with_commitment_fails_when_paused() {
     client.pause_features(&admin, &(PauseFlag::DepositWithCommitment as u64));
 
     let result = client.try_deposit_with_commitment(&user, &token_id, &500, &commitment, &0, &None);
-    assert_contract_error(result, QuickexError::OperationPaused);
+    assert_contract_error(result,  RustAcademyError::OperationPaused);
 }
 
 #[test]
@@ -1189,7 +1189,7 @@ fn test_withdraw_fails_when_paused() {
     client.pause_features(&admin, &(PauseFlag::Withdrawal as u64));
 
     let result = client.try_withdraw(&token, &amount, &commitment, &to, &salt);
-    assert_contract_error(result, QuickexError::OperationPaused);
+    assert_contract_error(result,  RustAcademyError::OperationPaused);
 }
 
 #[test]
@@ -1210,7 +1210,7 @@ fn test_deposit_fails_when_paused() {
     client.pause_features(&admin, &(PauseFlag::Deposit as u64));
 
     let result = client.try_deposit(&token, &amount, &owner, &salt, &timeout, &None);
-    assert_contract_error(result, QuickexError::OperationPaused);
+    assert_contract_error(result,  RustAcademyError::OperationPaused);
 }
 
 #[test]
@@ -1239,7 +1239,7 @@ fn test_refund_fails_when_paused() {
     env.ledger().set_timestamp(expires_at);
 
     let result = client.try_refund(&commitment, &owner);
-    assert_contract_error(result, QuickexError::OperationPaused);
+    assert_contract_error(result,  RustAcademyError::OperationPaused);
 }
 
 #[test]
@@ -1268,7 +1268,7 @@ fn test_refund_pause_unpause() {
     env.ledger().set_timestamp(expires_at);
 
     let result = client.try_refund(&commitment, &owner);
-    assert_contract_error(result, QuickexError::OperationPaused);
+    assert_contract_error(result,  RustAcademyError::OperationPaused);
 
     client.unpause_features(&admin, &(PauseFlag::Refund as u64));
     client.refund(&commitment, &owner);
@@ -1302,7 +1302,7 @@ fn test_set_paused_by_non_admin_fails() {
 
     // Non-admin tries to pause - should fail
     let result = client.try_set_paused(&non_admin, &true);
-    assert_contract_error(result, QuickexError::InsufficientRole);
+    assert_contract_error(result,  RustAcademyError::InsufficientRole);
 }
 
 #[test]
@@ -1368,7 +1368,7 @@ fn test_set_admin_by_non_admin_fails() {
 
     // Non-admin tries to transfer admin rights - should fail
     let result = client.try_set_admin(&non_admin, &new_admin);
-    assert_contract_error(result, QuickexError::InsufficientRole);
+    assert_contract_error(result,  RustAcademyError::InsufficientRole);
 }
 
 #[test]
@@ -1385,7 +1385,7 @@ fn test_old_admin_cannot_pause_after_transfer() {
 
     // Old admin tries to pause - should fail
     let result = client.try_set_paused(&admin, &true);
-    assert_contract_error(result, QuickexError::InsufficientRole);
+    assert_contract_error(result,  RustAcademyError::InsufficientRole);
 }
 
 #[test]
@@ -1734,7 +1734,7 @@ fn test_upgrade_by_admin() {
             // This is a contract error - should NOT be Unauthorized
             assert_ne!(
                 contract_error,
-                QuickexError::Unauthorized,
+                 RustAcademyError::Unauthorized,
                 "Upgrade failed with Unauthorized error when admin called it"
             );
         }
@@ -1754,7 +1754,7 @@ fn test_migrate_by_non_admin_fails() {
     client.initialize(&admin);
 
     let result = client.try_migrate(&non_admin);
-    assert_contract_error(result, QuickexError::InsufficientRole);
+    assert_contract_error(result,  RustAcademyError::InsufficientRole);
 }
 
 #[test]
@@ -1762,8 +1762,8 @@ fn test_upgrade_migration_preserves_legacy_escrow_data() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(LegacyQuickexContract, ());
-    let legacy_client = LegacyQuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register(Legacy RustAcademyContract, ());
+    let legacy_client = Legacy RustAcademyContractClient::new(&env, &contract_id);
 
     let admin = Address::generate(&env);
     let owner = Address::generate(&env);
@@ -1776,8 +1776,8 @@ fn test_upgrade_migration_preserves_legacy_escrow_data() {
 
     let commitment = legacy_client.deposit(&token, &amount, &owner, &salt, &300, &None);
 
-    env.register_at(&contract_id, QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    env.register_at(&contract_id,  RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     assert_eq!(client.get_version(), LEGACY_CONTRACT_VERSION);
 
@@ -1817,7 +1817,7 @@ fn test_upgrade_by_non_admin_fails() {
 
     // Non-admin tries to upgrade - should fail with Unauthorized
     let result = client.try_upgrade(&non_admin, &new_wasm_hash);
-    assert_contract_error(result, QuickexError::InsufficientRole);
+    assert_contract_error(result,  RustAcademyError::InsufficientRole);
 }
 
 #[test]
@@ -1830,7 +1830,7 @@ fn test_upgrade_without_admin_initialized_fails() {
 
     // Try to upgrade without admin set - should fail with Unauthorized
     let result = client.try_upgrade(&caller, &new_wasm_hash);
-    assert_contract_error(result, QuickexError::Unauthorized);
+    assert_contract_error(result,  RustAcademyError::Unauthorized);
 }
 
 // ============================================================================
@@ -1895,7 +1895,7 @@ fn test_withdrawal_fails_after_expiry() {
 
     // Withdrawal should fail with EscrowExpired (error #13)
     let res = client.try_withdraw(&token, &amount, &commitment2, &to, &salt2);
-    assert_eq!(res, Err(Ok(crate::errors::QuickexError::EscrowExpired)));
+    assert_eq!(res, Err(Ok(crate::errors:: RustAcademyError::EscrowExpired)));
 }
 
 /// Regression suite: refund after expiry — golden path refund flow.
@@ -1920,7 +1920,7 @@ fn test_refund_successful() {
     // Try refund early - should fail with EscrowNotExpired (error #14)
     env.ledger().set_timestamp(expires_at - 1);
     let res = client.try_refund(&commitment, &owner);
-    assert_eq!(res, Err(Ok(crate::errors::QuickexError::EscrowNotExpired)));
+    assert_eq!(res, Err(Ok(crate::errors:: RustAcademyError::EscrowNotExpired)));
 
     // Advance past expiry
     env.ledger().set_timestamp(expires_at);
@@ -1956,7 +1956,7 @@ fn test_refund_unauthorized_fails() {
 
     // Thief tries to refund - should fail with InvalidOwner (error #15)
     let res = client.try_refund(&commitment, &thief);
-    assert_eq!(res, Err(Ok(crate::errors::QuickexError::InvalidOwner)));
+    assert_eq!(res, Err(Ok(crate::errors:: RustAcademyError::InvalidOwner)));
 }
 
 #[test]
@@ -1976,7 +1976,7 @@ fn test_double_refund_fails() {
 
     // Second refund attempt - should fail with AlreadySpent (error #9)
     let res = client.try_refund(&commitment, &owner);
-    assert_eq!(res, Err(Ok(crate::errors::QuickexError::AlreadySpent)));
+    assert_eq!(res, Err(Ok(crate::errors:: RustAcademyError::AlreadySpent)));
 }
 
 // ============================================================================
@@ -2082,7 +2082,7 @@ fn test_dispute_fails_without_arbiter() {
 
     // Attempt dispute should fail
     let res = client.try_dispute(&commitment);
-    assert_eq!(res, Err(Ok(crate::errors::QuickexError::NoArbiter)));
+    assert_eq!(res, Err(Ok(crate::errors:: RustAcademyError::NoArbiter)));
 }
 
 #[test]
@@ -2111,7 +2111,7 @@ fn test_dispute_fails_on_non_pending_status() {
     let res = client.try_dispute(&commitment);
     assert_eq!(
         res,
-        Err(Ok(crate::errors::QuickexError::InvalidDisputeState))
+        Err(Ok(crate::errors:: RustAcademyError::InvalidDisputeState))
     );
 }
 
@@ -2224,7 +2224,7 @@ fn test_resolve_dispute_fails_for_non_arbiter() {
 
     // Non-arbiter caller must be blocked even when recipient is otherwise valid.
     let res = client.try_resolve_dispute(&impostor, &commitment, &true, &owner);
-    assert_eq!(res, Err(Ok(crate::errors::QuickexError::NotArbiter)));
+    assert_eq!(res, Err(Ok(crate::errors:: RustAcademyError::NotArbiter)));
 }
 
 #[test]
@@ -2252,7 +2252,7 @@ fn test_resolve_dispute_fails_on_non_disputed_status() {
     let res = client.try_resolve_dispute(&arbiter, &commitment, &true, &owner);
     assert_eq!(
         res,
-        Err(Ok(crate::errors::QuickexError::InvalidDisputeState))
+        Err(Ok(crate::errors:: RustAcademyError::InvalidDisputeState))
     );
 }
 
@@ -2284,7 +2284,7 @@ fn test_withdraw_fails_during_dispute() {
     let res = client.try_withdraw(&token, &amount, &commitment, &owner, &salt);
     assert_eq!(
         res,
-        Err(Ok(crate::errors::QuickexError::InvalidDisputeState))
+        Err(Ok(crate::errors:: RustAcademyError::InvalidDisputeState))
     );
 }
 
@@ -2312,7 +2312,7 @@ fn test_refund_fails_during_dispute() {
     let res = client.try_refund(&commitment, &owner);
     assert_eq!(
         res,
-        Err(Ok(crate::errors::QuickexError::InvalidDisputeState))
+        Err(Ok(crate::errors:: RustAcademyError::InvalidDisputeState))
     );
 }
 
@@ -2602,7 +2602,7 @@ fn test_cross_asset_zero_amount_edge_case() {
 
     // Attempt zero amount deposit should fail
     let result = client.try_deposit(&token, &0, &user, &salt, &0, &None);
-    assert_eq!(result, Err(Ok(QuickexError::InvalidAmount)));
+    assert_eq!(result, Err(Ok( RustAcademyError::InvalidAmount)));
 }
 
 #[test]
@@ -2709,8 +2709,8 @@ fn test_cross_asset_token_authorization() {
 
     token_client.mint(&user, &1000);
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let commitment = BytesN::from_array(&env, &[99u8; 32]);
 
@@ -3050,8 +3050,8 @@ fn test_partial_payment_success() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let token = create_test_token(&env);
     let owner = Address::generate(&env);
@@ -3092,8 +3092,8 @@ fn test_partial_payment_overpayment_rejected() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let token = create_test_token(&env);
     let owner = Address::generate(&env);
@@ -3121,7 +3121,7 @@ fn test_partial_payment_overpayment_rejected() {
     // Try to overpay
     let payment_amount: i128 = 501; // More than remaining (500)
     let result = client.try_partial_payment(&commitment, &payer, &payment_amount);
-    assert_contract_error(result, QuickexError::Overpayment);
+    assert_contract_error(result,  RustAcademyError::Overpayment);
 }
 
 #[test]
@@ -3129,8 +3129,8 @@ fn test_partial_payment_fully_paid_triggers_finalization() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let token = create_test_token(&env);
     let owner = Address::generate(&env);
@@ -3171,8 +3171,8 @@ fn test_partial_payment_invalid_amount_rejected() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let token = create_test_token(&env);
     let owner = Address::generate(&env);
@@ -3198,11 +3198,11 @@ fn test_partial_payment_invalid_amount_rejected() {
 
     // Try to pay zero
     let result = client.try_partial_payment(&commitment, &payer, &0);
-    assert_contract_error(result, QuickexError::InvalidAmount);
+    assert_contract_error(result,  RustAcademyError::InvalidAmount);
 
     // Try to pay negative
     let result = client.try_partial_payment(&commitment, &payer, &-100);
-    assert_contract_error(result, QuickexError::InvalidAmount);
+    assert_contract_error(result,  RustAcademyError::InvalidAmount);
 }
 
 #[test]
@@ -3210,15 +3210,15 @@ fn test_partial_payment_nonexistent_escrow_rejected() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let payer = Address::generate(&env);
     let fake_commitment = BytesN::from_array(&env, &[255; 32]);
 
     // Try to pay to non-existent escrow
     let result = client.try_partial_payment(&fake_commitment, &payer, &100);
-    assert_contract_error(result, QuickexError::CommitmentNotFound);
+    assert_contract_error(result,  RustAcademyError::CommitmentNotFound);
 }
 
 #[test]
@@ -3226,8 +3226,8 @@ fn test_partial_payment_terminal_state_rejected() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let token = create_test_token(&env);
     let owner = Address::generate(&env);
@@ -3245,7 +3245,7 @@ fn test_partial_payment_terminal_state_rejected() {
 
     // Try to make partial payment on spent escrow
     let result = client.try_partial_payment(&commitment, &payer, &100);
-    assert_contract_error(result, QuickexError::AlreadySpent);
+    assert_contract_error(result,  RustAcademyError::AlreadySpent);
 }
 
 #[test]
@@ -3253,8 +3253,8 @@ fn test_withdraw_requires_fully_paid() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let token = create_test_token(&env);
     let owner = Address::generate(&env);
@@ -3279,7 +3279,7 @@ fn test_withdraw_requires_fully_paid() {
 
     // Try to withdraw before fully paid
     let result = client.try_withdraw(&token, &amount_due, &commitment, &owner, &salt);
-    assert_contract_error(result, QuickexError::Overpayment);
+    assert_contract_error(result,  RustAcademyError::Overpayment);
 }
 
 #[test]
@@ -3287,8 +3287,8 @@ fn test_multi_payment_sequence() {
     let env = Env::default();
     env.mock_all_auths();
 
-    let contract_id = env.register(QuickexContract, ());
-    let client = QuickexContractClient::new(&env, &contract_id);
+    let contract_id = env.register( RustAcademyContract, ());
+    let client =  RustAcademyContractClient::new(&env, &contract_id);
 
     let token = create_test_token(&env);
     let owner = Address::generate(&env);

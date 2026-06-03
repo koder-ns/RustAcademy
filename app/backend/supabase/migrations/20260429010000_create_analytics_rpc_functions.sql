@@ -9,7 +9,7 @@
 -- Summary aggregation (USD equivalent + conversion rate)
 -- ---------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION quickex_analytics_summary(
+CREATE OR REPLACE FUNCTION  RustAcademy_analytics_summary(
   p_public_key TEXT,
   p_start_date TIMESTAMPTZ,
   p_end_date TIMESTAMPTZ
@@ -64,7 +64,7 @@ $$;
 -- Asset distribution aggregation
 -- ---------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION quickex_analytics_asset_distribution(
+CREATE OR REPLACE FUNCTION  RustAcademy_analytics_asset_distribution(
   p_public_key TEXT,
   p_start_date TIMESTAMPTZ,
   p_end_date TIMESTAMPTZ
@@ -109,7 +109,7 @@ $$;
 -- Time-series aggregation (daily/weekly/monthly)
 -- ---------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION quickex_analytics_time_series(
+CREATE OR REPLACE FUNCTION  RustAcademy_analytics_time_series(
   p_public_key TEXT,
   p_start_date TIMESTAMPTZ,
   p_end_date TIMESTAMPTZ,

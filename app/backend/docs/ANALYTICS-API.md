@@ -24,15 +24,15 @@ The Analytics API provides aggregated usage and financial metrics for the Develo
 
 **Query Parameters**:
 
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `startDate` | ISO 8601 | Yes | - | Period start date (e.g., `2026-04-01T00:00:00Z`) |
-| `endDate` | ISO 8601 | Yes | - | Period end date (e.g., `2026-04-30T23:59:59Z`) |
-| `grouping` | string | No | `daily` | Time granularity: `daily`, `weekly`, or `monthly` |
-| `assets` | string | No | - | Comma-separated asset codes to filter (e.g., `XLM,USDC`) |
-| `breakdownByAsset` | boolean | No | `false` | Include per-asset breakdown in results |
-| `includeComparison` | boolean | No | `false` | Include comparison with previous period |
-| `includeZeros` | boolean | No | `false` | Include zero-value data points in time series |
+| Parameter           | Type     | Required | Default | Description                                              |
+| ------------------- | -------- | -------- | ------- | -------------------------------------------------------- |
+| `startDate`         | ISO 8601 | Yes      | -       | Period start date (e.g., `2026-04-01T00:00:00Z`)         |
+| `endDate`           | ISO 8601 | Yes      | -       | Period end date (e.g., `2026-04-30T23:59:59Z`)           |
+| `grouping`          | string   | No       | `daily` | Time granularity: `daily`, `weekly`, or `monthly`        |
+| `assets`            | string   | No       | -       | Comma-separated asset codes to filter (e.g., `XLM,USDC`) |
+| `breakdownByAsset`  | boolean  | No       | `false` | Include per-asset breakdown in results                   |
+| `includeComparison` | boolean  | No       | `false` | Include comparison with previous period                  |
+| `includeZeros`      | boolean  | No       | `false` | Include zero-value data points in time series            |
 
 **Response Format**:
 
@@ -105,7 +105,10 @@ The Analytics API provides aggregated usage and financial metrics for the Develo
     "requestedStartDate": "2026-04-01T00:00:00Z",
     "requestedEndDate": "2026-04-30T23:59:59Z",
     "granularity": "daily",
-    "assetFilter": ["XLM", "USDC:GBUQWP3BOUZX34ULNQG23RQ6F4YUSXHTQSXUSMIQ6KUVNNBI5I7AD3H"],
+    "assetFilter": [
+      "XLM",
+      "USDC:GBUQWP3BOUZX34ULNQG23RQ6F4YUSXHTQSXUSMIQ6KUVNNBI5I7AD3H"
+    ],
     "generatedAt": "2026-04-28T15:30:45.123Z",
     "executionTimeMs": 187
   }
@@ -230,38 +233,45 @@ curl -X GET "http://localhost:3000/analytics/stats/comparison?startDate=2026-04-
 ## Metrics Reference
 
 ### Volume (`totalVolume` / `volume`)
+
 - **Definition**: Sum of all transaction amounts in the period
 - **Unit**: Asset units (e.g., XLM, USDC)
 - **Notes**: Only counts successful transactions
 
 ### Fees (`totalFees` / `fees`)
+
 - **Definition**: Total transaction fees paid
 - **Unit**: XLM (Stellar's native asset)
 - **Notes**: Includes Horizon API fees and network fees
 
 ### Success Rate (`successRate`)
+
 - **Definition**: Percentage of transactions that completed successfully
 - **Formula**: `(successful_transactions / total_transactions) * 100`
 - **Range**: 0–100%
 - **Notes**: "Success" = transaction confirmed on Stellar ledger; "Pending" = awaiting confirmation; "Failed" = rejected by network
 
 ### Active Links (`totalActiveLinks` / `activeLinks`)
+
 - **Definition**: Number of unique payment links used in the period
 - **Unit**: Integer count
 - **Notes**: A link is "active" if it has at least one transaction attempt
 
 ### Paid Links (`totalPaidLinks` / `paidLinks`)
+
 - **Definition**: Number of unique payment links that received at least one successful transaction
 - **Unit**: Integer count
 - **Notes**: Subset of active links
 
 ### Average Transaction (`averageTransaction`)
+
 - **Definition**: Mean transaction amount across all successful transactions
 - **Formula**: `total_volume / successful_transaction_count`
 - **Unit**: Asset units
 - **Notes**: Excludes pending/failed transactions
 
 ### Transaction Count (`transactionCount`)
+
 - **Definition**: Total number of transactions in the period
 - **Unit**: Integer count
 - **Notes**: Includes successful, pending, and failed transactions
@@ -273,6 +283,7 @@ curl -X GET "http://localhost:3000/analytics/stats/comparison?startDate=2026-04-
 All endpoints require either:
 
 1. **API Key** (X-API-Key header)
+
    ```bash
    curl -H "X-API-Key: your-api-key-here" ...
    ```
@@ -350,6 +361,7 @@ All endpoints require either:
 ### Common Error Responses
 
 **400 Bad Request**:
+
 ```json
 {
   "error": "INVALID_DATE_RANGE",
@@ -359,6 +371,7 @@ All endpoints require either:
 ```
 
 **401 Unauthorized**:
+
 ```json
 {
   "error": "INVALID_API_KEY",
@@ -368,6 +381,7 @@ All endpoints require either:
 ```
 
 **429 Too Many Requests**:
+
 ```json
 {
   "error": "RATE_LIMIT_EXCEEDED",
@@ -390,29 +404,33 @@ All endpoints require either:
 ### JavaScript/TypeScript
 
 ```typescript
-import axios from 'axios';
+import axios from "axios";
 
-const apiKey = 'your-api-key-here';
-const baseUrl = 'http://localhost:3000';
+const apiKey = "your-api-key-here";
+const baseUrl = "http://localhost:3000";
 
 // Fetch April 2026 stats (daily granularity)
 async function getMonthlyStats() {
   try {
     const response = await axios.get(`${baseUrl}/analytics/stats`, {
       params: {
-        startDate: '2026-04-01T00:00:00Z',
-        endDate: '2026-04-30T23:59:59Z',
-        grouping: 'daily',
+        startDate: "2026-04-01T00:00:00Z",
+        endDate: "2026-04-30T23:59:59Z",
+        grouping: "daily",
         breakdownByAsset: true,
       },
-      headers: { 'X-API-Key': apiKey },
+      headers: { "X-API-Key": apiKey },
     });
 
-    console.log('Summary:', response.data.summary);
-    console.log('Time Series:', response.data.timeSeries);
-    console.log('Execution Time:', response.data.metadata.executionTimeMs, 'ms');
+    console.log("Summary:", response.data.summary);
+    console.log("Time Series:", response.data.timeSeries);
+    console.log(
+      "Execution Time:",
+      response.data.metadata.executionTimeMs,
+      "ms",
+    );
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
+    console.error("Error:", error.response?.data || error.message);
   }
 }
 
@@ -420,7 +438,7 @@ async function getMonthlyStats() {
 async function compareWeeks() {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - 7);
-  
+
   const endDate = new Date();
 
   try {
@@ -428,15 +446,19 @@ async function compareWeeks() {
       params: {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
-        grouping: 'weekly',
+        grouping: "weekly",
       },
-      headers: { 'X-API-Key': apiKey },
+      headers: { "X-API-Key": apiKey },
     });
 
-    console.log(`Volume change: ${response.data.comparison.volumeChangePercent}%`);
-    console.log(`Success rate change: ${response.data.comparison.successRateChangePercent}%`);
+    console.log(
+      `Volume change: ${response.data.comparison.volumeChangePercent}%`,
+    );
+    console.log(
+      `Success rate change: ${response.data.comparison.successRateChangePercent}%`,
+    );
   } catch (error) {
-    console.error('Error:', error.response?.data || error.message);
+    console.error("Error:", error.response?.data || error.message);
   }
 }
 
@@ -460,13 +482,13 @@ def get_monthly_stats():
         'grouping': 'daily',
         'breakdownByAsset': 'true',
     }
-    
+
     headers = {'X-API-Key': API_KEY}
-    
+
     try:
         response = requests.get(f'{BASE_URL}/analytics/stats', params=params, headers=headers)
         response.raise_for_status()
-        
+
         data = response.json()
         print(f"Summary Volume: {data['summary']['totalVolume']}")
         print(f"Time Series Points: {len(data['timeSeries'])}")
@@ -477,19 +499,19 @@ def get_monthly_stats():
 def compare_periods():
     today = datetime.utcnow()
     week_ago = today - timedelta(days=7)
-    
+
     params = {
         'startDate': week_ago.isoformat() + 'Z',
         'endDate': today.isoformat() + 'Z',
         'grouping': 'weekly',
     }
-    
+
     headers = {'X-API-Key': API_KEY}
-    
+
     try:
         response = requests.get(f'{BASE_URL}/analytics/stats/comparison', params=params, headers=headers)
         response.raise_for_status()
-        
+
         data = response.json()
         print(f"Volume Change: {data['comparison']['volumeChangePercent']}%")
         print(f"Success Rate Change: {data['comparison']['successRateChangePercent']}%")
@@ -510,6 +532,7 @@ A: Active links have at least one transaction attempt (any status). Paid links h
 
 **Q: Why are some metrics showing 0?**  
 A: This happens when:
+
 - No transactions in the period
 - All transactions failed/are still pending
 - The requested assets had no activity
@@ -533,4 +556,4 @@ For issues or questions:
 
 1. Check the [ERROR-CODES.md](../../docs/ERROR-CODES.md) for detailed error descriptions
 2. Review [API-REFERENCE-PUBLIC-PROFILES.md](../../docs/API-REFERENCE-PUBLIC-PROFILES.md) for related auth endpoints
-3. Contact support: api-support@quickex.to
+3. Contact support: api-support@ RustAcademy.to

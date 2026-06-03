@@ -1,9 +1,9 @@
-const QUICKEX_HOSTS = ['quickex.to', 'www.quickex.to'];
-const QUICKEX_SCHEME = 'quickex';
+const RustAcademy_HOSTS = [" RustAcademy.to", "www. RustAcademy.to"];
+const RustAcademy_SCHEME = " RustAcademy";
 
-const EXPIRES_PARAM = 'expires';
+const EXPIRES_PARAM = "expires";
 
-const ASSET_WHITELIST = ['XLM', 'USDC', 'AQUA', 'yXLM'] as const;
+const ASSET_WHITELIST = ["XLM", "USDC", "AQUA", "yXLM"] as const;
 type AssetCode = (typeof ASSET_WHITELIST)[number];
 
 const AMOUNT_MIN = 0.0000001;
@@ -23,19 +23,27 @@ export type ParseResult =
   | { valid: true; data: PaymentLinkData }
   | { valid: false; error: string };
 
-function extractParts(raw: string): { username: string; params: URLSearchParams } | null {
-  
+function extractParts(
+  raw: string,
+): { username: string; params: URLSearchParams } | null {
   try {
     const url = new URL(raw);
 
-    if (url.protocol === `${QUICKEX_SCHEME}:`) {
-      // quickex://username?amount=...  –  hostname holds the username
-      const username = url.hostname || url.pathname.replace(/^\/+/, '').split('/')[0];
+    if (url.protocol === `${RustAcademy_SCHEME}:`) {
+      //  RustAcademy://username?amount=...  –  hostname holds the username
+      const username =
+        url.hostname || url.pathname.replace(/^\/+/, "").split("/")[0];
       return username ? { username, params: url.searchParams } : null;
     }
 
-    if ((url.protocol === 'https:' || url.protocol === 'http:') && QUICKEX_HOSTS.includes(url.hostname)) {
-      const segments = url.pathname.replace(/^\/+/, '').split('/').filter(Boolean);
+    if (
+      (url.protocol === "https:" || url.protocol === "http:") &&
+      RustAcademy_HOSTS.includes(url.hostname)
+    ) {
+      const segments = url.pathname
+        .replace(/^\/+/, "")
+        .split("/")
+        .filter(Boolean);
       if (segments.length === 0) return null;
       return { username: segments[0], params: url.searchParams };
     }
@@ -48,12 +56,12 @@ function extractParts(raw: string): { username: string; params: URLSearchParams 
 export function parsePaymentLink(raw: string): ParseResult {
   const trimmed = raw.trim();
   if (!trimmed) {
-    return { valid: false, error: 'Empty link' };
+    return { valid: false, error: "Empty link" };
   }
 
   const parts = extractParts(trimmed);
   if (!parts) {
-    return { valid: false, error: 'Not a valid QuickEx link' };
+    return { valid: false, error: "Not a valid  RustAcademy link" };
   }
 
   const { username, params } = parts;
@@ -62,35 +70,44 @@ export function parsePaymentLink(raw: string): ParseResult {
     return { valid: false, error: `Invalid username "${username}"` };
   }
 
-  const rawAmount = params.get('amount');
+  const rawAmount = params.get("amount");
   if (!rawAmount) {
-    return { valid: false, error: 'Missing amount' };
+    return { valid: false, error: "Missing amount" };
   }
   const amount = Number(rawAmount);
   if (Number.isNaN(amount) || amount < AMOUNT_MIN || amount > AMOUNT_MAX) {
-    return { valid: false, error: `Amount must be between ${AMOUNT_MIN} and ${AMOUNT_MAX}` };
+    return {
+      valid: false,
+      error: `Amount must be between ${AMOUNT_MIN} and ${AMOUNT_MAX}`,
+    };
   }
   const formattedAmount = amount.toFixed(7);
 
-  const rawAsset = (params.get('asset') ?? 'XLM').toUpperCase();
+  const rawAsset = (params.get("asset") ?? "XLM").toUpperCase();
   if (!ASSET_WHITELIST.includes(rawAsset as AssetCode)) {
-    return { valid: false, error: `Unsupported asset "${rawAsset}". Supported: ${ASSET_WHITELIST.join(', ')}` };
+    return {
+      valid: false,
+      error: `Unsupported asset "${rawAsset}". Supported: ${ASSET_WHITELIST.join(", ")}`,
+    };
   }
   const asset = rawAsset as AssetCode;
 
   let memo: string | null = null;
-  const rawMemo = params.get('memo');
+  const rawMemo = params.get("memo");
   if (rawMemo) {
     const decoded = decodeURIComponent(rawMemo).trim();
     if (decoded.length > MEMO_MAX_LENGTH) {
-      return { valid: false, error: `Memo exceeds ${MEMO_MAX_LENGTH} characters` };
+      return {
+        valid: false,
+        error: `Memo exceeds ${MEMO_MAX_LENGTH} characters`,
+      };
     }
     if (decoded.length > 0) {
       memo = decoded;
     }
   }
 
-  const privacy = params.get('privacy') === 'true';
+  const privacy = params.get("privacy") === "true";
 
   return {
     valid: true,

@@ -6,7 +6,7 @@
  *   - `brand` requires a selected `brandThemeId`.
  *
  * Per-profile persistence is handled via AsyncStorage with the key pattern:
- *   `@quickex/theme/<profileId>`.
+ *   `@ RustAcademy/theme/<profileId>`.
  */
 
 import React, {
@@ -16,9 +16,9 @@ import React, {
   useEffect,
   useMemo,
   useState,
-} from 'react';
-import { useColorScheme } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+} from "react";
+import { useColorScheme } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import {
   type ThemeId,
@@ -27,7 +27,7 @@ import {
   LightTheme,
   DarkTheme,
   ThemeRegistry,
-} from './tokens';
+} from "./tokens";
 
 // ---------------------------------------------------------------------------
 // 1. Persistence helpers
@@ -35,7 +35,7 @@ import {
 
 /** Build the AsyncStorage key for a given profile. */
 function storageKey(profileId: string): string {
-  return `@quickex/theme/${profileId}`;
+  return `@ RustAcademy/theme/${profileId}`;
 }
 
 export interface PersistedThemePreference {
@@ -75,22 +75,22 @@ async function savePreference(
 
 function resolveTheme(
   mode: ThemeMode,
-  systemScheme: 'light' | 'dark',
+  systemScheme: "light" | "dark",
   brandThemeId?: ThemeId,
 ): ThemeTokens {
   switch (mode) {
-    case 'light':
+    case "light":
       return LightTheme;
-    case 'dark':
+    case "dark":
       return DarkTheme;
-    case 'system':
-      return systemScheme === 'dark' ? DarkTheme : LightTheme;
-    case 'brand':
+    case "system":
+      return systemScheme === "dark" ? DarkTheme : LightTheme;
+    case "brand":
       if (brandThemeId && ThemeRegistry[brandThemeId]) {
         return ThemeRegistry[brandThemeId];
       }
       // Fallback to system if brandThemeId is somehow invalid.
-      return systemScheme === 'dark' ? DarkTheme : LightTheme;
+      return systemScheme === "dark" ? DarkTheme : LightTheme;
     default:
       return LightTheme;
   }
@@ -129,13 +129,13 @@ export interface ThemeProviderProps {
   children: React.ReactNode;
 }
 
-export function QuickExThemeProvider({
-  profileId = 'default',
+export function RustAcademyThemeProvider({
+  profileId = "default",
   children,
 }: ThemeProviderProps) {
-  const systemScheme = (useColorScheme() ?? 'light') as 'light' | 'dark';
+  const systemScheme = (useColorScheme() ?? "light") as "light" | "dark";
 
-  const [mode, setModeState] = useState<ThemeMode>('system');
+  const [mode, setModeState] = useState<ThemeMode>("system");
   const [brandThemeId, setBrandThemeIdState] = useState<ThemeId | undefined>(
     undefined,
   );
@@ -172,8 +172,8 @@ export function QuickExThemeProvider({
   const setBrandTheme = useCallback(
     (id: ThemeId) => {
       setBrandThemeIdState(id);
-      setModeState('brand');
-      savePreference(profileId, { mode: 'brand', brandThemeId: id });
+      setModeState("brand");
+      savePreference(profileId, { mode: "brand", brandThemeId: id });
     },
     [profileId],
   );
@@ -219,7 +219,9 @@ export function QuickExThemeProvider({
 export function useTheme(): ThemeContextValue {
   const ctx = useContext(ThemeContext);
   if (!ctx) {
-    throw new Error('useTheme must be used within a <QuickExThemeProvider>');
+    throw new Error(
+      "useTheme must be used within a < RustAcademyThemeProvider>",
+    );
   }
   return ctx;
 }

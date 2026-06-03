@@ -1,26 +1,26 @@
 openapi: 3.0.3
 info:
-  title: QuickEx Backend API
+  title:  RustAcademy Backend API
   description: >
-    QuickEx is a Stellar-based payment platform enabling payment links,
+     RustAcademy is a Stellar-based payment platform enabling payment links,
     recurring subscriptions, username resolution, marketplace trading,
     fiat on/off ramps, and webhook-driven event notifications.
 
-    **Base URL (production):** `https://api.quickex.example.com`
+    **Base URL (production):** `https://api. RustAcademy.example.com`
     **Base URL (development):** `http://localhost:3000`
 
     Interactive Swagger UI is available at `/docs` when the server is running.
   version: 1.0.0
   contact:
-    name: QuickEx API Support
-    url: https://github.com/quickex/quickex
+    name:  RustAcademy API Support
+    url: https://github.com/ RustAcademy/ RustAcademy
   license:
     name: MIT
 
 servers:
   - url: http://localhost:3000
     description: Local development
-  - url: https://api.quickex.example.com
+  - url: https://api. RustAcademy.example.com
     description: Production
 
 tags:
@@ -858,7 +858,7 @@ paths:
         "200":
           description: Preflight result
         "503":
-          description: QUICKEX_CONTRACT_ID not configured
+          description:  RustAcademy_CONTRACT_ID not configured
 
   /stellar/quote:
     post:

@@ -5,23 +5,24 @@ import { ErrorReportingShell } from "@/components/ErrorReportingShell";
 import "./globals.css";
 
 const siteUrl =
-  (process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://quickex.to");
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  "https:// RustAcademy.to";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "QuickEx",
-    template: "%s | QuickEx",
+    default: " RustAcademy",
+    template: "%s |  RustAcademy",
   },
   description: "Privacy-focused payments on Stellar",
-  applicationName: "QuickEx",
+  applicationName: " RustAcademy",
   keywords: ["Stellar", "payments", "crypto", "XLM", "USDC", "payment link"],
   authors: [{ name: "Pulsefy" }],
   creator: "Pulsefy",
   openGraph: {
     type: "website",
-    siteName: "QuickEx",
-    title: "QuickEx — Privacy-focused payments on Stellar",
+    siteName: " RustAcademy",
+    title: " RustAcademy — Privacy-focused payments on Stellar",
     description: "Privacy-focused payments on Stellar",
     url: siteUrl,
     images: [
@@ -29,14 +30,14 @@ export const metadata: Metadata = {
         url: "/api/og",
         width: 1200,
         height: 630,
-        alt: "QuickEx — Privacy-focused payments on Stellar",
+        alt: " RustAcademy — Privacy-focused payments on Stellar",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    site: "@quickex",
-    title: "QuickEx — Privacy-focused payments on Stellar",
+    site: "@ RustAcademy",
+    title: " RustAcademy — Privacy-focused payments on Stellar",
     description: "Privacy-focused payments on Stellar",
     images: ["/api/og"],
   },
@@ -68,10 +69,10 @@ export default function RootLayout({
 
           <footer className="container mx-auto border-t border-white/5 px-6 py-12 text-sm text-neutral-400">
             <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-              <p>Copyright 2026 QuickEx Platform. Built by Pulsefy.</p>
+              <p>Copyright 2026 RustAcademy Platform. Built by Pulsefy.</p>
               <div className="flex gap-8 underline decoration-white/10 underline-offset-4 hover:decoration-white/20">
                 <a
-                  href="https://github.com/pulsefy/QuickEx"
+                  href="https://github.com/pulsefy/ RustAcademy"
                   target="_blank"
                   rel="noreferrer"
                 >

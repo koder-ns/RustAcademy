@@ -12,7 +12,7 @@ export type StoredNotification = {
   readAt: string | null;
 };
 
-export const NOTIFICATION_STORAGE_KEY = "quickex.notification-center.v2";
+export const NOTIFICATION_STORAGE_KEY = " RustAcademy.notification-center.v2";
 
 export const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   payments: "Payments",
@@ -21,8 +21,7 @@ export const CATEGORY_LABELS: Record<NotificationCategory, string> = {
 };
 
 export const CATEGORY_STYLES: Record<NotificationCategory, string> = {
-  payments:
-    "border-emerald-400/20 bg-emerald-400/10 text-emerald-100",
+  payments: "border-emerald-400/20 bg-emerald-400/10 text-emerald-100",
   escrows: "border-indigo-400/20 bg-indigo-400/10 text-indigo-100",
   system: "border-amber-400/20 bg-amber-400/10 text-amber-100",
 };

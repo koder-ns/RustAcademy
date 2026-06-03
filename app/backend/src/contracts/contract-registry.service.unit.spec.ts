@@ -1,22 +1,24 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SupabaseService } from '../supabase/supabase.service';
-import { AppConfigService } from '../config';
-import { AuditService } from '../audit/audit.service';
-import { ContractRegistryService } from './contract-registry.service';
-import { ContractChangeWebhookService } from './contract-change-webhook.service';
-import {
-  ContractChangeWebhookDispatcher,
-} from './contract-change-webhook.dispatcher';
+import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { SupabaseService } from "../supabase/supabase.service";
+import { AppConfigService } from "../config";
+import { AuditService } from "../audit/audit.service";
+import { ContractRegistryService } from "./contract-registry.service";
+import { ContractChangeWebhookService } from "./contract-change-webhook.service";
+import { ContractChangeWebhookDispatcher } from "./contract-change-webhook.dispatcher";
 
-describe('ContractRegistryService', () => {
+describe("ContractRegistryService", () => {
   let service: ContractRegistryService;
   let mockSupabaseService: jest.Mocked<Partial<SupabaseService>>;
   let mockAuditService: jest.Mocked<Partial<AuditService>>;
   let mockAppConfigService: Partial<AppConfigService>;
   let mockEventEmitter: jest.Mocked<EventEmitter2>;
-  let mockContractChangeWebhookService: jest.Mocked<Partial<ContractChangeWebhookService>>;
-  let mockWebhookDispatcher: jest.Mocked<Partial<ContractChangeWebhookDispatcher>>;
+  let mockContractChangeWebhookService: jest.Mocked<
+    Partial<ContractChangeWebhookService>
+  >;
+  let mockWebhookDispatcher: jest.Mocked<
+    Partial<ContractChangeWebhookDispatcher>
+  >;
 
   beforeEach(() => {
     const mockClient = {
@@ -38,7 +40,7 @@ describe('ContractRegistryService', () => {
     };
 
     mockAppConfigService = {
-      network: 'testnet',
+      network: "testnet",
     };
 
     mockEventEmitter = {
@@ -66,88 +68,88 @@ describe('ContractRegistryService', () => {
     );
   });
 
-  it('publishes and returns the active registry', async () => {
+  it("publishes and returns the active registry", async () => {
     const result = await service.publish({
-      networkPassphrase: 'Test SDF Network ; September 2015',
-      deploymentId: 'deploy-1',
+      networkPassphrase: "Test SDF Network ; September 2015",
+      deploymentId: "deploy-1",
       contracts: [
         {
-          name: 'quickex',
-          contractId: 'C123',
-          wasmHash: 'abc123',
+          name: " RustAcademy",
+          contractId: "C123",
+          wasmHash: "abc123",
           contractVersion: 1,
         },
       ],
     });
 
-    expect(result.data.quickex).toEqual(
-      expect.objectContaining({ id: 'C123', wasmHash: 'abc123', version: 1 }),
+    expect(result.data.RustAcademy).toEqual(
+      expect.objectContaining({ id: "C123", wasmHash: "abc123", version: 1 }),
     );
     expect(result.version).toBeGreaterThan(0);
     expect(mockAuditService.log).toHaveBeenCalledWith(
-      'contract_registry',
-      'registry.publish',
-      'deploy-1',
+      "contract_registry",
+      "registry.publish",
+      "deploy-1",
       expect.any(Object),
     );
   });
 
-  it('rejects a mismatched passphrase', async () => {
+  it("rejects a mismatched passphrase", async () => {
     await expect(
       service.publish({
-        networkPassphrase: 'Public Global Stellar Network ; September 2015',
+        networkPassphrase: "Public Global Stellar Network ; September 2015",
         contracts: [
           {
-            name: 'quickex',
-            contractId: 'C123',
-            wasmHash: 'abc123',
+            name: " RustAcademy",
+            contractId: "C123",
+            wasmHash: "abc123",
           },
         ],
       }),
     ).rejects.toThrow(BadRequestException);
   });
 
-  it('rolls back to a previous contract version', async () => {
+  it("rolls back to a previous contract version", async () => {
     await service.publish({
-      networkPassphrase: 'Test SDF Network ; September 2015',
-      deploymentId: 'deploy-1',
+      networkPassphrase: "Test SDF Network ; September 2015",
+      deploymentId: "deploy-1",
       contracts: [
         {
-          name: 'quickex',
-          contractId: 'C123',
-          wasmHash: 'abc123',
+          name: " RustAcademy",
+          contractId: "C123",
+          wasmHash: "abc123",
           contractVersion: 1,
         },
       ],
     });
 
     await service.publish({
-      networkPassphrase: 'Test SDF Network ; September 2015',
-      deploymentId: 'deploy-2',
+      networkPassphrase: "Test SDF Network ; September 2015",
+      deploymentId: "deploy-2",
       contracts: [
         {
-          name: 'quickex',
-          contractId: 'C456',
-          wasmHash: 'def456',
+          name: " RustAcademy",
+          contractId: "C456",
+          wasmHash: "def456",
           contractVersion: 2,
         },
       ],
     });
 
-    const result = await service.rollback({ name: 'quickex', version: 1 });
-    expect(result.data.quickex).toEqual(
-      expect.objectContaining({ id: 'C123', wasmHash: 'abc123', version: 1 }),
+    const result = await service.rollback({ name: " RustAcademy", version: 1 });
+    expect(result.data.RustAcademy).toEqual(
+      expect.objectContaining({ id: "C123", wasmHash: "abc123", version: 1 }),
     );
   });
 
-  it('throws when rolling back a missing version', async () => {
-    await expect(service.rollback({ name: 'quickex', version: 99 })).rejects.toThrow(
-      NotFoundException,
-    );
+  it("throws when rolling back a missing version", async () => {
+    await expect(
+      service.rollback({ name: " RustAcademy", version: 99 }),
+    ).rejects.toThrow(NotFoundException);
   });
 
-  describe('Dual-read finalization', () => {
-    it('finalizes dual-read by clearing previousContractId', async () => {
+  describe("Dual-read finalization", () => {
+    it("finalizes dual-read by clearing previousContractId", async () => {
       // Setup: publish with dual-read config
       const mockClient = {
         from: jest.fn(() => ({
@@ -156,21 +158,21 @@ describe('ContractRegistryService', () => {
           order: jest.fn().mockResolvedValue({
             data: [
               {
-                contract_name: 'quickex',
-                network: 'testnet',
-                contract_id: 'C456',
-                previous_contract_id: 'C123',
+                contract_name: " RustAcademy",
+                network: "testnet",
+                contract_id: "C456",
+                previous_contract_id: "C123",
                 effective_ledger: 50000000,
                 effective_time: null,
-                wasm_hash: 'def456',
+                wasm_hash: "def456",
                 contract_version: 2,
-                deployment_id: 'deploy-2',
+                deployment_id: "deploy-2",
                 metadata: {},
-                published_by: 'test',
+                published_by: "test",
                 version: 2,
-                created_at: '2026-06-02T10:00:00Z',
-                updated_at: '2026-06-02T10:00:00Z',
-                network_passphrase: 'Test SDF Network ; September 2015',
+                created_at: "2026-06-02T10:00:00Z",
+                updated_at: "2026-06-02T10:00:00Z",
+                network_passphrase: "Test SDF Network ; September 2015",
                 is_active: true,
               },
             ],
@@ -194,21 +196,21 @@ describe('ContractRegistryService', () => {
         mockWebhookDispatcher as unknown as ContractChangeWebhookDispatcher,
       );
 
-      const result = await service.finalizeDualRead('quickex');
+      const result = await service.finalizeDualRead(" RustAcademy");
 
       // Should have removed dual-read config
       expect(mockAuditService.log).toHaveBeenCalledWith(
-        'contract_registry',
-        'registry.finalize_dual_read',
-        'quickex',
-        expect.objectContaining({ actor: 'deployment_automation' }),
+        "contract_registry",
+        "registry.finalize_dual_read",
+        " RustAcademy",
+        expect.objectContaining({ actor: "deployment_automation" }),
       );
 
       // Result should show cleared previousContractId
-      expect(result.data.quickex).toBeDefined();
+      expect(result.data.RustAcademy).toBeDefined();
     });
 
-    it('throws when no active entry exists', async () => {
+    it("throws when no active entry exists", async () => {
       const mockClient = {
         from: jest.fn(() => ({
           select: jest.fn().mockReturnThis(),
@@ -232,10 +234,12 @@ describe('ContractRegistryService', () => {
         mockWebhookDispatcher as unknown as ContractChangeWebhookDispatcher,
       );
 
-      await expect(service.finalizeDualRead('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.finalizeDualRead("missing")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
-    it('throws when not in dual-read window', async () => {
+    it("throws when not in dual-read window", async () => {
       const mockClient = {
         from: jest.fn(() => ({
           select: jest.fn().mockReturnThis(),
@@ -243,21 +247,21 @@ describe('ContractRegistryService', () => {
           order: jest.fn().mockResolvedValue({
             data: [
               {
-                contract_name: 'quickex',
-                network: 'testnet',
-                contract_id: 'C456',
+                contract_name: " RustAcademy",
+                network: "testnet",
+                contract_id: "C456",
                 previous_contract_id: null,
                 effective_ledger: null,
                 effective_time: null,
-                wasm_hash: 'def456',
+                wasm_hash: "def456",
                 contract_version: 2,
-                deployment_id: 'deploy-2',
+                deployment_id: "deploy-2",
                 metadata: {},
-                published_by: 'test',
+                published_by: "test",
                 version: 2,
-                created_at: '2026-06-02T10:00:00Z',
-                updated_at: '2026-06-02T10:00:00Z',
-                network_passphrase: 'Test SDF Network ; September 2015',
+                created_at: "2026-06-02T10:00:00Z",
+                updated_at: "2026-06-02T10:00:00Z",
+                network_passphrase: "Test SDF Network ; September 2015",
                 is_active: true,
               },
             ],
@@ -281,7 +285,9 @@ describe('ContractRegistryService', () => {
         mockWebhookDispatcher as unknown as ContractChangeWebhookDispatcher,
       );
 
-      await expect(service.finalizeDualRead('quickex')).rejects.toThrow(BadRequestException);
+      await expect(service.finalizeDualRead(" RustAcademy")).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

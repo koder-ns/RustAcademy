@@ -53,10 +53,10 @@ export class IndexerLagService implements OnModuleInit {
       this.logger.error("Failed to fetch current network ledger", error);
     }
 
-    if (this.config.quickexContractId) {
+    if (this.config.RustAcademyContractId) {
       try {
         const lastIndexed = await this.checkpointRepo.getLastLedger(
-          this.config.quickexContractId,
+          this.config.RustAcademyContractId,
         );
         if (lastIndexed !== null) {
           this.lastIndexedLedger = lastIndexed;
@@ -71,10 +71,7 @@ export class IndexerLagService implements OnModuleInit {
 
   getStatus(): IndexerLagStatus {
     let lagLedgers: number | null = null;
-    if (
-      this.currentNetworkLedger !== null &&
-      this.lastIndexedLedger !== null
-    ) {
+    if (this.currentNetworkLedger !== null && this.lastIndexedLedger !== null) {
       lagLedgers = Math.max(
         0,
         this.currentNetworkLedger - this.lastIndexedLedger,

@@ -94,7 +94,10 @@ export default function PublicProfile() {
       />
 
       {/* MAIN CONTENT */}
-      <main id="public-profile-main" className="relative z-10 max-w-2xl mx-auto p-4 sm:p-6 md:p-12">
+      <main
+        id="public-profile-main"
+        className="relative z-10 max-w-2xl mx-auto p-4 sm:p-6 md:p-12"
+      >
         {/* Profile Header */}
         <div className="text-center mb-12">
           {/* Avatar */}
@@ -129,7 +132,9 @@ export default function PublicProfile() {
           )}
 
           {/* Social Links */}
-          {(profile.twitterHandle || profile.discordHandle || profile.githubHandle) && (
+          {(profile.twitterHandle ||
+            profile.discordHandle ||
+            profile.githubHandle) && (
             <div className="flex justify-center gap-4 mb-8">
               {profile.twitterHandle && (
                 <a
@@ -173,14 +178,19 @@ export default function PublicProfile() {
 
           <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <div>
-              <label htmlFor="payment-amount" className="block text-sm font-bold text-neutral-300 mb-2">
+              <label
+                htmlFor="payment-amount"
+                className="block text-sm font-bold text-neutral-300 mb-2"
+              >
                 Amount
               </label>
               <input
                 id="payment-amount"
                 type="number"
                 value={paymentForm.amount}
-                onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })}
+                onChange={(e) =>
+                  setPaymentForm({ ...paymentForm, amount: e.target.value })
+                }
                 className={`w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-lg ${FOCUS_RING_CLASS}`}
                 placeholder="0.00"
                 step="0.01"
@@ -188,13 +198,18 @@ export default function PublicProfile() {
             </div>
 
             <div>
-              <label htmlFor="payment-asset" className="block text-sm font-bold text-neutral-300 mb-2">
+              <label
+                htmlFor="payment-asset"
+                className="block text-sm font-bold text-neutral-300 mb-2"
+              >
                 Asset
               </label>
               <select
                 id="payment-asset"
                 value={paymentForm.asset}
-                onChange={(e) => setPaymentForm({ ...paymentForm, asset: e.target.value })}
+                onChange={(e) =>
+                  setPaymentForm({ ...paymentForm, asset: e.target.value })
+                }
                 className={`w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white ${FOCUS_RING_CLASS}`}
               >
                 <option value="USDC">USDC</option>
@@ -205,14 +220,19 @@ export default function PublicProfile() {
             </div>
 
             <div>
-              <label htmlFor="payment-memo" className="block text-sm font-bold text-neutral-300 mb-2">
+              <label
+                htmlFor="payment-memo"
+                className="block text-sm font-bold text-neutral-300 mb-2"
+              >
                 Memo (optional)
               </label>
               <input
                 id="payment-memo"
                 type="text"
                 value={paymentForm.memo}
-                onChange={(e) => setPaymentForm({ ...paymentForm, memo: e.target.value })}
+                onChange={(e) =>
+                  setPaymentForm({ ...paymentForm, memo: e.target.value })
+                }
                 className={`w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white ${FOCUS_RING_CLASS}`}
                 placeholder="Payment for..."
                 maxLength={28}
@@ -247,7 +267,7 @@ export default function PublicProfile() {
 
         {/* Footer */}
         <div className="text-center mt-12 text-neutral-400 text-sm">
-          <p>Powered by QuickEx • Stellar Network</p>
+          <p>Powered by RustAcademy • Stellar Network</p>
         </div>
       </main>
     </div>

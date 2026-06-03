@@ -1,6 +1,6 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as StellarSdk from '@stellar/stellar-sdk';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import * as StellarSdk from "@stellar/stellar-sdk";
 
 // ---------------------------------------------------------------------------
 // Response shapes
@@ -99,7 +99,7 @@ const CACHE_TTL_MS = 15_000; // 15 s — short enough to reflect recent state
 @Injectable()
 export class ContractViewsService {
   private readonly logger = new Logger(ContractViewsService.name);
-  private readonly cache  = new TtlCache<unknown>();
+  private readonly cache = new TtlCache<unknown>();
 
   /** Soroban RPC server instance, lazily initialised */
   private rpc: StellarSdk.rpc.Server | null = null;
@@ -112,17 +112,17 @@ export class ContractViewsService {
 
   /** Fee configuration currently set on the contract. */
   async getFeeConfig(): Promise<FeeConfigView> {
-    return this.cached('fee_config', () => this.fetchFeeConfig());
+    return this.cached("fee_config", () => this.fetchFeeConfig());
   }
 
   /** Contract pause state and last-paused ledger. */
   async getPauseState(): Promise<PauseStateView> {
-    return this.cached('pause_state', () => this.fetchPauseState());
+    return this.cached("pause_state", () => this.fetchPauseState());
   }
 
   /** Static contract metadata (name, version, deploy ledger). */
   async getContractMetadata(): Promise<ContractMetadataView> {
-    return this.cached('contract_metadata', () => this.fetchContractMetadata());
+    return this.cached("contract_metadata", () => this.fetchContractMetadata());
   }
 
   /**
@@ -131,7 +131,9 @@ export class ContractViewsService {
    * storage TTL has lapsed.
    */
   async getEscrowSummary(escrowId: string): Promise<EscrowSummaryView> {
-    return this.cached(`escrow:${escrowId}`, () => this.fetchEscrowSummary(escrowId));
+    return this.cached(`escrow:${escrowId}`, () =>
+      this.fetchEscrowSummary(escrowId),
+    );
   }
 
   /**
@@ -139,7 +141,9 @@ export class ContractViewsService {
    * Throws {@link NotFoundException} when the link does not exist.
    */
   async getLinkSummary(identifier: string): Promise<LinkSummaryView> {
-    return this.cached(`link:${identifier}`, () => this.fetchLinkSummary(identifier));
+    return this.cached(`link:${identifier}`, () =>
+      this.fetchLinkSummary(identifier),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -148,38 +152,54 @@ export class ContractViewsService {
 
   private async fetchFeeConfig(): Promise<FeeConfigView> {
     // Simulate a read-only `get_fee_config` contract call.
-    // When QUICKEX_CONTRACT_ID is not set (e.g. local dev) we return safe
+    // When  RustAcademy_CONTRACT_ID is not set (e.g. local dev) we return safe
     // defaults so the frontend can still render.
-    const contractId = this.configService.get<string>('QUICKEX_CONTRACT_ID')
-      ?? process.env['QUICKEX_CONTRACT_ID'];
+    const contractId =
+      this.configService.get<string>(" RustAcademy_CONTRACT_ID") ??
+      process.env[" RustAcademy_CONTRACT_ID"];
 
     if (!contractId) {
-      this.logger.warn('QUICKEX_CONTRACT_ID not set — returning default fee config');
-      return { feeBps: 50, feeRecipient: '', minFeeStroops: '100' };
+      this.logger.warn(
+        " RustAcademy_CONTRACT_ID not set — returning default fee config",
+      );
+      return { feeBps: 50, feeRecipient: "", minFeeStroops: "100" };
     }
 
     try {
-      const result = await this.simulateContractView(contractId, 'get_fee_config', []);
+      const result = await this.simulateContractView(
+        contractId,
+        "get_fee_config",
+        [],
+      );
       return this.parseFeeConfig(result);
     } catch (err) {
-      this.logger.warn(`get_fee_config simulation failed: ${(err as Error).message}`);
-      return { feeBps: 50, feeRecipient: '', minFeeStroops: '100' };
+      this.logger.warn(
+        `get_fee_config simulation failed: ${(err as Error).message}`,
+      );
+      return { feeBps: 50, feeRecipient: "", minFeeStroops: "100" };
     }
   }
 
   private async fetchPauseState(): Promise<PauseStateView> {
-    const contractId = this.configService.get<string>('QUICKEX_CONTRACT_ID')
-      ?? process.env['QUICKEX_CONTRACT_ID'];
+    const contractId =
+      this.configService.get<string>(" RustAcademy_CONTRACT_ID") ??
+      process.env[" RustAcademy_CONTRACT_ID"];
 
     if (!contractId) {
       return { paused: false, pausedAtLedger: null };
     }
 
     try {
-      const result = await this.simulateContractView(contractId, 'is_paused', []);
+      const result = await this.simulateContractView(
+        contractId,
+        "is_paused",
+        [],
+      );
       return this.parsePauseState(result);
     } catch (err) {
-      this.logger.warn(`is_paused simulation failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `is_paused simulation failed: ${(err as Error).message}`,
+      );
       return { paused: false, pausedAtLedger: null };
     }
   }
@@ -188,41 +208,54 @@ export class ContractViewsService {
     const stellarCfg = this.configService.get<{
       network: string;
       networkPassphrase: string;
-    }>('stellar');
+    }>("stellar");
 
-    const contractId = this.configService.get<string>('QUICKEX_CONTRACT_ID')
-      ?? process.env['QUICKEX_CONTRACT_ID']
-      ?? '';
+    const contractId =
+      this.configService.get<string>(" RustAcademy_CONTRACT_ID") ??
+      process.env[" RustAcademy_CONTRACT_ID"] ??
+      "";
 
     // Static fields we can derive without an RPC call
     const base: ContractMetadataView = {
-      name:             'QuickEx Payment Contract',
-      version:          '0.1.0',
+      name: " RustAcademy Payment Contract",
+      version: "0.1.0",
       contractId,
-      network:          stellarCfg?.network ?? 'testnet',
+      network: stellarCfg?.network ?? "testnet",
       deployedAtLedger: 0,
     };
 
     if (!contractId) return base;
 
     try {
-      const result = await this.simulateContractView(contractId, 'get_metadata', []);
+      const result = await this.simulateContractView(
+        contractId,
+        "get_metadata",
+        [],
+      );
       return { ...base, ...this.parseContractMetadata(result) };
     } catch (err) {
-      this.logger.warn(`get_metadata simulation failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `get_metadata simulation failed: ${(err as Error).message}`,
+      );
       return base;
     }
   }
 
-  private async fetchEscrowSummary(escrowId: string): Promise<EscrowSummaryView> {
+  private async fetchEscrowSummary(
+    escrowId: string,
+  ): Promise<EscrowSummaryView> {
     const contractId = this.requireContractId();
 
-    const args = [StellarSdk.nativeToScVal(escrowId, { type: 'string' })];
-    const result = await this.simulateContractView(contractId, 'get_escrow', args);
+    const args = [StellarSdk.nativeToScVal(escrowId, { type: "string" })];
+    const result = await this.simulateContractView(
+      contractId,
+      "get_escrow",
+      args,
+    );
 
     if (!result) {
       throw new NotFoundException({
-        error: 'ESCROW_NOT_FOUND',
+        error: "ESCROW_NOT_FOUND",
         message: `Escrow "${escrowId}" not found or expired.`,
       });
     }
@@ -233,12 +266,16 @@ export class ContractViewsService {
   private async fetchLinkSummary(identifier: string): Promise<LinkSummaryView> {
     const contractId = this.requireContractId();
 
-    const args = [StellarSdk.nativeToScVal(identifier, { type: 'string' })];
-    const result = await this.simulateContractView(contractId, 'get_link', args);
+    const args = [StellarSdk.nativeToScVal(identifier, { type: "string" })];
+    const result = await this.simulateContractView(
+      contractId,
+      "get_link",
+      args,
+    );
 
     if (!result) {
       throw new NotFoundException({
-        error: 'LINK_NOT_FOUND',
+        error: "LINK_NOT_FOUND",
         message: `Link "${identifier}" not found or expired.`,
       });
     }
@@ -252,20 +289,23 @@ export class ContractViewsService {
 
   private async simulateContractView(
     contractId: string,
-    method:     string,
-    args:       StellarSdk.xdr.ScVal[],
+    method: string,
+    args: StellarSdk.xdr.ScVal[],
   ): Promise<StellarSdk.xdr.ScVal | null> {
-    const server   = this.getRpcServer();
-    const stellarCfg = this.configService.get<{ networkPassphrase: string }>('stellar');
-    const passphrase = stellarCfg?.networkPassphrase ?? StellarSdk.Networks.TESTNET;
+    const server = this.getRpcServer();
+    const stellarCfg = this.configService.get<{ networkPassphrase: string }>(
+      "stellar",
+    );
+    const passphrase =
+      stellarCfg?.networkPassphrase ?? StellarSdk.Networks.TESTNET;
 
     // Use a throwaway keypair — read-only simulation needs no real signing key
     const dummyKeypair = StellarSdk.Keypair.random();
-    const account = new StellarSdk.Account(dummyKeypair.publicKey(), '0');
+    const account = new StellarSdk.Account(dummyKeypair.publicKey(), "0");
 
     const contract = new StellarSdk.Contract(contractId);
     const tx = new StellarSdk.TransactionBuilder(account, {
-      fee:            '100',
+      fee: "100",
       networkPassphrase: passphrase,
     })
       .addOperation(contract.call(method, ...args))
@@ -284,8 +324,9 @@ export class ContractViewsService {
       this.logger.warn(`Simulation requires TTL restore for ${method}`);
     }
 
-    const returnVal = (sim as StellarSdk.rpc.Api.SimulateTransactionSuccessResponse)
-      .result?.retval;
+    const returnVal = (
+      sim as StellarSdk.rpc.Api.SimulateTransactionSuccessResponse
+    ).result?.retval;
 
     return returnVal ?? null;
   }
@@ -295,48 +336,56 @@ export class ContractViewsService {
   // ---------------------------------------------------------------------------
 
   private parseFeeConfig(val: StellarSdk.xdr.ScVal | null): FeeConfigView {
-    if (!val) return { feeBps: 50, feeRecipient: '', minFeeStroops: '100' };
+    if (!val) return { feeBps: 50, feeRecipient: "", minFeeStroops: "100" };
     try {
-      const map  = this.scValToMap(val);
-      const bps  = this.getMapField(map, 'fee_bps');
-      const recip = this.getMapField(map, 'fee_recipient');
-      const min  = this.getMapField(map, 'min_fee_stroops');
+      const map = this.scValToMap(val);
+      const bps = this.getMapField(map, "fee_bps");
+      const recip = this.getMapField(map, "fee_recipient");
+      const min = this.getMapField(map, "min_fee_stroops");
       return {
-        feeBps:        bps  ? Number(StellarSdk.scValToNative(bps))  : 50,
-        feeRecipient:  recip ? String(StellarSdk.scValToNative(recip)) : '',
-        minFeeStroops: min  ? String(StellarSdk.scValToNative(min))  : '100',
+        feeBps: bps ? Number(StellarSdk.scValToNative(bps)) : 50,
+        feeRecipient: recip ? String(StellarSdk.scValToNative(recip)) : "",
+        minFeeStroops: min ? String(StellarSdk.scValToNative(min)) : "100",
       };
     } catch {
-      return { feeBps: 50, feeRecipient: '', minFeeStroops: '100' };
+      return { feeBps: 50, feeRecipient: "", minFeeStroops: "100" };
     }
   }
 
   private parsePauseState(val: StellarSdk.xdr.ScVal | null): PauseStateView {
     if (!val) return { paused: false, pausedAtLedger: null };
     try {
-      const map    = this.scValToMap(val);
-      const paused = this.getMapField(map, 'paused');
-      const ledger = this.getMapField(map, 'paused_at_ledger');
+      const map = this.scValToMap(val);
+      const paused = this.getMapField(map, "paused");
+      const ledger = this.getMapField(map, "paused_at_ledger");
       return {
-        paused:         paused ? Boolean(StellarSdk.scValToNative(paused)) : false,
-        pausedAtLedger: ledger ? Number(StellarSdk.scValToNative(ledger)) : null,
+        paused: paused ? Boolean(StellarSdk.scValToNative(paused)) : false,
+        pausedAtLedger: ledger
+          ? Number(StellarSdk.scValToNative(ledger))
+          : null,
       };
     } catch {
       return { paused: false, pausedAtLedger: null };
     }
   }
 
-  private parseContractMetadata(val: StellarSdk.xdr.ScVal | null): Partial<ContractMetadataView> {
+  private parseContractMetadata(
+    val: StellarSdk.xdr.ScVal | null,
+  ): Partial<ContractMetadataView> {
     if (!val) return {};
     try {
-      const map     = this.scValToMap(val);
-      const name    = this.getMapField(map, 'name');
-      const version = this.getMapField(map, 'version');
-      const ledger  = this.getMapField(map, 'deployed_at_ledger');
+      const map = this.scValToMap(val);
+      const name = this.getMapField(map, "name");
+      const version = this.getMapField(map, "version");
+      const ledger = this.getMapField(map, "deployed_at_ledger");
       return {
-        name:             name    ? String(StellarSdk.scValToNative(name))    : undefined,
-        version:          version ? String(StellarSdk.scValToNative(version)) : undefined,
-        deployedAtLedger: ledger  ? Number(StellarSdk.scValToNative(ledger))  : undefined,
+        name: name ? String(StellarSdk.scValToNative(name)) : undefined,
+        version: version
+          ? String(StellarSdk.scValToNative(version))
+          : undefined,
+        deployedAtLedger: ledger
+          ? Number(StellarSdk.scValToNative(ledger))
+          : undefined,
       };
     } catch {
       return {};
@@ -344,41 +393,67 @@ export class ContractViewsService {
   }
 
   private parseEscrowSummary(
-    val:      StellarSdk.xdr.ScVal,
+    val: StellarSdk.xdr.ScVal,
     escrowId: string,
   ): EscrowSummaryView {
-    const map          = this.scValToMap(val);
-    const expiryLedger = Number(StellarSdk.scValToNative(this.requireMapField(map, 'expiry_ledger')));
+    const map = this.scValToMap(val);
+    const expiryLedger = Number(
+      StellarSdk.scValToNative(this.requireMapField(map, "expiry_ledger")),
+    );
     const currentLedger = 0; // Would be fetched from horizon in a full impl; safe default
 
     return {
-      id:            escrowId,
-      depositor:     String(StellarSdk.scValToNative(this.requireMapField(map, 'depositor'))),
-      beneficiary:   String(StellarSdk.scValToNative(this.requireMapField(map, 'beneficiary'))),
-      amount:        String(StellarSdk.scValToNative(this.requireMapField(map, 'amount'))),
-      assetCode:     String(StellarSdk.scValToNative(this.requireMapField(map, 'asset_code'))),
-      released:      Boolean(StellarSdk.scValToNative(this.requireMapField(map, 'released'))),
-      refunded:      Boolean(StellarSdk.scValToNative(this.requireMapField(map, 'refunded'))),
+      id: escrowId,
+      depositor: String(
+        StellarSdk.scValToNative(this.requireMapField(map, "depositor")),
+      ),
+      beneficiary: String(
+        StellarSdk.scValToNative(this.requireMapField(map, "beneficiary")),
+      ),
+      amount: String(
+        StellarSdk.scValToNative(this.requireMapField(map, "amount")),
+      ),
+      assetCode: String(
+        StellarSdk.scValToNative(this.requireMapField(map, "asset_code")),
+      ),
+      released: Boolean(
+        StellarSdk.scValToNative(this.requireMapField(map, "released")),
+      ),
+      refunded: Boolean(
+        StellarSdk.scValToNative(this.requireMapField(map, "refunded")),
+      ),
       expiryLedger,
-      expired:       currentLedger > 0 && currentLedger > expiryLedger,
+      expired: currentLedger > 0 && currentLedger > expiryLedger,
     };
   }
 
   private parseLinkSummary(
-    val:        StellarSdk.xdr.ScVal,
+    val: StellarSdk.xdr.ScVal,
     identifier: string,
   ): LinkSummaryView {
-    const map     = this.scValToMap(val);
-    const ttlField = this.getMapField(map, 'expires_at_ledger');
+    const map = this.scValToMap(val);
+    const ttlField = this.getMapField(map, "expires_at_ledger");
 
     return {
-      id:               String(StellarSdk.scValToNative(this.requireMapField(map, 'id'))),
-      slug:             identifier,
-      recipientAddress: String(StellarSdk.scValToNative(this.requireMapField(map, 'recipient_address'))),
-      assetCode:        String(StellarSdk.scValToNative(this.requireMapField(map, 'asset_code'))),
-      amount:           String(StellarSdk.scValToNative(this.requireMapField(map, 'amount'))),
-      active:           Boolean(StellarSdk.scValToNative(this.requireMapField(map, 'active'))),
-      expiresAtLedger:  ttlField ? Number(StellarSdk.scValToNative(ttlField)) : null,
+      id: String(StellarSdk.scValToNative(this.requireMapField(map, "id"))),
+      slug: identifier,
+      recipientAddress: String(
+        StellarSdk.scValToNative(
+          this.requireMapField(map, "recipient_address"),
+        ),
+      ),
+      assetCode: String(
+        StellarSdk.scValToNative(this.requireMapField(map, "asset_code")),
+      ),
+      amount: String(
+        StellarSdk.scValToNative(this.requireMapField(map, "amount")),
+      ),
+      active: Boolean(
+        StellarSdk.scValToNative(this.requireMapField(map, "active")),
+      ),
+      expiresAtLedger: ttlField
+        ? Number(StellarSdk.scValToNative(ttlField))
+        : null,
     };
   }
 
@@ -386,7 +461,9 @@ export class ContractViewsService {
   // ScVal map helpers
   // ---------------------------------------------------------------------------
 
-  private scValToMap(val: StellarSdk.xdr.ScVal): Map<string, StellarSdk.xdr.ScVal> {
+  private scValToMap(
+    val: StellarSdk.xdr.ScVal,
+  ): Map<string, StellarSdk.xdr.ScVal> {
     if (val.switch() !== StellarSdk.xdr.ScValType.scvMap()) {
       throw new Error(`Expected ScvMap, got ${val.switch().name}`);
     }
@@ -410,7 +487,8 @@ export class ContractViewsService {
     key: string,
   ): StellarSdk.xdr.ScVal {
     const val = map.get(key);
-    if (!val) throw new Error(`Missing required field "${key}" in contract response`);
+    if (!val)
+      throw new Error(`Missing required field "${key}" in contract response`);
     return val;
   }
 
@@ -434,22 +512,26 @@ export class ContractViewsService {
   private getRpcServer(): StellarSdk.rpc.Server {
     if (this.rpc) return this.rpc;
 
-    const stellarCfg = this.configService.get<{ sorobanRpcUrl: string }>('stellar');
-    const rpcUrl = stellarCfg?.sorobanRpcUrl
-      ?? process.env['SOROBAN_RPC_URL']
-      ?? 'https://soroban-testnet.stellar.org';
+    const stellarCfg = this.configService.get<{ sorobanRpcUrl: string }>(
+      "stellar",
+    );
+    const rpcUrl =
+      stellarCfg?.sorobanRpcUrl ??
+      process.env["SOROBAN_RPC_URL"] ??
+      "https://soroban-testnet.stellar.org";
 
     this.rpc = new StellarSdk.rpc.Server(rpcUrl, { allowHttp: false });
     return this.rpc;
   }
 
   private requireContractId(): string {
-    const id = this.configService.get<string>('QUICKEX_CONTRACT_ID')
-      ?? process.env['QUICKEX_CONTRACT_ID'];
+    const id =
+      this.configService.get<string>(" RustAcademy_CONTRACT_ID") ??
+      process.env[" RustAcademy_CONTRACT_ID"];
     if (!id) {
       throw new NotFoundException({
-        error: 'CONTRACT_NOT_CONFIGURED',
-        message: 'QUICKEX_CONTRACT_ID is not configured.',
+        error: "CONTRACT_NOT_CONFIGURED",
+        message: " RustAcademy_CONTRACT_ID is not configured.",
       });
     }
     return id;

@@ -1,9 +1,10 @@
 # Upgrade Safety Gate & Post-Upgrade Invariants
+
 **Issue #432** | Wave 5 – Lifecycle Management
 
 ## Overview
 
-This document describes the contract-level safeguards and invariant enforcement mechanisms for safe, controlled upgrades in QuickEx.
+This document describes the contract-level safeguards and invariant enforcement mechanisms for safe, controlled upgrades in RustAcademy.
 
 ### Key Features
 
@@ -19,11 +20,11 @@ This document describes the contract-level safeguards and invariant enforcement 
 
 New storage keys added to `DataKey` enum:
 
-| Key                      | Type | Purpose |
-|--------------------------|------|---------|
-| `UpgradeWindowStart`     | u64  | Ledger timestamp when upgrades become allowed |
-| `UpgradeWindowEnd`       | u64  | Ledger timestamp when upgrades become blocked (0 = unbounded) |
-| `UpgradeInProgress`      | bool | Flag: upgrade currently in-flight |
+| Key                  | Type | Purpose                                                       |
+| -------------------- | ---- | ------------------------------------------------------------- |
+| `UpgradeWindowStart` | u64  | Ledger timestamp when upgrades become allowed                 |
+| `UpgradeWindowEnd`   | u64  | Ledger timestamp when upgrades become blocked (0 = unbounded) |
+| `UpgradeInProgress`  | bool | Flag: upgrade currently in-flight                             |
 
 ---
 
@@ -60,6 +61,7 @@ start_upgrade(env, caller, new_version)
   - No upgrade already in-progress
 
 **Checks** (AC1 – Acceptance Criterion):
+
 - Window is set (`start != 0`)
 - Current ledger timestamp ≥ `start`
 - If `end != 0`: current ledger timestamp ≤ `end`
@@ -102,6 +104,7 @@ complete_upgrade(env, caller, new_version)
   - Must have called `start_upgrade` first
 
 **Internal Flow**:
+
 1. Call `migrate()` to run storage migrations
 2. Validate post-upgrade invariants (AC2)
 3. Clear `UpgradeInProgress` flag
@@ -147,6 +150,7 @@ Invariants checked in `storage::assert_post_upgrade_invariants()`:
 **Violation Behavior**: Panic with `InternalError` deterministically
 
 **Example Violation**:
+
 - If a corrupted migration sets `fee_bps = 20_000`, `complete_upgrade()` panics
 - Indexers/monitors can detect via transaction failure logs
 
@@ -186,6 +190,7 @@ UpgradeCompleted {
 ```
 
 **Indexer Use**:
+
 - Filter by topic `"TOPIC_ADMIN"` and type `"UpgradeStarted"` / `"UpgradeCompleted"`
 - Group by `(admin, old_version, new_version, timestamp)` tuples
 - Track deployment timeline and version history
@@ -201,7 +206,7 @@ UpgradeCompleted {
 pub struct UpgradeStartedEvent {
     #[topic]
     pub admin: Address,
-    
+
     pub schema_version: u32,           // = 2
     pub old_version: u32,               // Current contract version
     pub new_version: u32,               // Target version
@@ -218,7 +223,7 @@ pub struct UpgradeStartedEvent {
 pub struct UpgradeCompletedEvent {
     #[topic]
     pub admin: Address,
-    
+
     pub schema_version: u32,           // = 2
     pub old_version: u32,               // Version before migration
     pub new_version: u32,               // Version after migration
@@ -232,11 +237,11 @@ pub struct UpgradeCompletedEvent {
 
 New or repurposed errors:
 
-| Error | Code | Trigger | Context |
-|-------|------|---------|---------|
-| `InvalidAmount` | 100 | Upgrade window not active | `start_upgrade()` outside `[start, end)` |
-| `ContractPaused` | 300 | Upgrade already in progress | `start_upgrade()` called twice |
-| `InternalError` | 900 | Post-upgrade invariants failed | `complete_upgrade()` after failed migration |
+| Error            | Code | Trigger                        | Context                                     |
+| ---------------- | ---- | ------------------------------ | ------------------------------------------- |
+| `InvalidAmount`  | 100  | Upgrade window not active      | `start_upgrade()` outside `[start, end)`    |
+| `ContractPaused` | 300  | Upgrade already in progress    | `start_upgrade()` called twice              |
+| `InternalError`  | 900  | Post-upgrade invariants failed | `complete_upgrade()` after failed migration |
 
 ---
 
@@ -378,6 +383,6 @@ A: Look for `UpgradeStarted` events without a corresponding `UpgradeCompleted` i
 ## References
 
 - [Soroban Contract Upgrade Guide](https://developers.stellar.org/build/guides/soroban-migration)
-- [QuickEx Invariant Checks](./UPGRADE_SAFETY_GATE.md) (this file)
-- [`storage.rs::assert_post_upgrade_invariants()`](../contracts/quickex/src/storage.rs)
-- [`admin.rs::start_upgrade()`, `complete_upgrade()`](../contracts/quickex/src/admin.rs)
+- [ RustAcademy Invariant Checks](./UPGRADE_SAFETY_GATE.md) (this file)
+- [`storage.rs::assert_post_upgrade_invariants()`](../contracts/ RustAcademy/src/storage.rs)
+- [`admin.rs::start_upgrade()`, `complete_upgrade()`](../contracts/ RustAcademy/src/admin.rs)

@@ -1,6 +1,6 @@
 /**
- * Domain types for QuickEx Soroban contract events.
- * These mirror the Rust event structs defined in contracts/quickex/src/events.rs
+ * Domain types for  RustAcademy Soroban contract events.
+ * These mirror the Rust event structs defined in contracts/ RustAcademy/src/events.rs
  */
 
 export type SorobanEventType =
@@ -98,7 +98,7 @@ export interface StealthWithdrawnEvent extends BaseContractEvent {
   amount: bigint;
 }
 
-export type QuickExContractEvent =
+export type RustAcademyContractEvent =
   | EscrowDepositedEvent
   | EscrowWithdrawnEvent
   | EscrowRefundedEvent

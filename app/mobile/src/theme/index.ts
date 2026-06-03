@@ -10,17 +10,17 @@ export {
   type StatusColors,
   LightTheme,
   DarkTheme,
-  QuickExBlueTheme,
+  RustAcademyBlueTheme,
   PulsefyPurpleTheme,
   ThemeRegistry,
   BrandThemes,
   AllThemes,
-} from './tokens';
+} from "./tokens";
 
 export {
-  QuickExThemeProvider,
+  RustAcademyThemeProvider,
   useTheme,
   type ThemeContextValue,
   type ThemeProviderProps,
   type PersistedThemePreference,
-} from './ThemeContext';
+} from "./ThemeContext";

@@ -49,16 +49,31 @@ export function AppLockOverlay({ visible, onUnlock }: AppLockOverlayProps) {
   return (
     <View style={[styles.overlay, { backgroundColor: theme.overlayBg }]}>
       <View style={[styles.card, { backgroundColor: theme.surfaceElevated }]}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>QuickEx Security Lock</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          {" "}
+          RustAcademy Security Lock
+        </Text>
         <Text style={[styles.body, { color: theme.textSecondary }]}>
           Use biometrics or your fallback PIN to continue.
         </Text>
 
-        {unlocking ? <ActivityIndicator size="small" color={theme.primary} /> : null}
-        {errorMessage ? <Text style={[styles.error, { color: theme.status.error }]}>{errorMessage}</Text> : null}
+        {unlocking ? (
+          <ActivityIndicator size="small" color={theme.primary} />
+        ) : null}
+        {errorMessage ? (
+          <Text style={[styles.error, { color: theme.status.error }]}>
+            {errorMessage}
+          </Text>
+        ) : null}
 
-        <Pressable style={[styles.button, { backgroundColor: theme.buttonPrimaryBg }]} onPress={unlock} disabled={unlocking}>
-          <Text style={[styles.buttonText, { color: theme.buttonPrimaryText }]}>Unlock App</Text>
+        <Pressable
+          style={[styles.button, { backgroundColor: theme.buttonPrimaryBg }]}
+          onPress={unlock}
+          disabled={unlocking}
+        >
+          <Text style={[styles.buttonText, { color: theme.buttonPrimaryText }]}>
+            Unlock App
+          </Text>
         </Pressable>
       </View>
     </View>

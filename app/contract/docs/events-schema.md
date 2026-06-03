@@ -1,6 +1,6 @@
-# QuickEx Contract Events Schema
+# RustAcademy Contract Events Schema
 
-This document defines the indexer-facing contract event schema for `quickex`.
+This document defines the indexer-facing contract event schema for ` RustAcademy`.
 
 ## Design goals
 
@@ -15,10 +15,10 @@ This document defines the indexer-facing contract event schema for `quickex`.
 Every event payload includes a `schema_version: u32` field (introduced in v2).
 Indexers MUST read this field before decoding any other payload field.
 
-| Version | Description                                      |
-|---------|--------------------------------------------------|
-| 1       | Original schema – no `schema_version` field      |
-| 2       | Added `schema_version` to every event payload    |
+| Version | Description                                   |
+| ------- | --------------------------------------------- |
+| 1       | Original schema – no `schema_version` field   |
+| 2       | Added `schema_version` to every event payload |
 
 ### Detecting the version
 

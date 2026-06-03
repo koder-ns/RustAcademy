@@ -1,16 +1,19 @@
 {
   "expo": {
-    "name": "QuickEx",
-    "slug": "quickex",
+    "name": " RustAcademy",
+    "slug": " RustAcademy",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "quickex",
+    "scheme": " RustAcademy",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "associatedDomains": ["applinks:quickex.to", "applinks:www.quickex.to"],
+      "associatedDomains": [
+        "applinks: RustAcademy.to",
+        "applinks:www. RustAcademy.to"
+      ],
       "infoPlist": {
         "UIBackgroundModes": ["fetch"]
       }
@@ -31,12 +34,12 @@
           "data": [
             {
               "scheme": "https",
-              "host": "quickex.to",
+              "host": " RustAcademy.to",
               "pathPrefix": "/"
             },
             {
               "scheme": "https",
-              "host": "www.quickex.to",
+              "host": "www. RustAcademy.to",
               "pathPrefix": "/"
             }
           ],
@@ -53,13 +56,13 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "QuickEx uses Face ID to protect payments and sensitive wallet data."
+          "faceIDPermission": " RustAcademy uses Face ID to protect payments and sensitive wallet data."
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "QuickEx needs camera access to scan QR payment codes."
+          "cameraPermission": " RustAcademy needs camera access to scan QR payment codes."
         }
       ],
       "expo-notifications",

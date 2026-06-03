@@ -12,7 +12,7 @@ use soroban_sdk::{contractevent, Address, BytesN, Env};
 ///   v2 – added `schema_version` to every event payload (this release)
 pub const EVENT_SCHEMA_VERSION: u32 = 2;
 
-/// Testnet event topic namespace used as topic[0] for every QuickEx event.
+/// Testnet event topic namespace used as topic[0] for every  RustAcademy event.
 #[allow(dead_code)]
 pub const EVENT_TOPIC_ADMIN: &str = "TOPIC_ADMIN";
 #[allow(dead_code)]

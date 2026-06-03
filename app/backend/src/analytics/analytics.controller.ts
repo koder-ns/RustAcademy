@@ -1,26 +1,27 @@
-import { Controller, Get, Query, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Request, Response } from 'express';
-import { ApiKeyGuard } from '../auth/guards/api-key.guard';
-import { AnalyticsService } from './analytics.service';
+import { Controller, Get, Query, Req, Res, UseGuards } from "@nestjs/common";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { Request, Response } from "express";
+import { ApiKeyGuard } from "../auth/guards/api-key.guard";
+import { AnalyticsService } from "./analytics.service";
 import {
   AnalyticsQueryDto,
   ExportReportQueryDto,
   TimeSeriesQueryDto,
   ReportFormat,
-} from './dto/analytics-query.dto';
+} from "./dto/analytics-query.dto";
 
-@ApiTags('analytics')
+@ApiTags("analytics")
 @UseGuards(ApiKeyGuard)
-@Controller('analytics')
+@Controller("analytics")
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  @Get('report')
+  @Get("report")
   @ApiOperation({
-    summary: 'Fetch dashboard analytics report (summary, asset distribution, and time-series)',
+    summary:
+      "Fetch dashboard analytics report (summary, asset distribution, and time-series)",
   })
-  @ApiResponse({ status: 200, description: 'Analytics report generated' })
+  @ApiResponse({ status: 200, description: "Analytics report generated" })
   async getReport(@Req() req: Request, @Query() query: TimeSeriesQueryDto) {
     return this.analyticsService.getAnalyticsReport(
       query.publicKey,
@@ -31,11 +32,12 @@ export class AnalyticsController {
     );
   }
 
-  @Get('time-series')
+  @Get("time-series")
   @ApiOperation({
-    summary: 'Fetch only time-series analytics for chart rendering (daily/weekly/monthly)',
+    summary:
+      "Fetch only time-series analytics for chart rendering (daily/weekly/monthly)",
   })
-  @ApiResponse({ status: 200, description: 'Time-series analytics generated' })
+  @ApiResponse({ status: 200, description: "Time-series analytics generated" })
   async getTimeSeries(@Req() req: Request, @Query() query: TimeSeriesQueryDto) {
     const report = await this.analyticsService.getAnalyticsReport(
       query.publicKey,
@@ -51,12 +53,15 @@ export class AnalyticsController {
     };
   }
 
-  @Get('assets')
+  @Get("assets")
   @ApiOperation({
-    summary: 'Fetch asset distribution for payment history',
+    summary: "Fetch asset distribution for payment history",
   })
-  @ApiResponse({ status: 200, description: 'Asset distribution generated' })
-  async getAssetDistribution(@Req() req: Request, @Query() query: AnalyticsQueryDto) {
+  @ApiResponse({ status: 200, description: "Asset distribution generated" })
+  async getAssetDistribution(
+    @Req() req: Request,
+    @Query() query: AnalyticsQueryDto,
+  ) {
     const report = await this.analyticsService.getAnalyticsReport(
       query.publicKey,
       query.startDate,
@@ -70,11 +75,11 @@ export class AnalyticsController {
     };
   }
 
-  @Get('export')
+  @Get("export")
   @ApiOperation({
-    summary: 'Export analytics report in CSV or PDF for tax/accounting',
+    summary: "Export analytics report in CSV or PDF for tax/accounting",
   })
-  @ApiResponse({ status: 200, description: 'Report export generated' })
+  @ApiResponse({ status: 200, description: "Report export generated" })
   async exportReport(
     @Query() query: ExportReportQueryDto,
     @Req() req: Request,
@@ -96,8 +101,8 @@ export class AnalyticsController {
         payments,
         query.reportType,
       );
-      const filename = `quickex-${query.reportType}-report.pdf`;
-      res.header('Content-Type', 'application/pdf');
+      const filename = ` RustAcademy-${query.reportType}-report.pdf`;
+      res.header("Content-Type", "application/pdf");
       res.attachment(filename);
       return res.send(pdf);
     }
@@ -107,8 +112,8 @@ export class AnalyticsController {
       payments,
       query.reportType,
     );
-    const filename = `quickex-${query.reportType}-report.csv`;
-    res.header('Content-Type', 'text/csv');
+    const filename = ` RustAcademy-${query.reportType}-report.csv`;
+    res.header("Content-Type", "text/csv");
     res.attachment(filename);
     return res.send(csv);
   }

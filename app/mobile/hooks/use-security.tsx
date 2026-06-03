@@ -1,25 +1,25 @@
 import * as LocalAuthentication from "expo-local-authentication";
 import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
 import { AppState, Platform } from "react-native";
 
 import { PinAuthModal } from "@/components/security/pin-auth-modal";
 import {
-    clearSensitiveToken,
-    getSecuritySettings,
-    getSensitiveToken,
-    hasFallbackPin,
-    saveSecuritySettings,
-    saveSensitiveToken,
-    setFallbackPin,
-    verifyFallbackPin,
+  clearSensitiveToken,
+  getSecuritySettings,
+  getSensitiveToken,
+  hasFallbackPin,
+  saveSecuritySettings,
+  saveSensitiveToken,
+  setFallbackPin,
+  verifyFallbackPin,
 } from "@/services/security";
 import type { SecurityAuthReason, SecuritySettings } from "@/types/security";
 
@@ -57,7 +57,7 @@ const DEFAULT_SETTINGS: SecuritySettings = {
 };
 
 const PIN_DESCRIPTION_BY_REASON: Record<SecurityAuthReason, string> = {
-  app_unlock: "Enter your fallback PIN to unlock QuickEx.",
+  app_unlock: "Enter your fallback PIN to unlock  RustAcademy.",
   payment_authorization: "Enter your fallback PIN to authorize this payment.",
   sensitive_data_access: "Enter your fallback PIN to reveal sensitive data.",
 };
@@ -166,7 +166,7 @@ export function SecurityProvider({ children }: { children: React.ReactNode }) {
           ? "Authenticate to approve payment"
           : reason === "sensitive_data_access"
             ? "Authenticate to access sensitive data"
-            : "Authenticate to unlock QuickEx";
+            : "Authenticate to unlock  RustAcademy";
 
       try {
         const result = await LocalAuthentication.authenticateAsync({

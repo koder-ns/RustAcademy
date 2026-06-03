@@ -1,6 +1,6 @@
-# QuickEx Deployment Checklist
+# RustAcademy Deployment Checklist
 
-This checklist is the release gate for any QuickEx deployment change. Use it for testnet validation first, then repeat the exact validated steps for mainnet.
+This checklist is the release gate for any RustAcademy deployment change. Use it for testnet validation first, then repeat the exact validated steps for mainnet.
 
 ## 1. Required checks before deployment
 
@@ -11,7 +11,7 @@ This checklist is the release gate for any QuickEx deployment change. Use it for
 - [ ] `cargo test upgrade_harness_ -- --nocapture`
 - [ ] `cargo test test_event_schema_catalog_locks_canonical_topics_and_payloads`
 
-If the PR touches an event payload, also run the relevant snapshot test(s) in [contracts/quickex/src/test.rs](../contracts/quickex/src/test.rs) and confirm the payload keys remain locked.
+If the PR touches an event payload, also run the relevant snapshot test(s) in [contracts/ RustAcademy/src/test.rs](../contracts/ RustAcademy/src/test.rs) and confirm the payload keys remain locked.
 
 ## 2. Governance requirements
 
@@ -36,7 +36,7 @@ Suggested validation commands:
 ```bash
 cargo build --target wasm32v1-none --release
 stellar contract deploy \
-  --wasm target/wasm32v1-none/release/quickex.wasm \
+  --wasm target/wasm32v1-none/release/ RustAcademy.wasm \
   --source test \
   --network testnet
 
@@ -72,7 +72,7 @@ Suggested command shape:
 
 ```bash
 stellar contract deploy \
-  --wasm target/wasm32v1-none/release/quickex.wasm \
+  --wasm target/wasm32v1-none/release/ RustAcademy.wasm \
   --source main \
   --network mainnet
 ```

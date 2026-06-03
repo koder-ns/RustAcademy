@@ -1,6 +1,6 @@
-# QuickEx upgrade / regression test suite
+# RustAcademy upgrade / regression test suite
 
-This document describes the **regression test suite** used to future-proof QuickEx: after contract or SDK upgrades, these tests ensure existing escrows and commitments still behave correctly.
+This document describes the **regression test suite** used to future-proof RustAcademy: after contract or SDK upgrades, these tests ensure existing escrows and commitments still behave correctly.
 
 ## Purpose
 
@@ -10,19 +10,19 @@ This document describes the **regression test suite** used to future-proof Quick
 
 ## Golden path scenarios covered
 
-| Scenario | Test(s) | Location |
-|----------|--------|----------|
-| Create escrows & commitments | `test_deposit`, `test_commitment_cycle`, `test_successful_withdrawal` | `src/test.rs` |
-| Toggle privacy | `test_set_privacy_toggle_cycle_succeeds`, `test_set_and_get_privacy` | `src/test.rs` |
-| Withdrawals | `test_successful_withdrawal` | `src/test.rs` |
-| Refunds | `test_refund_successful` | `src/test.rs` |
-| Full flow (single smoke test) | `regression_golden_path_full_flow` | `src/test.rs` |
-| Upgrade migration | `test_upgrade_migration_preserves_legacy_escrow_data` | `src/test.rs` |
-| Commitment creation/verification | `test_create_and_verify_commitment_success` | `src/commitment_test.rs` |
+| Scenario                         | Test(s)                                                               | Location                 |
+| -------------------------------- | --------------------------------------------------------------------- | ------------------------ |
+| Create escrows & commitments     | `test_deposit`, `test_commitment_cycle`, `test_successful_withdrawal` | `src/test.rs`            |
+| Toggle privacy                   | `test_set_privacy_toggle_cycle_succeeds`, `test_set_and_get_privacy`  | `src/test.rs`            |
+| Withdrawals                      | `test_successful_withdrawal`                                          | `src/test.rs`            |
+| Refunds                          | `test_refund_successful`                                              | `src/test.rs`            |
+| Full flow (single smoke test)    | `regression_golden_path_full_flow`                                    | `src/test.rs`            |
+| Upgrade migration                | `test_upgrade_migration_preserves_legacy_escrow_data`                 | `src/test.rs`            |
+| Commitment creation/verification | `test_create_and_verify_commitment_success`                           | `src/commitment_test.rs` |
 
 ## How to run the regression suite
 
-From the **contract directory** (`app/contract/contracts/quickex/`):
+From the **contract directory** (`app/contract/contracts/ RustAcademy/`):
 
 ```sh
 # Run only the combined golden-path smoke test (fast)
@@ -41,7 +41,7 @@ cargo test
 From the **repository root**, using the workspace:
 
 ```sh
-cargo test -p quickex
+cargo test -p  RustAcademy
 ```
 
 Snapshots are stored under `test_snapshots/`. If your environment generates or checks snapshots (e.g. via Soroban CLI), ensure they are updated only when behavior is intentionally changed.
@@ -56,6 +56,7 @@ When you add a **new feature** that affects core escrow, commitment, or privacy 
    - Storage invariants: `src/storage_test.rs`
 
 2. **Mark regression tests** with a brief doc comment above the test:
+
    ```rust
    /// Regression suite: <short description of what this guards>.
    #[test]

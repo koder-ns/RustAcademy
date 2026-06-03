@@ -1,6 +1,6 @@
-# QuickEx SDK — Getting Started Guide
+# RustAcademy SDK — Getting Started Guide
 
-> A complete guide for integrating QuickEx into your JavaScript or TypeScript application.
+> A complete guide for integrating RustAcademy into your JavaScript or TypeScript application.
 
 ---
 
@@ -26,7 +26,7 @@
 - **Node.js** 18+ (or a modern browser with `fetch` support)
 - **TypeScript** 5+ (optional, but recommended)
 - A **Stellar wallet** (for signing and sending transactions)
-- A **QuickEx API key** (optional — gives higher rate limits)
+- A ** RustAcademy API key** (optional — gives higher rate limits)
 
 ---
 
@@ -35,16 +35,16 @@
 ### Option A: Install the client package (when published)
 
 ```bash
-npm install @quickex/sdk
+npm install @ RustAcademy/sdk
 # or
-pnpm add @quickex/sdk
+pnpm add @ RustAcademy/sdk
 # or
-yarn add @quickex/sdk
+yarn add @ RustAcademy/sdk
 ```
 
 ### Option B: Use the lightweight HTTP client (zero dependencies)
 
-The QuickEx API is a standard REST API. You can use `fetch` directly:
+The RustAcademy API is a standard REST API. You can use `fetch` directly:
 
 ```bash
 # No extra packages needed — just use the built-in fetch API
@@ -55,32 +55,32 @@ The QuickEx API is a standard REST API. You can use `fetch` directly:
 ## Configuration
 
 ```typescript
-// quickex.config.ts
-export const QUICKEX_CONFIG = {
-  // Base URL — change to https://api.quickex.example.com for production
-  baseUrl: process.env.QUICKEX_BASE_URL || 'http://localhost:3000',
+//  RustAcademy.config.ts
+export const RustAcademy_CONFIG = {
+  // Base URL — change to https://api. RustAcademy.example.com for production
+  baseUrl: process.env.RustAcademy_BASE_URL || "http://localhost:3000",
 
   // Optional API key for higher rate limits
-  apiKey: process.env.QUICKEX_API_KEY || '',
+  apiKey: process.env.RustAcademy_API_KEY || "",
 
   // Network — 'testnet' or 'mainnet'
-  network: process.env.STELLAR_NETWORK || 'testnet',
+  network: process.env.STELLAR_NETWORK || "testnet",
 };
 ```
 
 ### Environment Variables
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `QUICKEX_BASE_URL` | No | `http://localhost:3000` | API base URL |
-| `QUICKEX_API_KEY` | No | — | API key for higher rate limits |
-| `STELLAR_NETWORK` | No | `testnet` | Stellar network to use |
+| Variable                | Required | Default                 | Description                    |
+| ----------------------- | -------- | ----------------------- | ------------------------------ |
+| ` RustAcademy_BASE_URL` | No       | `http://localhost:3000` | API base URL                   |
+| ` RustAcademy_API_KEY`  | No       | —                       | API key for higher rate limits |
+| `STELLAR_NETWORK`       | No       | `testnet`               | Stellar network to use         |
 
 ---
 
 ## Authentication
 
-QuickEx uses API keys for authentication. API keys are optional for public endpoints but give you:
+RustAcademy uses API keys for authentication. API keys are optional for public endpoints but give you:
 
 - **Higher rate limits**: 120 req/min vs 20 req/min
 - **Access to admin endpoints**: refunds, exports, feature flags
@@ -89,12 +89,12 @@ QuickEx uses API keys for authentication. API keys are optional for public endpo
 ### Creating an API Key
 
 ```typescript
-const response = await fetch('http://localhost:3000/api-keys', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("http://localhost:3000/api-keys", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    name: 'My App Key',
-    scopes: ['links:read', 'links:write', 'transactions:read'],
+    name: "My App Key",
+    scopes: ["links:read", "links:write", "transactions:read"],
   }),
 });
 
@@ -106,21 +106,21 @@ const { key, id } = await response.json();
 
 ```typescript
 const headers = {
-  'Content-Type': 'application/json',
-  'X-API-Key': 'qk_live_abc123...',
+  "Content-Type": "application/json",
+  "X-API-Key": "qk_live_abc123...",
 };
 ```
 
 ### Available Scopes
 
-| Scope | Description |
-|---|---|
-| `links:read` | Read payment link metadata and status |
-| `links:write` | Create and manage payment links |
-| `transactions:read` | Query transaction history |
-| `usernames:read` | Search and list usernames |
-| `refunds:write` | Initiate and manage refunds (admin) |
-| `admin` | Full admin access (job queue, feature flags) |
+| Scope               | Description                                  |
+| ------------------- | -------------------------------------------- |
+| `links:read`        | Read payment link metadata and status        |
+| `links:write`       | Create and manage payment links              |
+| `transactions:read` | Query transaction history                    |
+| `usernames:read`    | Search and list usernames                    |
+| `refunds:write`     | Initiate and manage refunds (admin)          |
+| `admin`             | Full admin access (job queue, feature flags) |
 
 ---
 
@@ -129,7 +129,7 @@ const headers = {
 ### 1. Initialize the client
 
 ```typescript
-class QuickExClient {
+class RustAcademyClient {
   private baseUrl: string;
   private apiKey?: string;
 
@@ -138,13 +138,16 @@ class QuickExClient {
     this.apiKey = apiKey;
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    path: string,
+    options: RequestInit = {},
+  ): Promise<T> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(options.headers as Record<string, string>),
     };
     if (this.apiKey) {
-      headers['X-API-Key'] = this.apiKey;
+      headers["X-API-Key"] = this.apiKey;
     }
 
     const response = await fetch(`${this.baseUrl}${path}`, {
@@ -154,7 +157,7 @@ class QuickExClient {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new QuickExError(error);
+      throw new RustAcademyError(error);
     }
 
     return response.json();
@@ -162,34 +165,43 @@ class QuickExClient {
 
   // --- Health ---
   health() {
-    return this.request<{ status: string }>('/health');
+    return this.request<{ status: string }>("/health");
   }
 
   // --- Usernames ---
   createUsername(username: string, publicKey: string) {
-    return this.request<{ ok: boolean }>('/username', {
-      method: 'POST',
+    return this.request<{ ok: boolean }>("/username", {
+      method: "POST",
       body: JSON.stringify({ username, publicKey }),
     });
   }
 
   listUsernames(publicKey: string) {
-    return this.request<{ usernames: any[] }>(`/username?publicKey=${publicKey}`);
+    return this.request<{ usernames: any[] }>(
+      `/username?publicKey=${publicKey}`,
+    );
   }
 
   searchUsernames(query: string, limit = 10) {
-    return this.request<any>(`/username/search?query=${encodeURIComponent(query)}&limit=${limit}`);
+    return this.request<any>(
+      `/username/search?query=${encodeURIComponent(query)}&limit=${limit}`,
+    );
   }
 
   // --- Links ---
   generateLinkMetadata(data: any) {
-    return this.request<{ success: boolean; data: any }>('/links/metadata', {
-      method: 'POST',
+    return this.request<{ success: boolean; data: any }>("/links/metadata", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  getPaymentLinkStatus(params: { username: string; amount: number; asset?: string; memo?: string }) {
+  getPaymentLinkStatus(params: {
+    username: string;
+    amount: number;
+    asset?: string;
+    memo?: string;
+  }) {
     const qs = new URLSearchParams({
       username: params.username,
       amount: String(params.amount),
@@ -200,22 +212,25 @@ class QuickExClient {
   }
 
   // --- Transactions ---
-  getTransactions(accountId: string, options?: { asset?: string; limit?: number; cursor?: string }) {
+  getTransactions(
+    accountId: string,
+    options?: { asset?: string; limit?: number; cursor?: string },
+  ) {
     const qs = new URLSearchParams({ accountId });
-    if (options?.asset) qs.set('asset', options.asset);
-    if (options?.limit) qs.set('limit', String(options.limit));
-    if (options?.cursor) qs.set('cursor', options.cursor);
+    if (options?.asset) qs.set("asset", options.asset);
+    if (options?.limit) qs.set("limit", String(options.limit));
+    if (options?.cursor) qs.set("cursor", options.cursor);
     return this.request<any>(`/transactions?${qs}`);
   }
 
   // --- Stellar ---
   getVerifiedAssets() {
-    return this.request<any>('/stellar/verified-assets');
+    return this.request<any>("/stellar/verified-assets");
   }
 
   createQuote(data: any) {
-    return this.request<any>('/stellar/quote', {
-      method: 'POST',
+    return this.request<any>("/stellar/quote", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
@@ -223,7 +238,7 @@ class QuickExClient {
   // --- Webhooks ---
   createWebhook(publicKey: string, data: any) {
     return this.request<any>(`/webhooks/${publicKey}`, {
-      method: 'POST',
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
@@ -234,23 +249,30 @@ class QuickExClient {
 
   deleteWebhook(publicKey: string, id: string) {
     return this.request<void>(`/webhooks/${publicKey}/${id}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 }
 
 // Custom error class
-class QuickExError extends Error {
+class RustAcademyError extends Error {
   code: string;
   requestId?: string;
   fields?: Record<string, string[]>;
 
-  constructor(error: { error: { code: string; message: string; request_id?: string; fields?: Record<string, string[]> } }) {
+  constructor(error: {
+    error: {
+      code: string;
+      message: string;
+      request_id?: string;
+      fields?: Record<string, string[]>;
+    };
+  }) {
     super(error.error.message);
     this.code = error.error.code;
     this.requestId = error.error.request_id;
     this.fields = error.error.fields;
-    this.name = 'QuickExError';
+    this.name = " RustAcademyError";
   }
 }
 ```
@@ -258,9 +280,9 @@ class QuickExError extends Error {
 ### 2. Use the client
 
 ```typescript
-const client = new QuickExClient(
-  'http://localhost:3000',
-  'qk_live_abc123...' // optional
+const client = new RustAcademyClient(
+  "http://localhost:3000",
+  "qk_live_abc123...", // optional
 );
 
 // Check health
@@ -268,21 +290,27 @@ const health = await client.health();
 console.log(health.status); // "ok"
 
 // Register a username
-await client.createUsername('alice_123', 'GBXGQ55JMQ4L2B6E7S8Y9Z0A1B2C3D4E5F6G7H8I7YWR');
+await client.createUsername(
+  "alice_123",
+  "GBXGQ55JMQ4L2B6E7S8Y9Z0A1B2C3D4E5F6G7H8I7YWR",
+);
 
 // Create a payment link
 const link = await client.generateLinkMetadata({
   amount: 50.5,
-  asset: 'XLM',
-  username: 'alice_123',
-  memo: 'Payment for service',
-  acceptedAssets: ['XLM', 'USDC'],
+  asset: "XLM",
+  username: "alice_123",
+  memo: "Payment for service",
+  acceptedAssets: ["XLM", "USDC"],
 });
 
 // Query transactions
-const txs = await client.getTransactions('GBXGQ55JMQ4L2B6E7S8Y9Z0A1B2C3D4E5F6G7H8I7YWR', {
-  limit: 10,
-});
+const txs = await client.getTransactions(
+  "GBXGQ55JMQ4L2B6E7S8Y9Z0A1B2C3D4E5F6G7H8I7YWR",
+  {
+    limit: 10,
+  },
+);
 ```
 
 ---
@@ -303,7 +331,7 @@ DRAFT → ACTIVE → EXPIRED → (re-activated) → ACTIVE
 **Link Format:**
 
 ```
-https://app.quickex.example.com/pay?amount=50.5000000&asset=XLM&username=alice_123
+https://app. RustAcademy.example.com/pay?amount=50.5000000&asset=XLM&username=alice_123
 ```
 
 ### Usernames
@@ -356,10 +384,10 @@ interface PublicProfile {
 }
 
 // --- Payment Link ---
-type LinkState = 'DRAFT' | 'ACTIVE' | 'EXPIRED' | 'PAID' | 'REFUNDED';
+type LinkState = "DRAFT" | "ACTIVE" | "EXPIRED" | "PAID" | "REFUNDED";
 
 interface LinkMetadata {
-  amount: string;           // "50.5000000" (7 decimal places)
+  amount: string; // "50.5000000" (7 decimal places)
   memo: string | null;
   memoType: string;
   asset: string;
@@ -408,8 +436,8 @@ interface Transaction {
 }
 
 // --- Recurring Payment ---
-type FrequencyType = 'daily' | 'weekly' | 'monthly' | 'yearly';
-type RecurringStatus = 'active' | 'paused' | 'completed' | 'cancelled';
+type FrequencyType = "daily" | "weekly" | "monthly" | "yearly";
+type RecurringStatus = "active" | "paused" | "completed" | "cancelled";
 
 interface RecurringPaymentLink {
   id: string;
@@ -431,20 +459,20 @@ interface RecurringPaymentLink {
 
 // --- Webhook ---
 type NotificationEventType =
-  | 'EscrowDeposited'
-  | 'EscrowWithdrawn'
-  | 'EscrowRefunded'
-  | 'payment.received'
-  | 'username.claimed'
-  | 'recurring.payment.due'
-  | 'recurring.payment.executed'
-  | 'recurring.payment.failed'
-  | 'recurring.payment.cancelled'
-  | 'recurring.link.created'
-  | 'recurring.link.updated'
-  | 'recurring.link.paused'
-  | 'recurring.link.resumed'
-  | 'recurring.link.completed';
+  | "EscrowDeposited"
+  | "EscrowWithdrawn"
+  | "EscrowRefunded"
+  | "payment.received"
+  | "username.claimed"
+  | "recurring.payment.due"
+  | "recurring.payment.executed"
+  | "recurring.payment.failed"
+  | "recurring.payment.cancelled"
+  | "recurring.link.created"
+  | "recurring.link.updated"
+  | "recurring.link.paused"
+  | "recurring.link.resumed"
+  | "recurring.link.completed";
 
 interface Webhook {
   id: string;
@@ -480,12 +508,18 @@ interface Quote {
 }
 
 // --- API Key ---
-type ApiKeyScope = 'links:read' | 'links:write' | 'transactions:read' | 'usernames:read' | 'refunds:write' | 'admin';
+type ApiKeyScope =
+  | "links:read"
+  | "links:write"
+  | "transactions:read"
+  | "usernames:read"
+  | "refunds:write"
+  | "admin";
 
 interface ApiKeyCreated {
   id: string;
   name: string;
-  key: string;           // ⚠️ Only shown once!
+  key: string; // ⚠️ Only shown once!
   key_prefix: string;
   scopes: ApiKeyScope[];
   is_active: boolean;
@@ -496,11 +530,11 @@ interface ApiKeyCreated {
 
 ## Rate Limits
 
-| Tier | Default (no key) | With API Key |
-|---|---|---|
-| Global | 20 req/min | 120 req/min |
-| Search | 20 req/min | 120 req/min |
-| Trending | 10 req/min | 120 req/min |
+| Tier     | Default (no key) | With API Key |
+| -------- | ---------------- | ------------ |
+| Global   | 20 req/min       | 120 req/min  |
+| Search   | 20 req/min       | 120 req/min  |
+| Trending | 10 req/min       | 120 req/min  |
 
 When rate-limited, you receive a `429` response:
 
@@ -527,17 +561,22 @@ async function requestWithRetry<T>(
     try {
       return await fn();
     } catch (error) {
-      if (error instanceof QuickExError && error.code === 'RATE_LIMIT_EXCEEDED') {
+      if (
+        error instanceof RustAcademyError &&
+        error.code === "RATE_LIMIT_EXCEEDED"
+      ) {
         const retryAfter = 30; // seconds
         if (attempt < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+          await new Promise((resolve) =>
+            setTimeout(resolve, retryAfter * 1000),
+          );
           continue;
         }
       }
       throw error;
     }
   }
-  throw new Error('Max retries exceeded');
+  throw new Error("Max retries exceeded");
 }
 ```
 
@@ -549,17 +588,17 @@ All errors follow the same JSON shape. See the [Error Contract](./ERROR-CODES.md
 
 ```typescript
 try {
-  await client.createUsername('taken_name', publicKey);
+  await client.createUsername("taken_name", publicKey);
 } catch (error) {
-  if (error instanceof QuickExError) {
+  if (error instanceof RustAcademyError) {
     switch (error.code) {
-      case 'USERNAME_TAKEN':
+      case "USERNAME_TAKEN":
         // Username already registered
         break;
-      case 'USERNAME_INVALID':
+      case "USERNAME_INVALID":
         // Format requirements not met
         break;
-      case 'VALIDATION_ERROR':
+      case "VALIDATION_ERROR":
         // Check error.fields for details
         console.log(error.fields);
         break;
@@ -575,10 +614,13 @@ try {
 
 ## Pagination
 
-QuickEx uses cursor-based pagination for list endpoints. Pass the `cursor` from a previous response to get the next page.
+RustAcademy uses cursor-based pagination for list endpoints. Pass the `cursor` from a previous response to get the next page.
 
 ```typescript
-async function getAllTransactions(client: QuickExClient, accountId: string): Promise<Transaction[]> {
+async function getAllTransactions(
+  client: RustAcademyClient,
+  accountId: string,
+): Promise<Transaction[]> {
   const all: Transaction[] = [];
   let cursor: string | undefined;
 
@@ -589,7 +631,9 @@ async function getAllTransactions(client: QuickExClient, accountId: string): Pro
     });
 
     all.push(...response.transactions);
-    cursor = response.pagination.hasMore ? response.pagination.cursor : undefined;
+    cursor = response.pagination.hasMore
+      ? response.pagination.cursor
+      : undefined;
   } while (cursor);
 
   return all;
@@ -600,34 +644,32 @@ async function getAllTransactions(client: QuickExClient, accountId: string): Pro
 
 ## Webhook Verification
 
-When you register a webhook, QuickEx signs every payload with a secret. Verify signatures to ensure authenticity.
+When you register a webhook, RustAcademy signs every payload with a secret. Verify signatures to ensure authenticity.
 
 ```typescript
-import { createHmac } from 'crypto';
+import { createHmac } from "crypto";
 
 function verifyWebhookSignature(
-  payload: string,     // raw request body
-  signature: string,   // x-quickex-signature header
-  secret: string,      // from webhook registration response
+  payload: string, // raw request body
+  signature: string, // x- RustAcademy-signature header
+  secret: string, // from webhook registration response
 ): boolean {
-  const expected = createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
+  const expected = createHmac("sha256", secret).update(payload).digest("hex");
   return signature === expected;
 }
 
 // Express example
-app.post('/webhooks/quickex', (req, res) => {
-  const signature = req.headers['x-quickex-signature'] as string;
+app.post("/webhooks/ RustAcademy", (req, res) => {
+  const signature = req.headers["x- RustAcademy-signature"] as string;
   const raw = JSON.stringify(req.body); // use raw body parser in production
-  const secret = process.env.QUICKEX_WEBHOOK_SECRET!;
+  const secret = process.env.RustAcademy_WEBHOOK_SECRET!;
 
   if (!verifyWebhookSignature(raw, signature, secret)) {
-    return res.status(401).json({ error: 'Invalid signature' });
+    return res.status(401).json({ error: "Invalid signature" });
   }
 
   // Process the verified event
-  console.log('Verified event:', req.body);
+  console.log("Verified event:", req.body);
   res.status(200).json({ received: true });
 });
 ```
@@ -638,95 +680,95 @@ app.post('/webhooks/quickex', (req, res) => {
 
 ### Endpoints Quick Reference
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/health` | Health check |
-| `GET` | `/ready` | Readiness check |
-| `POST` | `/username` | Create username |
-| `GET` | `/username` | List usernames for wallet |
-| `GET` | `/username/search` | Search public profiles |
-| `GET` | `/username/trending` | Trending creators |
-| `GET` | `/username/recently-active` | Recently active users |
-| `POST` | `/username/toggle-public` | Toggle profile visibility |
-| `POST` | `/links/metadata` | Generate link metadata |
-| `POST` | `/links/bulk/generate` | Bulk link generation (JSON) |
-| `POST` | `/links/bulk/generate/csv` | Bulk link generation (CSV) |
-| `GET` | `/payment-links/status` | Payment link status |
-| `POST` | `/links/recurring` | Create recurring link |
-| `GET` | `/links/recurring` | List recurring links |
-| `GET` | `/links/recurring/:id` | Get recurring link |
-| `PATCH` | `/links/recurring/:id` | Update recurring link |
-| `POST` | `/links/recurring/:id/cancel` | Cancel recurring link |
-| `POST` | `/links/recurring/:id/pause` | Pause recurring link |
-| `POST` | `/links/recurring/:id/resume` | Resume recurring link |
-| `GET` | `/links/recurring/:id/executions` | Execution history |
-| `POST` | `/links/scan` | Scan link for scams |
-| `GET` | `/transactions` | List transactions |
-| `POST` | `/transactions/compose` | Compose Soroban tx |
-| `GET` | `/payments/recent` | Recent payments |
-| `GET` | `/stellar/verified-assets` | Verified assets |
-| `POST` | `/stellar/path-preview` | Path preview (strict-receive) |
-| `POST` | `/stellar/path-preview/strict-send` | Path preview (strict-send) |
-| `POST` | `/stellar/soroban-preflight` | Soroban preflight |
-| `POST` | `/stellar/quote` | Create quote |
-| `GET` | `/stellar/quote/:quoteId` | Get quote |
-| `POST` | `/webhooks/:publicKey` | Register webhook |
-| `GET` | `/webhooks/:publicKey` | List webhooks |
-| `GET` | `/webhooks/:publicKey/:id` | Get webhook |
-| `PUT` | `/webhooks/:publicKey/:id` | Update webhook |
-| `DELETE` | `/webhooks/:publicKey/:id` | Delete webhook |
-| `POST` | `/webhooks/:publicKey/:id/regenerate-secret` | Regenerate secret |
-| `GET` | `/webhooks/:publicKey/:id/logs` | Delivery logs |
-| `GET` | `/webhooks/:publicKey/:id/stats` | Delivery stats |
-| `POST` | `/webhooks/:publicKey/:id/redeliver` | Redeliver event |
-| `PUT` | `/notifications/preferences/:publicKey` | Set notification prefs |
-| `GET` | `/notifications/preferences/:publicKey` | Get notification prefs |
-| `DELETE` | `/notifications/preferences/:publicKey/:channel` | Disable channel |
-| `POST` | `/marketplace/list` | List username for sale |
-| `GET` | `/marketplace` | Active listings |
-| `GET` | `/marketplace/:listingId` | Get listing |
-| `DELETE` | `/marketplace/:listingId` | Cancel listing |
-| `POST` | `/marketplace/:listingId/bid` | Place bid |
-| `GET` | `/marketplace/:listingId/bids` | Get bids |
-| `POST` | `/marketplace/:listingId/accept-bid/:bidId` | Accept bid |
-| `POST` | `/api-keys` | Create API key |
-| `GET` | `/api-keys` | List API keys |
-| `GET` | `/api-keys/usage` | Usage stats |
-| `DELETE` | `/api-keys/:id` | Revoke key |
-| `POST` | `/api-keys/:id/rotate` | Rotate key |
-| `GET` | `/fiat-ramps/anchors` | Available anchors |
-| `POST` | `/fiat-ramps/deposit` | Initiate deposit |
-| `POST` | `/fiat-ramps/withdraw` | Initiate withdrawal |
-| `POST` | `/admin/refunds` | Initiate refund |
-| `GET` | `/admin/refunds` | List refunds |
-| `POST` | `/admin/refunds/:id/approve` | Approve refund |
-| `POST` | `/admin/refunds/:id/reject` | Reject refund |
-| `POST` | `/exports` | Request data export |
-| `GET` | `/telegram/status/:telegramId` | Check Telegram linkage |
-| `POST` | `/telegram/verify/:telegramId` | Verify Telegram linkage |
-| `PUT` | `/telegram/settings/:telegramId` | Update Telegram settings |
-| `DELETE` | `/telegram/link/:telegramId` | Unlink Telegram |
-| `GET` | `/reconciliation/status` | Reconciliation worker status |
-| `POST` | `/reconciliation/trigger` | Trigger reconciliation |
-| `POST` | `/reconciliation/backfill` | Start backfill |
-| `GET` | `/reconciliation/backfill/status` | Backfill progress |
-| `GET` | `/admin/jobs` | List jobs |
-| `GET` | `/admin/jobs/metrics/summary` | Job metrics |
-| `GET` | `/admin/jobs/dlq` | Dead letter queue |
-| `POST` | `/admin/jobs/bulk-retry` | Bulk retry jobs |
-| `GET` | `/admin/jobs/:id` | Get job details |
-| `POST` | `/admin/jobs/:id/cancel` | Cancel job |
-| `POST` | `/admin/jobs/:id/retry` | Retry job |
-| `GET` | `/metrics` | Prometheus metrics |
-| `GET` | `/metrics/content-type` | Metrics content type |
-| `GET` | `/assets` | List assets with metadata |
-| `GET` | `/assets/:code` | Get asset metadata |
-| `POST` | `/assets/:code/refresh` | Refresh asset cache |
-| `GET` | `/assets/cache/stats` | Cache stats |
-| `POST` | `/assets/cache/clear` | Clear cache |
-| `GET` | `/admin/audit` | Query audit logs |
-| `GET` | `/admin/audit/export` | Export audit CSV |
-| `DELETE` | `/admin/audit/retention` | Apply retention policy |
+| Method   | Endpoint                                         | Description                   |
+| -------- | ------------------------------------------------ | ----------------------------- |
+| `GET`    | `/health`                                        | Health check                  |
+| `GET`    | `/ready`                                         | Readiness check               |
+| `POST`   | `/username`                                      | Create username               |
+| `GET`    | `/username`                                      | List usernames for wallet     |
+| `GET`    | `/username/search`                               | Search public profiles        |
+| `GET`    | `/username/trending`                             | Trending creators             |
+| `GET`    | `/username/recently-active`                      | Recently active users         |
+| `POST`   | `/username/toggle-public`                        | Toggle profile visibility     |
+| `POST`   | `/links/metadata`                                | Generate link metadata        |
+| `POST`   | `/links/bulk/generate`                           | Bulk link generation (JSON)   |
+| `POST`   | `/links/bulk/generate/csv`                       | Bulk link generation (CSV)    |
+| `GET`    | `/payment-links/status`                          | Payment link status           |
+| `POST`   | `/links/recurring`                               | Create recurring link         |
+| `GET`    | `/links/recurring`                               | List recurring links          |
+| `GET`    | `/links/recurring/:id`                           | Get recurring link            |
+| `PATCH`  | `/links/recurring/:id`                           | Update recurring link         |
+| `POST`   | `/links/recurring/:id/cancel`                    | Cancel recurring link         |
+| `POST`   | `/links/recurring/:id/pause`                     | Pause recurring link          |
+| `POST`   | `/links/recurring/:id/resume`                    | Resume recurring link         |
+| `GET`    | `/links/recurring/:id/executions`                | Execution history             |
+| `POST`   | `/links/scan`                                    | Scan link for scams           |
+| `GET`    | `/transactions`                                  | List transactions             |
+| `POST`   | `/transactions/compose`                          | Compose Soroban tx            |
+| `GET`    | `/payments/recent`                               | Recent payments               |
+| `GET`    | `/stellar/verified-assets`                       | Verified assets               |
+| `POST`   | `/stellar/path-preview`                          | Path preview (strict-receive) |
+| `POST`   | `/stellar/path-preview/strict-send`              | Path preview (strict-send)    |
+| `POST`   | `/stellar/soroban-preflight`                     | Soroban preflight             |
+| `POST`   | `/stellar/quote`                                 | Create quote                  |
+| `GET`    | `/stellar/quote/:quoteId`                        | Get quote                     |
+| `POST`   | `/webhooks/:publicKey`                           | Register webhook              |
+| `GET`    | `/webhooks/:publicKey`                           | List webhooks                 |
+| `GET`    | `/webhooks/:publicKey/:id`                       | Get webhook                   |
+| `PUT`    | `/webhooks/:publicKey/:id`                       | Update webhook                |
+| `DELETE` | `/webhooks/:publicKey/:id`                       | Delete webhook                |
+| `POST`   | `/webhooks/:publicKey/:id/regenerate-secret`     | Regenerate secret             |
+| `GET`    | `/webhooks/:publicKey/:id/logs`                  | Delivery logs                 |
+| `GET`    | `/webhooks/:publicKey/:id/stats`                 | Delivery stats                |
+| `POST`   | `/webhooks/:publicKey/:id/redeliver`             | Redeliver event               |
+| `PUT`    | `/notifications/preferences/:publicKey`          | Set notification prefs        |
+| `GET`    | `/notifications/preferences/:publicKey`          | Get notification prefs        |
+| `DELETE` | `/notifications/preferences/:publicKey/:channel` | Disable channel               |
+| `POST`   | `/marketplace/list`                              | List username for sale        |
+| `GET`    | `/marketplace`                                   | Active listings               |
+| `GET`    | `/marketplace/:listingId`                        | Get listing                   |
+| `DELETE` | `/marketplace/:listingId`                        | Cancel listing                |
+| `POST`   | `/marketplace/:listingId/bid`                    | Place bid                     |
+| `GET`    | `/marketplace/:listingId/bids`                   | Get bids                      |
+| `POST`   | `/marketplace/:listingId/accept-bid/:bidId`      | Accept bid                    |
+| `POST`   | `/api-keys`                                      | Create API key                |
+| `GET`    | `/api-keys`                                      | List API keys                 |
+| `GET`    | `/api-keys/usage`                                | Usage stats                   |
+| `DELETE` | `/api-keys/:id`                                  | Revoke key                    |
+| `POST`   | `/api-keys/:id/rotate`                           | Rotate key                    |
+| `GET`    | `/fiat-ramps/anchors`                            | Available anchors             |
+| `POST`   | `/fiat-ramps/deposit`                            | Initiate deposit              |
+| `POST`   | `/fiat-ramps/withdraw`                           | Initiate withdrawal           |
+| `POST`   | `/admin/refunds`                                 | Initiate refund               |
+| `GET`    | `/admin/refunds`                                 | List refunds                  |
+| `POST`   | `/admin/refunds/:id/approve`                     | Approve refund                |
+| `POST`   | `/admin/refunds/:id/reject`                      | Reject refund                 |
+| `POST`   | `/exports`                                       | Request data export           |
+| `GET`    | `/telegram/status/:telegramId`                   | Check Telegram linkage        |
+| `POST`   | `/telegram/verify/:telegramId`                   | Verify Telegram linkage       |
+| `PUT`    | `/telegram/settings/:telegramId`                 | Update Telegram settings      |
+| `DELETE` | `/telegram/link/:telegramId`                     | Unlink Telegram               |
+| `GET`    | `/reconciliation/status`                         | Reconciliation worker status  |
+| `POST`   | `/reconciliation/trigger`                        | Trigger reconciliation        |
+| `POST`   | `/reconciliation/backfill`                       | Start backfill                |
+| `GET`    | `/reconciliation/backfill/status`                | Backfill progress             |
+| `GET`    | `/admin/jobs`                                    | List jobs                     |
+| `GET`    | `/admin/jobs/metrics/summary`                    | Job metrics                   |
+| `GET`    | `/admin/jobs/dlq`                                | Dead letter queue             |
+| `POST`   | `/admin/jobs/bulk-retry`                         | Bulk retry jobs               |
+| `GET`    | `/admin/jobs/:id`                                | Get job details               |
+| `POST`   | `/admin/jobs/:id/cancel`                         | Cancel job                    |
+| `POST`   | `/admin/jobs/:id/retry`                          | Retry job                     |
+| `GET`    | `/metrics`                                       | Prometheus metrics            |
+| `GET`    | `/metrics/content-type`                          | Metrics content type          |
+| `GET`    | `/assets`                                        | List assets with metadata     |
+| `GET`    | `/assets/:code`                                  | Get asset metadata            |
+| `POST`   | `/assets/:code/refresh`                          | Refresh asset cache           |
+| `GET`    | `/assets/cache/stats`                            | Cache stats                   |
+| `POST`   | `/assets/cache/clear`                            | Clear cache                   |
+| `GET`    | `/admin/audit`                                   | Query audit logs              |
+| `GET`    | `/admin/audit/export`                            | Export audit CSV              |
+| `DELETE` | `/admin/audit/retention`                         | Apply retention policy        |
 
 ---
 

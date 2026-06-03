@@ -1,10 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import * as crypto from 'crypto';
+import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import * as crypto from "crypto";
 
-import { ApiKeysService } from '../api-keys/api-keys.service';
-import { ApiKeyCreated } from '../api-keys/api-keys.types';
-import { WebhookService } from '../notifications/webhook.service';
-import { AuditService } from '../audit/audit.service';
+import { ApiKeysService } from "../api-keys/api-keys.service";
+import { ApiKeyCreated } from "../api-keys/api-keys.types";
+import { WebhookService } from "../notifications/webhook.service";
+import { AuditService } from "../audit/audit.service";
 
 import {
   BulkRevokeDto,
@@ -12,9 +12,9 @@ import {
   WebhookTestResultDto,
   IntegrationHealthDto,
   PingResponseDto,
-} from './dto/developer.dto';
+} from "./dto/developer.dto";
 
-const VERSION = '0.1.0';
+const VERSION = "0.1.0";
 const TEST_WEBHOOK_TIMEOUT_MS = 10_000;
 const MAX_RESPONSE_BODY_LENGTH = 2048;
 
@@ -30,7 +30,7 @@ export class DeveloperService {
 
   ping(): PingResponseDto {
     return {
-      status: 'ok',
+      status: "ok",
       timestamp: new Date().toISOString(),
       version: VERSION,
     };
@@ -38,15 +38,15 @@ export class DeveloperService {
 
   async testWebhook(webhookId: string): Promise<WebhookTestResultDto> {
     const webhook = await this.webhookService.getWebhook(webhookId);
-    if (!webhook) throw new NotFoundException('Webhook not found');
+    if (!webhook) throw new NotFoundException("Webhook not found");
 
     const sentAt = new Date().toISOString();
     const testEventId = `test_${crypto.randomUUID()}`;
     const payload = {
-      eventType: 'payment.received',
+      eventType: "payment.received",
       eventId: testEventId,
       recipientPublicKey: webhook.publicKey,
-      payload: { test: true, source: 'developer_self_service_api' },
+      payload: { test: true, source: "developer_self_service_api" },
       timestamp: sentAt,
     };
 
@@ -64,14 +64,14 @@ export class DeveloperService {
 
     try {
       const res = await fetch(webhook.webhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'X-QX-Signature': signature,
-          'X-QX-Event': 'payment.received',
-          'X-QX-Event-Id': testEventId,
-          'X-QX-Test': 'true',
-          'User-Agent': 'QuickEx-Webhook/1.0',
+          "Content-Type": "application/json",
+          "X-QX-Signature": signature,
+          "X-QX-Event": "payment.received",
+          "X-QX-Event-Id": testEventId,
+          "X-QX-Test": "true",
+          "User-Agent": " RustAcademy-Webhook/1.0",
         },
         body: bodyStr,
         signal: controller.signal,
@@ -82,9 +82,10 @@ export class DeveloperService {
 
       try {
         const text = await res.text();
-        responseBody = text.length > MAX_RESPONSE_BODY_LENGTH
-          ? text.slice(0, MAX_RESPONSE_BODY_LENGTH) + '...'
-          : text;
+        responseBody =
+          text.length > MAX_RESPONSE_BODY_LENGTH
+            ? text.slice(0, MAX_RESPONSE_BODY_LENGTH) + "..."
+            : text;
       } catch {
         // ignore body read errors
       }
@@ -98,12 +99,12 @@ export class DeveloperService {
 
     const latencyMs = Date.now() - start;
 
-    await this.auditService.log(
-      'developer_api',
-      'webhook.test',
-      webhookId,
-      { target_url: webhook.webhookUrl, http_status: httpStatus, success, latency_ms: latencyMs },
-    );
+    await this.auditService.log("developer_api", "webhook.test", webhookId, {
+      target_url: webhook.webhookUrl,
+      http_status: httpStatus,
+      success,
+      latency_ms: latencyMs,
+    });
 
     return {
       success,
@@ -125,19 +126,22 @@ export class DeveloperService {
     const failed: { id: string; reason: string }[] = [];
 
     results.forEach((result, idx) => {
-      if (result.status === 'fulfilled') {
+      if (result.status === "fulfilled") {
         revoked.push(result.value);
       } else {
         failed.push({
           id: dto.ids[idx],
-          reason: result.reason instanceof Error ? result.reason.message : String(result.reason),
+          reason:
+            result.reason instanceof Error
+              ? result.reason.message
+              : String(result.reason),
         });
       }
     });
 
     await this.auditService.log(
-      'developer_api',
-      'keys.bulk_revoke',
+      "developer_api",
+      "keys.bulk_revoke",
       undefined,
       { requested: dto.ids, revoked, failed: failed.map((f) => f.id) },
     );
@@ -154,12 +158,9 @@ export class DeveloperService {
   async emergencyRotate(id: string): Promise<ApiKeyCreated> {
     const result = await this.apiKeysService.emergencyRotate(id);
 
-    await this.auditService.log(
-      'developer_api',
-      'keys.emergency_rotate',
-      id,
-      { new_prefix: result.key_prefix },
-    );
+    await this.auditService.log("developer_api", "keys.emergency_rotate", id, {
+      new_prefix: result.key_prefix,
+    });
 
     return result;
   }
@@ -171,27 +172,26 @@ export class DeveloperService {
     ]);
 
     const totalDeliveries = webhookStats.totalSent + webhookStats.totalFailed;
-    const webhookFailureRate = totalDeliveries > 0
-      ? webhookStats.totalFailed / totalDeliveries
-      : 0;
+    const webhookFailureRate =
+      totalDeliveries > 0 ? webhookStats.totalFailed / totalDeliveries : 0;
     const webhookScore = Math.round(60 * (1 - webhookFailureRate));
 
-    const quotaUtilization = usage.quota > 0
-      ? usage.total_requests / usage.quota
-      : 0;
-    const quotaScore = quotaUtilization <= 0.9
-      ? Math.round(40 * (1 - Math.max(0, quotaUtilization - 0.7) / 0.3))
-      : 0;
+    const quotaUtilization =
+      usage.quota > 0 ? usage.total_requests / usage.quota : 0;
+    const quotaScore =
+      quotaUtilization <= 0.9
+        ? Math.round(40 * (1 - Math.max(0, quotaUtilization - 0.7) / 0.3))
+        : 0;
 
     const score = Math.min(100, Math.max(0, webhookScore + quotaScore));
     const grade = this.toGrade(score);
 
-    await this.auditService.log(
-      'developer_api',
-      'health.score',
-      ownerId,
-      { score, grade, webhook_failure_rate: webhookFailureRate, quota_utilization: quotaUtilization },
-    );
+    await this.auditService.log("developer_api", "health.score", ownerId, {
+      score,
+      grade,
+      webhook_failure_rate: webhookFailureRate,
+      quota_utilization: quotaUtilization,
+    });
 
     return {
       score,
@@ -206,17 +206,20 @@ export class DeveloperService {
     };
   }
 
-  private toGrade(score: number): 'A' | 'B' | 'C' | 'D' | 'F' {
-    if (score >= 90) return 'A';
-    if (score >= 75) return 'B';
-    if (score >= 60) return 'C';
-    if (score >= 45) return 'D';
-    return 'F';
+  private toGrade(score: number): "A" | "B" | "C" | "D" | "F" {
+    if (score >= 90) return "A";
+    if (score >= 75) return "B";
+    if (score >= 60) return "C";
+    if (score >= 45) return "D";
+    return "F";
   }
 
   private signPayload(secret: string, body: string, timestamp: number): string {
     const signed = `${timestamp}.${body}`;
-    const hmac = crypto.createHmac('sha256', secret).update(signed).digest('hex');
+    const hmac = crypto
+      .createHmac("sha256", secret)
+      .update(signed)
+      .digest("hex");
     return `t=${timestamp},v1=${hmac}`;
   }
 }

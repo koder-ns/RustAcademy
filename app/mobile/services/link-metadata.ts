@@ -1,14 +1,14 @@
-import Constants from 'expo-constants';
+import Constants from "expo-constants";
 
 /**
- * Base URL for the QuickEx backend.
+ * Base URL for the  RustAcademy backend.
  * Set EXPO_PUBLIC_API_URL in your .env file.
  * Falls back to localhost for local development.
  */
 const API_BASE_URL =
-    (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
-    process.env['EXPO_PUBLIC_API_URL'] ??
-    'http://localhost:3000';
+  (Constants.expoConfig?.extra?.apiUrl as string | undefined) ??
+  process.env["EXPO_PUBLIC_API_URL"] ??
+  "http://localhost:3000";
 
 export interface PathPreviewRow {
   sourceAmount: string;
@@ -45,7 +45,7 @@ export interface FetchLinkMetadataOptions {
 }
 
 /**
- * Fetches link metadata with optional swap options from the QuickEx backend.
+ * Fetches link metadata with optional swap options from the  RustAcademy backend.
  * Throws a descriptive Error on network issues or non-2xx responses.
  */
 export async function fetchLinkMetadata(
@@ -72,15 +72,17 @@ export async function fetchLinkMetadata(
   let response: Response;
   try {
     response = await fetch(url, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
+        "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(requestBody),
     });
   } catch (networkError) {
-    throw new Error('Network request failed. Check your connection and try again.');
+    throw new Error(
+      "Network request failed. Check your connection and try again.",
+    );
   }
 
   if (!response.ok) {

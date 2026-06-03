@@ -1,10 +1,10 @@
-# QuickEx environment registry
+#  RustAcademy environment registry
 #
 # This file is the deploy-time source of truth used by operators and downstream
 # services (backend/frontend) to discover deployed contract coordinates.
 
 version = 1
-application = "quickex"
+application = " RustAcademy"
 
 [environments.testnet]
 network = "testnet"
@@ -14,7 +14,7 @@ identity = "seyi"
 mainnet_gated = false
 
 [[environments.testnet.contracts]]
-name = "quickex"
+name = " RustAcademy"
 contract_id = "CCM5LR3XVTSDDNVEK7U4QQUN663TU4LZGDTMP3H4QIPIZO2WJOAJS2JH"
 wasm_hash = "0x57025c36c2dca81767dfbe03e78e7abc383e138ef9fe44b61f327e2cac83ed92"
 admin_addresses = ["GA5TBSBGERHVMEFBJGEM3KYMRLWO73Y2QRAV6P66GPEBOJ5ZMJUT7LLY"]
@@ -31,5 +31,5 @@ notes = "Deployed with stellar CLI via `stellar contract deploy` using the lates
 network = "mainnet"
 rpc_url = "https://mainnet.stellar.org"
 network_passphrase = "Public Global Stellar Network ; September 2015"
-identity = "quickex-mainnet"
+identity = " RustAcademy-mainnet"
 mainnet_gated = true

@@ -4,10 +4,7 @@ import dynamic from "next/dynamic";
 import { useState, useEffect, useMemo } from "react";
 import { UsernameCard } from "@/components/UsernameCard";
 import { ListingDetailModal } from "@/components/ListingDetailModal";
-import {
-  fetchListings,
-  MarketplaceListing,
-} from "@/hooks/marketplaceApi";
+import { fetchListings, MarketplaceListing } from "@/hooks/marketplaceApi";
 import { useWatchlist } from "@/contexts/WatchlistContext";
 import { useRealtimeUpdates } from "@/hooks/useRealtimeUpdates";
 import Link from "next/link";
@@ -52,7 +49,11 @@ function StatsBar({ listings }: { listings: MarketplaceListing[] }) {
   return (
     <div className="grid grid-cols-3 gap-4 mb-10">
       {[
-        { label: "Total Volume", value: `${totalVolume.toLocaleString()} USDC`, icon: "📈" },
+        {
+          label: "Total Volume",
+          value: `${totalVolume.toLocaleString()} USDC`,
+          icon: "📈",
+        },
         { label: "Active Bids", value: totalBids.toString(), icon: "⚡" },
         { label: "Watchers", value: totalWatching.toString(), icon: "👁" },
       ].map((s) => (
@@ -79,12 +80,22 @@ function MarketplacePageContent() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("all");
   const [sortKey, setSortKey] = useState("ending");
-  const [activeListing, setActiveListing] = useState<MarketplaceListing | null>(null);
-  const [detailListing, setDetailListing] = useState<MarketplaceListing | null>(null);
+  const [activeListing, setActiveListing] = useState<MarketplaceListing | null>(
+    null,
+  );
+  const [detailListing, setDetailListing] = useState<MarketplaceListing | null>(
+    null,
+  );
   const [showWatchlistOnly, setShowWatchlistOnly] = useState(false);
 
   const { watchlist, isInWatchlist, toggleWatchlist } = useWatchlist();
-  const { isConnected, lastUpdate, subscribeToListing, unsubscribeFromListing, onBidUpdate } = useRealtimeUpdates();
+  const {
+    isConnected,
+    lastUpdate,
+    subscribeToListing,
+    unsubscribeFromListing,
+    onBidUpdate,
+  } = useRealtimeUpdates();
 
   useEffect(() => {
     fetchListings().then((data) => {
@@ -96,9 +107,9 @@ function MarketplacePageContent() {
   // Subscribe to real-time updates for all listings
   useEffect(() => {
     if (listings.length > 0) {
-      listings.forEach(listing => subscribeToListing(listing.id));
+      listings.forEach((listing) => subscribeToListing(listing.id));
       return () => {
-        listings.forEach(listing => unsubscribeFromListing(listing.id));
+        listings.forEach((listing) => unsubscribeFromListing(listing.id));
       };
     }
   }, [listings, subscribeToListing, unsubscribeFromListing]);
@@ -106,16 +117,16 @@ function MarketplacePageContent() {
   // Handle real-time bid updates
   useEffect(() => {
     const unsubscribe = onBidUpdate((update) => {
-      setListings(prev =>
-        prev.map(listing =>
+      setListings((prev) =>
+        prev.map((listing) =>
           listing.id === update.listingId
             ? {
                 ...listing,
                 currentBid: Math.max(listing.currentBid, update.newBid),
-                bidCount: listing.bidCount + 1
+                bidCount: listing.bidCount + 1,
               }
-            : listing
-        )
+            : listing,
+        ),
       );
     });
 
@@ -127,8 +138,8 @@ function MarketplacePageContent() {
       prev.map((l) =>
         l.username === username
           ? { ...l, currentBid: amount, bidCount: l.bidCount + 1 }
-          : l
-      )
+          : l,
+      ),
     );
   }
 
@@ -142,7 +153,7 @@ function MarketplacePageContent() {
 
     // Filter by watchlist if enabled
     if (showWatchlistOnly) {
-      result = result.filter(listing => isInWatchlist(listing.id));
+      result = result.filter((listing) => isInWatchlist(listing.id));
     }
 
     // Filter by category
@@ -159,10 +170,14 @@ function MarketplacePageContent() {
     // Sort results
     switch (sortKey) {
       case "ending":
-        result = [...result].sort((a, b) => a.endsAt.getTime() - b.endsAt.getTime());
+        result = [...result].sort(
+          (a, b) => a.endsAt.getTime() - b.endsAt.getTime(),
+        );
         break;
       case "newest":
-        result = [...result].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        result = [...result].sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+        );
         break;
       case "price_asc":
         result = [...result].sort((a, b) => a.currentBid - b.currentBid);
@@ -176,7 +191,14 @@ function MarketplacePageContent() {
     }
 
     return result;
-  }, [listings, search, activeCategory, sortKey, showWatchlistOnly, isInWatchlist]);
+  }, [
+    listings,
+    search,
+    activeCategory,
+    sortKey,
+    showWatchlistOnly,
+    isInWatchlist,
+  ]);
 
   return (
     <div className="relative min-h-screen text-white selection:bg-indigo-500/30">
@@ -189,7 +211,10 @@ function MarketplacePageContent() {
         <div className="max-w-5xl mx-auto px-6">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs font-black text-neutral-600 uppercase tracking-widest mb-6">
-            <Link href="/" className="hover:text-white transition">QuickEx</Link>
+            <Link href="/" className="hover:text-white transition">
+              {" "}
+              RustAcademy
+            </Link>
             <span>/</span>
             <span className="text-neutral-400">Marketplace</span>
           </nav>
@@ -203,10 +228,13 @@ function MarketplacePageContent() {
                 </span>
               </div>
               <h1 className="text-5xl md:text-6xl font-black tracking-tight bg-gradient-to-br from-white via-neutral-200 to-neutral-500 bg-clip-text text-transparent leading-none mb-4">
-                Username<br />Marketplace
+                Username
+                <br />
+                Marketplace
               </h1>
               <p className="text-neutral-400 max-w-lg leading-relaxed">
-                Bid on rare, short, and premium Stellar usernames. Own your identity on-chain — permanent, self-custodied, and transferable.
+                Bid on rare, short, and premium Stellar usernames. Own your
+                identity on-chain — permanent, self-custodied, and transferable.
               </p>
             </div>
 
@@ -299,9 +327,11 @@ function MarketplacePageContent() {
           {/* Real-time status */}
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
+              <span
+                className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-400 animate-pulse" : "bg-red-400"}`}
+              />
               <span className="text-neutral-500 font-bold">
-                {isConnected ? 'Live Updates Active' : 'Connection Lost'}
+                {isConnected ? "Live Updates Active" : "Connection Lost"}
               </span>
               {lastUpdate && (
                 <span className="text-neutral-600">
@@ -336,24 +366,22 @@ function MarketplacePageContent() {
         ) : filtered.length === 0 ? (
           <div className="py-32 text-center space-y-6">
             <div className="text-6xl mb-4">
-              {showWatchlistOnly ? '❤️' : search ? '🔍' : '📦'}
+              {showWatchlistOnly ? "❤️" : search ? "🔍" : "📦"}
             </div>
             <div>
               <h3 className="text-2xl font-black mb-2">
                 {showWatchlistOnly
-                  ? 'Your watchlist is empty'
+                  ? "Your watchlist is empty"
                   : search
-                  ? 'No results found'
-                  : 'No listings match your filters'
-                }
+                    ? "No results found"
+                    : "No listings match your filters"}
               </h3>
               <p className="text-neutral-500 text-sm max-w-md mx-auto leading-relaxed">
                 {showWatchlistOnly
-                  ? 'Add usernames to your watchlist by clicking the heart icon on any listing. You\'ll get notified of new bids and can easily revisit your favorites.'
+                  ? "Add usernames to your watchlist by clicking the heart icon on any listing. You'll get notified of new bids and can easily revisit your favorites."
                   : search
-                  ? `Try a different search term or browse all listings.`
-                  : 'Try adjusting your category filter or check back later for new auctions.'
-                }
+                    ? `Try a different search term or browse all listings.`
+                    : "Try adjusting your category filter or check back later for new auctions."}
               </p>
             </div>
 
@@ -361,13 +389,29 @@ function MarketplacePageContent() {
             {!showWatchlistOnly && !search && (
               <div className="max-w-lg mx-auto">
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-left">
-                  <h4 className="font-black text-sm mb-3 text-indigo-400">💡 How Bidding Works</h4>
+                  <h4 className="font-black text-sm mb-3 text-indigo-400">
+                    💡 How Bidding Works
+                  </h4>
                   <ul className="space-y-2 text-xs text-neutral-400 leading-relaxed">
-                    <li>• <strong>Minimum bid:</strong> Must be at least 1 USDC higher than current bid</li>
-                    <li>• <strong>Auction duration:</strong> 7 days from listing creation</li>
-                    <li>• <strong>Buy Now:</strong> Instantly purchase at seller&apos;s set price (optional)</li>
-                    <li>• <strong>Winner:</strong> Highest bidder when auction ends</li>
-                    <li>• <strong>Payment:</strong> USDC on Stellar network</li>
+                    <li>
+                      • <strong>Minimum bid:</strong> Must be at least 1 USDC
+                      higher than current bid
+                    </li>
+                    <li>
+                      • <strong>Auction duration:</strong> 7 days from listing
+                      creation
+                    </li>
+                    <li>
+                      • <strong>Buy Now:</strong> Instantly purchase at
+                      seller&apos;s set price (optional)
+                    </li>
+                    <li>
+                      • <strong>Winner:</strong> Highest bidder when auction
+                      ends
+                    </li>
+                    <li>
+                      • <strong>Payment:</strong> USDC on Stellar network
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -384,7 +428,10 @@ function MarketplacePageContent() {
               )}
               {search && (
                 <button
-                  onClick={() => { setSearch(""); setActiveCategory("all"); }}
+                  onClick={() => {
+                    setSearch("");
+                    setActiveCategory("all");
+                  }}
                   className="px-6 py-3 bg-white/5 border border-white/10 rounded-xl font-bold text-sm hover:bg-white/10 transition"
                 >
                   Clear Filters
@@ -410,7 +457,9 @@ function MarketplacePageContent() {
         listing={detailListing}
         isWatched={detailListing ? isInWatchlist(detailListing.id) : false}
         onClose={() => setDetailListing(null)}
-        onToggleWatchlist={(listing) => toggleWatchlist(listing.id, listing.username)}
+        onToggleWatchlist={(listing) =>
+          toggleWatchlist(listing.id, listing.username)
+        }
         onPlaceBid={handleOpenBid}
       />
 

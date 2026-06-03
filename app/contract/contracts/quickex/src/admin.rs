@@ -1,4 +1,4 @@
-use crate::errors::QuickexError;
+use crate::errors:: RustAcademyError;
 use crate::events::{
     publish_admin_changed, publish_contract_initialized, publish_contract_migrated,
     publish_contract_paused, publish_fee_collector_rotated, publish_per_asset_fee_set,
@@ -13,9 +13,9 @@ use soroban_sdk::{Address, Env, Vec};
 ///
 /// This is a one-time operation; subsequent calls fail with [`AlreadyInitialized`].
 /// The initial admin is assigned the [`Role::Admin`] role.
-pub fn initialize(env: &Env, admin: Address) -> Result<(), QuickexError> {
+pub fn initialize(env: &Env, admin: Address) -> Result<(),  RustAcademyError> {
     if storage::is_initialized(env) || has_admin(env) {
-        return Err(QuickexError::AlreadyInitialized);
+        return Err( RustAcademyError::AlreadyInitialized);
     }
 
     // Set initial admin address (singleton for compatibility).
@@ -49,11 +49,11 @@ pub fn has_admin(env: &Env) -> bool {
 }
 
 /// Require that one-time contract initialization has completed.
-pub fn require_initialized(env: &Env) -> Result<(), QuickexError> {
+pub fn require_initialized(env: &Env) -> Result<(),  RustAcademyError> {
     if storage::is_initialized(env) {
         Ok(())
     } else {
-        Err(QuickexError::Unauthorized)
+        Err( RustAcademyError::Unauthorized)
     }
 }
 
@@ -69,7 +69,7 @@ pub fn has_role(env: &Env, address: &Address, role: Role) -> bool {
 }
 
 /// Require that the caller has at least one of the specified roles.
-pub fn require_any_role(env: &Env, caller: &Address, roles: &[Role]) -> Result<(), QuickexError> {
+pub fn require_any_role(env: &Env, caller: &Address, roles: &[Role]) -> Result<(),  RustAcademyError> {
     require_initialized(env)?;
 
     caller.require_auth();
@@ -88,11 +88,11 @@ pub fn require_any_role(env: &Env, caller: &Address, roles: &[Role]) -> Result<(
             }
         }
     }
-    Err(QuickexError::InsufficientRole)
+    Err( RustAcademyError::InsufficientRole)
 }
 
 /// Require that the caller is an Admin.
-pub fn require_admin(env: &Env, caller: &Address) -> Result<(), QuickexError> {
+pub fn require_admin(env: &Env, caller: &Address) -> Result<(),  RustAcademyError> {
     require_any_role(env, caller, &[Role::Admin])
 }
 
@@ -102,7 +102,7 @@ pub fn grant_role(
     caller: Address,
     target: Address,
     role: Role,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     require_admin(env, &caller)?;
 
     let mut roles = storage::get_roles(env, &target);
@@ -119,7 +119,7 @@ pub fn revoke_role(
     caller: Address,
     target: Address,
     role: Role,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     require_admin(env, &caller)?;
 
     let roles = storage::get_roles(env, &target);
@@ -134,7 +134,7 @@ pub fn revoke_role(
 }
 
 /// Set a new primary admin address (**Admin only**).
-pub fn set_admin(env: &Env, caller: Address, new_admin: Address) -> Result<(), QuickexError> {
+pub fn set_admin(env: &Env, caller: Address, new_admin: Address) -> Result<(),  RustAcademyError> {
     require_admin(env, &caller)?;
 
     let old_admin = storage::get_admin(env).unwrap();
@@ -162,7 +162,7 @@ pub fn set_admin(env: &Env, caller: Address, new_admin: Address) -> Result<(), Q
 }
 
 /// Set the paused state (**Admin or Operator only**).
-pub fn set_paused(env: &Env, caller: Address, new_state: bool) -> Result<(), QuickexError> {
+pub fn set_paused(env: &Env, caller: Address, new_state: bool) -> Result<(),  RustAcademyError> {
     require_any_role(env, &caller, &[Role::Admin, Role::Operator])?;
 
     storage::set_paused(env, new_state);
@@ -179,14 +179,14 @@ pub fn get_version(env: &Env) -> u32 {
     storage::get_contract_version(env).unwrap_or(storage::LEGACY_CONTRACT_VERSION)
 }
 
-pub fn migrate(env: &Env, caller: &Address) -> Result<u32, QuickexError> {
+pub fn migrate(env: &Env, caller: &Address) -> Result<u32,  RustAcademyError> {
     let from_version = get_version(env);
     if from_version == storage::LEGACY_CONTRACT_VERSION {
         caller.require_auth();
 
-        let admin = storage::get_admin(env).ok_or(QuickexError::Unauthorized)?;
+        let admin = storage::get_admin(env).ok_or( RustAcademyError::Unauthorized)?;
         if admin != *caller {
-            return Err(QuickexError::InsufficientRole);
+            return Err( RustAcademyError::InsufficientRole);
         }
 
         // Legacy deployments may not have role assignments. Seed Admin role so
@@ -201,14 +201,14 @@ pub fn migrate(env: &Env, caller: &Address) -> Result<u32, QuickexError> {
     }
 
     if from_version > storage::CURRENT_CONTRACT_VERSION {
-        return Err(QuickexError::InvalidContractVersion);
+        return Err( RustAcademyError::InvalidContractVersion);
     }
 
     let mut version = from_version;
     while version < storage::CURRENT_CONTRACT_VERSION {
         version = match version {
             storage::LEGACY_CONTRACT_VERSION => migrate_legacy_to_v1(env),
-            _ => return Err(QuickexError::InvalidContractVersion),
+            _ => return Err( RustAcademyError::InvalidContractVersion),
         };
     }
 
@@ -218,7 +218,7 @@ pub fn migrate(env: &Env, caller: &Address) -> Result<u32, QuickexError> {
 
     // Post-upgrade invariant checks (Issue #432)
     if let Err(_msg) = storage::assert_post_upgrade_invariants(env) {
-        env.panic_with_error(QuickexError::InternalError);
+        env.panic_with_error( RustAcademyError::InternalError);
     }
 
     Ok(version)
@@ -244,7 +244,7 @@ pub fn set_upgrade_window(
     caller: &Address,
     start: u64,
     end: u64,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     require_admin(env, caller)?;
     storage::set_upgrade_window(env, start, end);
     Ok(())
@@ -254,16 +254,16 @@ pub fn set_upgrade_window(
 ///
 /// **Admin only**. Emits `UpgradeStarted` event with old/new versions.
 /// Blocks if window is not active or upgrade already in progress.
-pub fn start_upgrade(env: &Env, caller: &Address, new_version: u32) -> Result<(), QuickexError> {
+pub fn start_upgrade(env: &Env, caller: &Address, new_version: u32) -> Result<(),  RustAcademyError> {
     require_admin(env, caller)?;
 
     // Check upgrade window is active (Issue #432 AC1)
     if !storage::is_upgrade_window_active(env) {
-        return Err(QuickexError::InvalidAmount); // Repurpose for "upgrade window not active"
+        return Err( RustAcademyError::InvalidAmount); // Repurpose for "upgrade window not active"
     }
 
     if storage::is_upgrade_in_progress(env) {
-        return Err(QuickexError::ContractPaused); // Reuse for "upgrade in progress"
+        return Err( RustAcademyError::ContractPaused); // Reuse for "upgrade in progress"
     }
 
     let old_version = get_version(env);
@@ -290,9 +290,9 @@ pub fn complete_upgrade(
     env: &Env,
     caller: &Address,
     new_version: u32,
-) -> Result<u32, QuickexError> {
+) -> Result<u32,  RustAcademyError> {
     if !storage::is_upgrade_in_progress(env) {
-        return Err(QuickexError::InternalError); // Not in upgrade state
+        return Err( RustAcademyError::InternalError); // Not in upgrade state
     }
 
     let old_version = get_version(env);
@@ -302,7 +302,7 @@ pub fn complete_upgrade(
 
     // Ensure new version matches expected (Issue #432 AC2)
     if migrated_version != new_version && new_version != 0 {
-        return Err(QuickexError::InvalidContractVersion);
+        return Err( RustAcademyError::InvalidContractVersion);
     }
 
     storage::set_upgrade_in_progress(env, false);
@@ -313,9 +313,9 @@ pub fn complete_upgrade(
 
 /// Require that the contract is not paused.
 #[allow(dead_code)]
-pub fn require_not_paused(env: &Env) -> Result<(), QuickexError> {
+pub fn require_not_paused(env: &Env) -> Result<(),  RustAcademyError> {
     if is_paused(env) {
-        return Err(QuickexError::ContractPaused);
+        return Err( RustAcademyError::ContractPaused);
     }
     Ok(())
 }
@@ -326,7 +326,7 @@ pub fn set_pause_flags(
     caller: &Address,
     flags_to_enable: u64,
     flags_to_disable: u64,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     require_any_role(env, caller, &[Role::Admin, Role::Operator])?;
 
     storage::set_pause_flags(env, caller, flags_to_enable, flags_to_disable);
@@ -334,7 +334,7 @@ pub fn set_pause_flags(
 }
 
 /// Set fee configuration (**Admin or Operator only**).
-pub fn set_fee_config(env: &Env, caller: &Address, config: FeeConfig) -> Result<(), QuickexError> {
+pub fn set_fee_config(env: &Env, caller: &Address, config: FeeConfig) -> Result<(),  RustAcademyError> {
     require_any_role(env, caller, &[Role::Admin, Role::Operator])?;
 
     storage::set_fee_config(env, &config);
@@ -348,11 +348,11 @@ pub fn set_per_asset_fee(
     caller: &Address,
     token: Address,
     config: PerAssetFeeConfig,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     require_any_role(env, caller, &[Role::Admin, Role::Operator])?;
 
     if config.fee_bps > 10_000 || config.arbiter_bps > 10_000 {
-        return Err(QuickexError::InvalidAmount);
+        return Err( RustAcademyError::InvalidAmount);
     }
 
     storage::set_per_asset_fee(env, &token, &config);
@@ -364,7 +364,7 @@ pub fn set_oracle_fee_config(
     env: &Env,
     caller: &Address,
     config: crate::types::OracleFeeConfig,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     require_any_role(env, caller, &[Role::Admin, Role::Operator])?;
 
     storage::set_oracle_fee_config(env, &config);
@@ -376,7 +376,7 @@ pub fn set_platform_wallet(
     env: &Env,
     caller: &Address,
     wallet: Address,
-) -> Result<(), QuickexError> {
+) -> Result<(),  RustAcademyError> {
     require_admin(env, caller)?;
 
     storage::set_platform_wallet(env, &wallet);
@@ -389,7 +389,7 @@ pub fn rotate_fee_collector(
     env: &Env,
     caller: &Address,
     new_collector: Address,
-) -> Result<u32, QuickexError> {
+) -> Result<u32,  RustAcademyError> {
     require_admin(env, caller)?;
 
     let next_index = fee_router::rotate_collector(env, &new_collector);

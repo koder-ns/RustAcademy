@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Put,  // Added Put import
+  Put, // Added Put import
   Delete,
   Body,
   Param,
@@ -45,9 +45,9 @@ class TelegramLinkStatusResponse {
 
 /**
  * REST API for managing Telegram account linkage and notifications.
- * 
+ *
  * Users can:
- * - Link their Telegram account to a QuickEx public key
+ * - Link their Telegram account to a  RustAcademy public key
  * - Verify the linkage with a code
  * - Update notification settings
  * - Unlink their account
@@ -64,7 +64,7 @@ export class TelegramController {
 
   /**
    * GET /telegram/status/:telegramId
-   * Check if a Telegram account is linked to QuickEx
+   * Check if a Telegram account is linked to  RustAcademy
    */
   @Get("status/:telegramId")
   @ApiOperation({ summary: "Check Telegram account linkage status" })
@@ -130,7 +130,10 @@ export class TelegramController {
       return { success: true };
     }
 
-    const isValid = await this.telegramBot.verifyUser(tid, dto.verificationCode);
+    const isValid = await this.telegramBot.verifyUser(
+      tid,
+      dto.verificationCode,
+    );
 
     if (!isValid) {
       throw new BadRequestException("Invalid verification code");
@@ -190,16 +193,14 @@ export class TelegramController {
 
   /**
    * DELETE /telegram/link/:telegramId
-   * Unlink a Telegram account from QuickEx
+   * Unlink a Telegram account from  RustAcademy
    */
   @Delete("link/:telegramId")
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: "Unlink Telegram account" })
   @ApiParam({ name: "telegramId", description: "Telegram user ID" })
   @ApiResponse({ status: 204, description: "Account unlinked successfully" })
-  async unlinkAccount(
-    @Param("telegramId") telegramId: string,
-  ): Promise<void> {
+  async unlinkAccount(@Param("telegramId") telegramId: string): Promise<void> {
     const tid = Number(telegramId);
     if (isNaN(tid)) {
       throw new BadRequestException("Invalid Telegram ID");

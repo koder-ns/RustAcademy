@@ -5,7 +5,7 @@ import Link from "next/link";
 import { QRPreview } from "@/components/QRPreview";
 import { NetworkBadge } from "@/components/NetworkBadge";
 import { useApi } from "@/hooks/useApi";
-import { getQuickexApiBase } from "@/lib/api";
+import { get RustAcademyApiBase } from "@/lib/api";
 import {
   buildGeneratedLinksCsv,
   BulkCsvDraftRow,
@@ -117,7 +117,7 @@ type BulkLinkRequestItem = {
 
 export default function Generator() {
   const { t } = useTranslation();
-  const apiBase = useMemo(() => getQuickexApiBase(), []);
+  const apiBase = useMemo(() => get RustAcademyApiBase(), []);
   const { error, loading, callApi, data } = useApi<LinkMetadataSuccess>();
   const csvInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1373,7 +1373,7 @@ export default function Generator() {
                 </h3>
                 <p className="mt-3 max-w-3xl text-sm text-neutral-400">
                   Accepted columns: <span className="font-mono text-neutral-300">amount, asset, memo, referenceId, username, destination, acceptedAssets, customerName, email</span>.
-                  Each row needs a positive amount and either a QuickEx username or a Stellar destination.
+                  Each row needs a positive amount and either a  RustAcademy username or a Stellar destination.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -1544,7 +1544,7 @@ export default function Generator() {
                           type="text"
                           value={row.username}
                           onChange={(event) => updateCsvRow(row.id, "username", event.target.value)}
-                          placeholder="QuickEx username"
+                          placeholder=" RustAcademy username"
                           className={`rounded-2xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white ${FOCUS_RING_CLASS}`}
                         />
                         <input
@@ -1613,7 +1613,7 @@ export default function Generator() {
                     type="button"
                     onClick={() =>
                       downloadBrowserFile(
-                        `quickex-batch-links-${new Date().toISOString().slice(0, 10)}.csv`,
+                        ` RustAcademy-batch-links-${new Date().toISOString().slice(0, 10)}.csv`,
                         buildGeneratedLinksCsv(bulkResult.links),
                         "text/csv;charset=utf-8",
                       )

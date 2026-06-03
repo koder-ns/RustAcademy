@@ -9,7 +9,7 @@ import { PaidPaymentState } from "@/components/payment-states/PaidPaymentState";
 import { RefundedPaymentState } from "@/components/payment-states/RefundedPaymentState";
 import { LoadingState } from "@/components/payment-states/LoadingState";
 import { ErrorState } from "@/components/payment-states/ErrorState";
-import { getQuickexApiBase } from "@/lib/api";
+import { get RustAcademyApiBase } from "@/lib/api";
 
 type LinkState = "ACTIVE" | "EXPIRED" | "PAID" | "REFUNDED" | "DRAFT";
 
@@ -64,7 +64,7 @@ function PaymentPageContent() {
     setError(null);
 
     try {
-      const apiBase = getQuickexApiBase();
+      const apiBase = get RustAcademyApiBase();
       const params = new URLSearchParams({
         username,
         amount,

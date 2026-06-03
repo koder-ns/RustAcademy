@@ -12,8 +12,8 @@ export default function DiscoveryPage() {
   useEffect(() => {
     // Simulate network latency for smooth skeleton experience
     const timer = setTimeout(() => {
-      setTrending(MOCK_USERS.filter(u => u.isTrending));
-      setRecent(MOCK_USERS.filter(u => u.isRecentlyActive));
+      setTrending(MOCK_USERS.filter((u) => u.isTrending));
+      setRecent(MOCK_USERS.filter((u) => u.isRecentlyActive));
       setIsLoading(false);
     }, 1500);
 
@@ -24,7 +24,9 @@ export default function DiscoveryPage() {
     <Link href={`/profile/${user.username}`} className="block group">
       <div className="p-6 rounded-3xl bg-neutral-900/40 border border-white/5 hover:border-indigo-500/30 hover:bg-neutral-900/80 transition-all h-full flex flex-col shadow-lg shadow-black/20 group-hover:shadow-indigo-500/10">
         <div className="flex items-start justify-between mb-5">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-2xl shadow-inner ${user.avatarColor}`}>
+          <div
+            className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-2xl shadow-inner ${user.avatarColor}`}
+          >
             {user.name.charAt(0)}
           </div>
           <div className="flex flex-col items-end">
@@ -33,10 +35,16 @@ export default function DiscoveryPage() {
             </span>
           </div>
         </div>
-        <h3 className="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors">{user.name}</h3>
-        <p className="text-sm text-indigo-300/80 mb-4 tracking-tight">@{user.username}</p>
-        <p className="text-sm text-neutral-400 flex-1 leading-relaxed">{user.bio}</p>
-        
+        <h3 className="text-lg font-bold text-white group-hover:text-indigo-400 transition-colors">
+          {user.name}
+        </h3>
+        <p className="text-sm text-indigo-300/80 mb-4 tracking-tight">
+          @{user.username}
+        </p>
+        <p className="text-sm text-neutral-400 flex-1 leading-relaxed">
+          {user.bio}
+        </p>
+
         <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-xs text-neutral-500 font-medium group-hover:text-indigo-400 transition-colors">
           <span>View Profile</span>
           <span>→</span>
@@ -56,7 +64,7 @@ export default function DiscoveryPage() {
       <div className="w-full h-3 rounded bg-white/5 mb-2"></div>
       <div className="w-4/5 h-3 rounded bg-white/5 mb-2"></div>
       <div className="w-1/2 h-3 rounded bg-white/5"></div>
-      
+
       <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
         <div className="w-1/4 h-3 rounded bg-white/5"></div>
         <div className="w-4 h-4 rounded bg-white/5"></div>
@@ -71,40 +79,57 @@ export default function DiscoveryPage() {
           <span className="text-3xl">🔭</span>
         </div>
         <h1 className="text-5xl md:text-6xl font-black tracking-tighter">
-          Discover <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">QuickEx</span>
+          Discover{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+            {" "}
+            RustAcademy
+          </span>
         </h1>
         <p className="text-xl text-neutral-400 leading-relaxed">
-          Find public profiles, connect with trending creators, and effortlessly send payments to active members of the community.
+          Find public profiles, connect with trending creators, and effortlessly
+          send payments to active members of the community.
         </p>
       </header>
 
       <section className="space-y-8">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold flex items-center gap-3">
-            <span className="text-orange-500 text-3xl drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]">🔥</span> Trending Profiles
+            <span className="text-orange-500 text-3xl drop-shadow-[0_0_15px_rgba(249,115,22,0.5)]">
+              🔥
+            </span>{" "}
+            Trending Profiles
           </h2>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {isLoading 
-            ? [...Array(4)].map((_, i) => <SkeletonCard key={`trending-skeleton-${i}`} />)
-            : trending.map(user => <UserCard key={`trending-${user.id}`} user={user} />)
-          }
+          {isLoading
+            ? [...Array(4)].map((_, i) => (
+                <SkeletonCard key={`trending-skeleton-${i}`} />
+              ))
+            : trending.map((user) => (
+                <UserCard key={`trending-${user.id}`} user={user} />
+              ))}
         </div>
       </section>
 
       <section className="space-y-8">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold flex items-center gap-3">
-            <span className="text-emerald-500 text-3xl drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">✨</span> Recently Active
+            <span className="text-emerald-500 text-3xl drop-shadow-[0_0_15px_rgba(16,185,129,0.5)]">
+              ✨
+            </span>{" "}
+            Recently Active
           </h2>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {isLoading 
-            ? [...Array(4)].map((_, i) => <SkeletonCard key={`recent-skeleton-${i}`} />)
-            : recent.map(user => <UserCard key={`recent-${user.id}`} user={user} />)
-          }
+          {isLoading
+            ? [...Array(4)].map((_, i) => (
+                <SkeletonCard key={`recent-skeleton-${i}`} />
+              ))
+            : recent.map((user) => (
+                <UserCard key={`recent-${user.id}`} user={user} />
+              ))}
         </div>
       </section>
 
@@ -114,13 +139,19 @@ export default function DiscoveryPage() {
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
           <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl -tralsate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-          
-          <h3 className="text-4xl font-bold relative z-10 tracking-tight">Want to get featured?</h3>
+
+          <h3 className="text-4xl font-bold relative z-10 tracking-tight">
+            Want to get featured?
+          </h3>
           <p className="text-lg text-neutral-300 max-w-xl mx-auto relative z-10">
-            Create your QuickEx profile, share your link, and start receiving payments to appear on the Discovery page.
+            Create your RustAcademy profile, share your link, and start
+            receiving payments to appear on the Discovery page.
           </p>
           <div className="relative z-10 pt-8">
-            <Link href="/generator" className="inline-block px-10 py-4 bg-white text-black font-bold rounded-2xl hover:bg-neutral-200 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-white/10">
+            <Link
+              href="/generator"
+              className="inline-block px-10 py-4 bg-white text-black font-bold rounded-2xl hover:bg-neutral-200 transition-all hover:scale-105 active:scale-95 shadow-xl shadow-white/10"
+            >
               Claim Your Username
             </Link>
           </div>

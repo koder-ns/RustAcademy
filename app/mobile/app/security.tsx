@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import {
-    Alert,
-    Pressable,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -63,23 +63,34 @@ export default function SecurityScreen() {
     Alert.alert(
       enabled ? "Biometric lock enabled" : "Biometric lock disabled",
       enabled
-        ? "QuickEx will require biometrics or fallback PIN when opening and before sensitive actions."
+        ? " RustAcademy will require biometrics or fallback PIN when opening and before sensitive actions."
         : "Biometric lock has been turned off.",
     );
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
       <View style={styles.content}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Security</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          Security
+        </Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           Protect sensitive flows with biometrics and a fallback PIN.
         </Text>
 
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: theme.surface, borderColor: theme.border },
+          ]}
+        >
           <View style={styles.row}>
             <View style={styles.rowTextWrap}>
-              <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>Enable Biometric Lock</Text>
+              <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>
+                Enable Biometric Lock
+              </Text>
               <Text style={[styles.rowBody, { color: theme.textSecondary }]}>
                 Prompt on app open and before critical transactions.
               </Text>
@@ -100,7 +111,12 @@ export default function SecurityScreen() {
           </Text>
         </View>
 
-        <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: theme.surface, borderColor: theme.border },
+          ]}
+        >
           <Text style={[styles.rowTitle, { color: theme.textPrimary }]}>
             {hasPinConfigured ? "Change Fallback PIN" : "Set Fallback PIN"}
           </Text>
@@ -110,7 +126,14 @@ export default function SecurityScreen() {
           </Text>
 
           <TextInput
-            style={[styles.input, { backgroundColor: theme.surfaceElevated, borderColor: theme.inputBorder, color: theme.inputText }]}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.inputBorder,
+                color: theme.inputText,
+              },
+            ]}
             placeholder="Enter 4-6 digit PIN"
             placeholderTextColor={theme.inputPlaceholder}
             value={pin}
@@ -120,7 +143,14 @@ export default function SecurityScreen() {
             maxLength={6}
           />
           <TextInput
-            style={[styles.input, { backgroundColor: theme.surfaceElevated, borderColor: theme.inputBorder, color: theme.inputText }]}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.surfaceElevated,
+                borderColor: theme.inputBorder,
+                color: theme.inputText,
+              },
+            ]}
             placeholder="Confirm PIN"
             placeholderTextColor={theme.inputPlaceholder}
             value={confirmPin}
@@ -137,7 +167,9 @@ export default function SecurityScreen() {
             onPress={submitPin}
             disabled={savingPin}
           >
-            <Text style={[styles.saveBtnText, { color: theme.buttonPrimaryText }]}>
+            <Text
+              style={[styles.saveBtnText, { color: theme.buttonPrimaryText }]}
+            >
               {savingPin ? "Saving..." : "Save PIN"}
             </Text>
           </Pressable>

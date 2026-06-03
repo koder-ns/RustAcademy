@@ -1,17 +1,17 @@
 /**
  * Job Queue System - Webhook Delivery Handler
- * 
+ *
  * Implements the JobHandler interface for webhook delivery jobs.
  * Sends HTTP POST requests to webhook URLs and handles retries based on response codes.
- * 
+ *
  * Requirements: 7.3, 7.4, 7.5, 15.4, 15.5
  */
 
-import { Injectable, Logger } from '@nestjs/common';
-import { JobHandler, Job, CancellationToken } from '../types';
-import { WebhookDeliveryPayload } from '../types/job-payloads.types';
-import { NotificationLogRepository } from '../../notifications/notification-log.repository';
-import { NotificationEventType } from '../../notifications/types/notification.types';
+import { Injectable, Logger } from "@nestjs/common";
+import { JobHandler, Job, CancellationToken } from "../types";
+import { WebhookDeliveryPayload } from "../types/job-payloads.types";
+import { NotificationLogRepository } from "../../notifications/notification-log.repository";
+import { NotificationEventType } from "../../notifications/types/notification.types";
 
 /**
  * Error thrown for permanent job failures (no retry)
@@ -20,13 +20,13 @@ import { NotificationEventType } from '../../notifications/types/notification.ty
 export class PermanentJobError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'PermanentJobError';
+    this.name = "PermanentJobError";
   }
 }
 
 /**
  * Webhook Delivery Handler
- * 
+ *
  * Sends HTTP POST requests to webhook URLs with event payloads.
  * Classifies errors as transient (5xx, network) or permanent (4xx, validation).
  * Logs failures to notification_logs table for audit trail.
@@ -43,22 +43,26 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
 
   /**
    * Execute webhook delivery
-   * 
+   *
    * Sends HTTP POST request to the webhook URL with the event payload.
    * Checks cancellation token before making the request.
-   * 
+   *
    * @param job - The webhook delivery job
    * @param cancellationToken - Token to check for cancellation
    * @throws PermanentJobError for 4xx responses (except 408, 429)
    * @throws Error for 5xx responses and network errors (transient)
-   * 
+   *
    * **Validates: Requirements 7.3, 7.4, 7.5**
    */
-  async execute(job: Job<WebhookDeliveryPayload>, cancellationToken: CancellationToken): Promise<void> {
+  async execute(
+    job: Job<WebhookDeliveryPayload>,
+    cancellationToken: CancellationToken,
+  ): Promise<void> {
     // Check cancellation token before HTTP request
     cancellationToken.throwIfCancelled();
 
-    const { webhookUrl, eventType, eventId, payload, recipientPublicKey } = job.payload;
+    const { webhookUrl, eventType, eventId, payload, recipientPublicKey } =
+      job.payload;
 
     this.logger.log(
       `Delivering webhook to ${webhookUrl} (eventType: ${eventType}, eventId: ${eventId}, jobId: ${job.id})`,
@@ -67,16 +71,19 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
     try {
       // Create abort controller for request timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.requestTimeoutMs);
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        this.requestTimeoutMs,
+      );
 
       // Send HTTP POST request
       const response = await fetch(webhookUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'X-QuickEx-Event': eventType,
-          'X-QuickEx-Event-Id': eventId,
-          'User-Agent': 'QuickEx-Webhook/1.0',
+          "Content-Type": "application/json",
+          "X- RustAcademy-Event": eventType,
+          "X- RustAcademy-Event-Id": eventId,
+          "User-Agent": " RustAcademy-Webhook/1.0",
         },
         body: JSON.stringify({
           eventType,
@@ -96,7 +103,7 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
         const text = await response.text();
         responseBody =
           text.length > this.maxResponseBodyLength
-            ? text.slice(0, this.maxResponseBodyLength) + '...'
+            ? text.slice(0, this.maxResponseBodyLength) + "..."
             : text;
       } catch {
         // Ignore response body read errors
@@ -108,7 +115,7 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
         // Success - log to notification_logs
         await this.notificationLogRepo.markSent(
           recipientPublicKey,
-          'webhook',
+          "webhook",
           eventType as NotificationEventType, // eventType from payload may not match NotificationEventType enum
           eventId,
           undefined, // no provider message ID for webhooks
@@ -123,7 +130,7 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
       }
 
       // Non-2xx response - classify error
-      const errorMessage = `Webhook returned HTTP ${response.status} for ${webhookUrl}: ${responseBody ?? 'no response body'}`;
+      const errorMessage = `Webhook returned HTTP ${response.status} for ${webhookUrl}: ${responseBody ?? "no response body"}`;
 
       if (response.status >= 400 && response.status < 500) {
         // 4xx errors are generally permanent, except:
@@ -163,7 +170,7 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
       }
 
       // Handle network errors (timeout, connection refused, DNS failure, etc.)
-      if (error.name === 'AbortError') {
+      if (error.name === "AbortError") {
         const timeoutError = `Webhook request timed out after ${this.requestTimeoutMs}ms for ${webhookUrl}`;
         this.logger.warn(`${timeoutError} (jobId: ${job.id}) - will retry`);
         throw new Error(timeoutError);
@@ -178,41 +185,44 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
 
   /**
    * Validate webhook delivery payload
-   * 
+   *
    * Checks that required fields are present:
    * - webhookUrl: Target URL for webhook delivery
    * - eventType: Type of event being delivered
-   * 
+   *
    * @param payload - The webhook delivery payload
    * @throws PermanentJobError if validation fails
-   * 
+   *
    * **Validates: Requirements 7.4, 15.4, 15.5**
    */
   async validate(payload: WebhookDeliveryPayload): Promise<void> {
     const errors: string[] = [];
 
-    if (!payload.webhookUrl || typeof payload.webhookUrl !== 'string') {
-      errors.push('webhookUrl is required and must be a string');
+    if (!payload.webhookUrl || typeof payload.webhookUrl !== "string") {
+      errors.push("webhookUrl is required and must be a string");
     }
 
-    if (!payload.eventType || typeof payload.eventType !== 'string') {
-      errors.push('eventType is required and must be a string');
+    if (!payload.eventType || typeof payload.eventType !== "string") {
+      errors.push("eventType is required and must be a string");
     }
 
-    if (!payload.eventId || typeof payload.eventId !== 'string') {
-      errors.push('eventId is required and must be a string');
+    if (!payload.eventId || typeof payload.eventId !== "string") {
+      errors.push("eventId is required and must be a string");
     }
 
-    if (!payload.recipientPublicKey || typeof payload.recipientPublicKey !== 'string') {
-      errors.push('recipientPublicKey is required and must be a string');
+    if (
+      !payload.recipientPublicKey ||
+      typeof payload.recipientPublicKey !== "string"
+    ) {
+      errors.push("recipientPublicKey is required and must be a string");
     }
 
-    if (!payload.payload || typeof payload.payload !== 'object') {
-      errors.push('payload is required and must be an object');
+    if (!payload.payload || typeof payload.payload !== "object") {
+      errors.push("payload is required and must be an object");
     }
 
     if (errors.length > 0) {
-      throw new PermanentJobError(`Validation failed: ${errors.join(', ')}`);
+      throw new PermanentJobError(`Validation failed: ${errors.join(", ")}`);
     }
 
     // Validate URL format
@@ -225,16 +235,19 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
 
   /**
    * Handle job failure
-   * 
+   *
    * Logs webhook delivery failure to notification_logs table for audit trail.
    * This is called when the job exhausts all retry attempts and moves to DLQ.
-   * 
+   *
    * @param job - The failed job
    * @param error - The error that caused the failure
-   * 
+   *
    * **Validates: Requirements 7.5**
    */
-  async onFailure(job: Job<WebhookDeliveryPayload>, error: Error): Promise<void> {
+  async onFailure(
+    job: Job<WebhookDeliveryPayload>,
+    error: Error,
+  ): Promise<void> {
     const { recipientPublicKey, eventType, eventId } = job.payload;
 
     this.logger.error(
@@ -245,7 +258,7 @@ export class WebhookDeliveryHandler implements JobHandler<WebhookDeliveryPayload
     try {
       await this.notificationLogRepo.markFailed(
         recipientPublicKey,
-        'webhook',
+        "webhook",
         eventType as NotificationEventType, // eventType from payload may not match NotificationEventType enum
         eventId,
         error.message,

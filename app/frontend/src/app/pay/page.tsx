@@ -43,7 +43,13 @@ export async function generateMetadata({
   }
 
   // Fetch safe metadata from the backend
-  const meta = await fetchPaymentMeta({ username, amount, asset, memo, acceptedAssets });
+  const meta = await fetchPaymentMeta({
+    username,
+    amount,
+    asset,
+    memo,
+    acceptedAssets,
+  });
 
   // Backend unreachable or link not found → safe fallback
   if (!meta) {
@@ -84,7 +90,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      site: "@quickex",
+      site: "@ RustAcademy",
       title,
       description,
       images: [dynamicOgImage],
@@ -93,7 +99,10 @@ export async function generateMetadata({
   };
 }
 
-function buildFallbackMetadata(siteUrl: string, canonicalUrl: string): Metadata {
+function buildFallbackMetadata(
+  siteUrl: string,
+  canonicalUrl: string,
+): Metadata {
   const ogImage = `${siteUrl}${DEFAULT_OG_IMAGE}`;
   return {
     title: `${FALLBACK_PAYMENT_METADATA.title} — ${SITE_NAME}`,
@@ -109,7 +118,7 @@ function buildFallbackMetadata(siteUrl: string, canonicalUrl: string): Metadata 
     },
     twitter: {
       card: "summary_large_image",
-      site: "@quickex",
+      site: "@ RustAcademy",
       title: FALLBACK_PAYMENT_METADATA.title,
       description: FALLBACK_PAYMENT_METADATA.description,
       images: [ogImage],

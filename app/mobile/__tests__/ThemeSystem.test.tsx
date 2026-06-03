@@ -5,25 +5,22 @@
  * Zero `any` types — all access patterns are fully typed.
  */
 
-import React from 'react';
-import { act, create } from 'react-test-renderer';
-import { Text, View } from 'react-native';
+import React from "react";
+import { act, create } from "react-test-renderer";
+import { Text, View } from "react-native";
 
 // ── Theme imports ────────────────────────────────────────────────────────────
-import {
-  QuickExThemeProvider,
-  useTheme,
-} from '../src/theme/ThemeContext';
+import { RustAcademyThemeProvider, useTheme } from "../src/theme/ThemeContext";
 import {
   LightTheme,
   DarkTheme,
-  QuickExBlueTheme,
+  RustAcademyBlueTheme,
   PulsefyPurpleTheme,
   type ThemeTokens,
   type StatusColors,
   AllThemes,
   ThemeRegistry,
-} from '../src/theme/tokens';
+} from "../src/theme/tokens";
 
 // ── Test helpers ─────────────────────────────────────────────────────────────
 
@@ -108,7 +105,10 @@ function ThemePreview() {
           }}
         />
       </View>
-      <View testID="status-badges" style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+      <View
+        testID="status-badges"
+        style={{ flexDirection: "row", gap: 8, marginTop: 8 }}
+      >
         <Text style={{ color: theme.status.success }}>✓</Text>
         <Text style={{ color: theme.status.warning }}>⚠</Text>
         <Text style={{ color: theme.status.error }}>✗</Text>
@@ -120,55 +120,55 @@ function ThemePreview() {
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 
-describe('Theme System v2', () => {
-  describe('Token Engine', () => {
-    it('all themes satisfy the ThemeTokens contract', () => {
+describe("Theme System v2", () => {
+  describe("Token Engine", () => {
+    it("all themes satisfy the ThemeTokens contract", () => {
       const requiredKeys: (keyof ThemeTokens)[] = [
-        'id',
-        'name',
-        'isDark',
-        'background',
-        'surface',
-        'surfaceElevated',
-        'primary',
-        'primaryForeground',
-        'secondary',
-        'secondaryForeground',
-        'textPrimary',
-        'textSecondary',
-        'textMuted',
-        'border',
-        'borderLight',
-        'divider',
-        'buttonPrimaryBg',
-        'buttonPrimaryText',
-        'buttonSecondaryBg',
-        'buttonSecondaryText',
-        'buttonSecondaryBorder',
-        'buttonDangerBg',
-        'buttonDangerText',
-        'inputBg',
-        'inputBorder',
-        'inputText',
-        'inputPlaceholder',
-        'chipBg',
-        'chipActiveBg',
-        'chipText',
-        'chipActiveText',
-        'headerBg',
-        'tabIconDefault',
-        'tabIconSelected',
-        'tint',
-        'status',
-        'qrForeground',
-        'qrBackground',
-        'skeleton',
-        'networkMainnet',
-        'networkTestnet',
-        'chartColors',
-        'overlayBg',
-        'link',
-        'swatchPreview',
+        "id",
+        "name",
+        "isDark",
+        "background",
+        "surface",
+        "surfaceElevated",
+        "primary",
+        "primaryForeground",
+        "secondary",
+        "secondaryForeground",
+        "textPrimary",
+        "textSecondary",
+        "textMuted",
+        "border",
+        "borderLight",
+        "divider",
+        "buttonPrimaryBg",
+        "buttonPrimaryText",
+        "buttonSecondaryBg",
+        "buttonSecondaryText",
+        "buttonSecondaryBorder",
+        "buttonDangerBg",
+        "buttonDangerText",
+        "inputBg",
+        "inputBorder",
+        "inputText",
+        "inputPlaceholder",
+        "chipBg",
+        "chipActiveBg",
+        "chipText",
+        "chipActiveText",
+        "headerBg",
+        "tabIconDefault",
+        "tabIconSelected",
+        "tint",
+        "status",
+        "qrForeground",
+        "qrBackground",
+        "skeleton",
+        "networkMainnet",
+        "networkTestnet",
+        "chartColors",
+        "overlayBg",
+        "link",
+        "swatchPreview",
       ];
 
       AllThemes.forEach((theme) => {
@@ -178,36 +178,36 @@ describe('Theme System v2', () => {
       });
     });
 
-    it('chartColors always has exactly 6 entries', () => {
+    it("chartColors always has exactly 6 entries", () => {
       AllThemes.forEach((theme) => {
         expect(theme.chartColors).toHaveLength(6);
       });
     });
 
-    it('QR foreground/background must be black/white for scanner readability', () => {
+    it("QR foreground/background must be black/white for scanner readability", () => {
       AllThemes.forEach((theme) => {
-        expect(theme.qrForeground).toBe('#000000');
-        expect(theme.qrBackground).toBe('#FFFFFF');
+        expect(theme.qrForeground).toBe("#000000");
+        expect(theme.qrBackground).toBe("#FFFFFF");
       });
     });
 
-    it('ThemeRegistry contains all four themes', () => {
+    it("ThemeRegistry contains all four themes", () => {
       expect(Object.keys(ThemeRegistry)).toHaveLength(4);
-      expect(ThemeRegistry['light']).toBe(LightTheme);
-      expect(ThemeRegistry['dark']).toBe(DarkTheme);
-      expect(ThemeRegistry['quickex-blue']).toBe(QuickExBlueTheme);
-      expect(ThemeRegistry['pulsefy-purple']).toBe(PulsefyPurpleTheme);
+      expect(ThemeRegistry["light"]).toBe(LightTheme);
+      expect(ThemeRegistry["dark"]).toBe(DarkTheme);
+      expect(ThemeRegistry[" RustAcademy-blue"]).toBe(RustAcademyBlueTheme);
+      expect(ThemeRegistry["pulsefy-purple"]).toBe(PulsefyPurpleTheme);
     });
   });
 
-  describe('ThemeProvider snapshots', () => {
-    it('renders Light theme correctly', async () => {
+  describe("ThemeProvider snapshots", () => {
+    it("renders Light theme correctly", async () => {
       let tree: ReturnType<typeof create>;
       await act(async () => {
         tree = create(
-          <QuickExThemeProvider>
+          <RustAcademyThemeProvider>
             <ThemePreview />
-          </QuickExThemeProvider>,
+          </RustAcademyThemeProvider>,
         );
       });
 
@@ -217,40 +217,48 @@ describe('Theme System v2', () => {
       });
     });
 
-    it('renders with wrapped provider', async () => {
+    it("renders with wrapped provider", async () => {
       let tree: ReturnType<typeof create>;
       await act(async () => {
         tree = create(
-          <QuickExThemeProvider profileId="test-user">
+          <RustAcademyThemeProvider profileId="test-user">
             <ThemePreview />
-          </QuickExThemeProvider>,
+          </RustAcademyThemeProvider>,
         );
       });
 
       const root = tree.root;
-      const themePreviewRoot = root.findByProps({ testID: 'theme-preview-root' });
+      const themePreviewRoot = root.findByProps({
+        testID: "theme-preview-root",
+      });
       expect(themePreviewRoot).toBeDefined();
 
       // Default mode is 'system' which resolves to light in test env
-      const modeText = root.findByProps({ testID: 'theme-mode' });
-      expect(modeText.props.children).toContain('system');
+      const modeText = root.findByProps({ testID: "theme-mode" });
+      expect(modeText.props.children).toContain("system");
       await act(async () => {
         tree.unmount();
       });
     });
   });
 
-  describe('Theme token accessibility', () => {
-    it('swatchPreview always has 4 colours', () => {
+  describe("Theme token accessibility", () => {
+    it("swatchPreview always has 4 colours", () => {
       AllThemes.forEach((theme) => {
         expect(theme.swatchPreview).toHaveLength(4);
       });
     });
 
-    it('status object has all required keys', () => {
+    it("status object has all required keys", () => {
       const statusKeys: (keyof StatusColors)[] = [
-        'success', 'successBg', 'warning', 'warningBg',
-        'error', 'errorBg', 'info', 'infoBg',
+        "success",
+        "successBg",
+        "warning",
+        "warningBg",
+        "error",
+        "errorBg",
+        "info",
+        "infoBg",
       ];
       AllThemes.forEach((theme) => {
         statusKeys.forEach((key) => {

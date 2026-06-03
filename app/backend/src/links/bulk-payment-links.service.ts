@@ -1,13 +1,13 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { LinksService } from './links.service';
-import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { LinksService } from "./links.service";
+import { FeatureFlagsService } from "../feature-flags/feature-flags.service";
 import {
   BulkPaymentLinkItemDto,
   BulkPaymentLinkResponseItemDto,
   BulkPaymentLinkResponseDto,
-} from './dto/bulk-payment-link.dto';
-import { LinkMetadataRequestDto } from '../dto';
-import { v4 as uuidv4 } from 'uuid';
+} from "./dto/bulk-payment-link.dto";
+import { LinkMetadataRequestDto } from "../dto";
+import { v4 as uuidv4 } from "uuid";
 
 @Injectable()
 export class BulkPaymentLinksService {
@@ -27,12 +27,14 @@ export class BulkPaymentLinksService {
   async generateBulkLinks(
     items: BulkPaymentLinkItemDto[],
   ): Promise<BulkPaymentLinkResponseDto> {
-    await this.featureFlagsService.assertActionEnabled('bulk_link_generation');
+    await this.featureFlagsService.assertActionEnabled("bulk_link_generation");
     const startTime = Date.now();
 
     // Validate batch size
     if (items.length === 0) {
-      throw new BadRequestException('At least one payment link item is required');
+      throw new BadRequestException(
+        "At least one payment link item is required",
+      );
     }
 
     if (items.length > this.MAX_LINKS_PER_REQUEST) {
@@ -57,7 +59,8 @@ export class BulkPaymentLinksService {
           const link = await this.generateSingleLink(item, index);
           return { success: true, link, index };
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
           return { success: false, error: errorMessage, index };
         }
       });
@@ -78,9 +81,9 @@ export class BulkPaymentLinksService {
       const errorDetails = errors
         .slice(0, 5)
         .map((e) => `Item ${e.index}: ${e.error}`)
-        .join('; ');
+        .join("; ");
       throw new BadRequestException(
-        `Failed to generate ${errors.length} link(s). ${errorDetails}${errors.length > 5 ? '...' : ''}`,
+        `Failed to generate ${errors.length} link(s). ${errorDetails}${errors.length > 5 ? "..." : ""}`,
       );
     }
 
@@ -103,14 +106,16 @@ export class BulkPaymentLinksService {
    * @param csvContent - CSV string with headers
    * @returns Bulk response with all generated links
    */
-  async generateFromCSV(csvContent: string): Promise<BulkPaymentLinkResponseDto> {
-    this.logger.log('Parsing CSV for bulk payment link generation');
+  async generateFromCSV(
+    csvContent: string,
+  ): Promise<BulkPaymentLinkResponseDto> {
+    this.logger.log("Parsing CSV for bulk payment link generation");
 
     // Parse CSV
     const items = this.parseCSV(csvContent);
 
     if (items.length === 0) {
-      throw new BadRequestException('No valid payment link items found in CSV');
+      throw new BadRequestException("No valid payment link items found in CSV");
     }
 
     this.logger.log(`Parsed ${items.length} items from CSV`);
@@ -134,7 +139,7 @@ export class BulkPaymentLinksService {
       amount: item.amount,
       asset: item.asset,
       memo: item.memo,
-      memoType: item.memoType as 'text' | 'id' | 'hash' | 'return',
+      memoType: item.memoType as "text" | "id" | "hash" | "return",
       username: item.username,
       destination: item.destination,
       referenceId: item.referenceId,
@@ -150,7 +155,7 @@ export class BulkPaymentLinksService {
     const id = `link_${uuidv4().substring(0, 12)}`;
 
     // Build shareable URL
-    const url = `https://app.quickex.to/pay?${metadata.canonical}`;
+    const url = `https://app. RustAcademy.to/pay?${metadata.canonical}`;
 
     return {
       id,
@@ -173,7 +178,7 @@ export class BulkPaymentLinksService {
    */
   private parseCSV(csvContent: string): BulkPaymentLinkItemDto[] {
     const lines = csvContent
-      .split('\n')
+      .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
@@ -182,10 +187,10 @@ export class BulkPaymentLinksService {
     }
 
     // Parse headers
-    const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
+    const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
 
     // Validate required header
-    if (!headers.includes('amount')) {
+    if (!headers.includes("amount")) {
       throw new BadRequestException('CSV must contain "amount" column');
     }
 
@@ -216,11 +221,12 @@ export class BulkPaymentLinksService {
       if (row.username) item.username = row.username;
       if (row.destination) item.destination = row.destination;
       if (row.referenceid) item.referenceId = row.referenceId;
-      if (row.privacy) item.privacy = row.privacy.toLowerCase() === 'true';
-      if (row.expirationdays) item.expirationDays = parseInt(row.expirationDays, 10);
+      if (row.privacy) item.privacy = row.privacy.toLowerCase() === "true";
+      if (row.expirationdays)
+        item.expirationDays = parseInt(row.expirationDays, 10);
       if (row.acceptedassets) {
         item.acceptedAssets = row.acceptedassets
-          .split('|')
+          .split("|")
           .map((a) => a.trim())
           .filter((a) => a.length > 0);
       }
@@ -244,7 +250,7 @@ export class BulkPaymentLinksService {
    */
   private parseCSVLine(line: string): string[] {
     const values: string[] = [];
-    let current = '';
+    let current = "";
     let inQuotes = false;
 
     for (let i = 0; i < line.length; i++) {
@@ -252,9 +258,9 @@ export class BulkPaymentLinksService {
 
       if (char === '"') {
         inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
+      } else if (char === "," && !inQuotes) {
         values.push(current.trim());
-        current = '';
+        current = "";
       } else {
         current += char;
       }

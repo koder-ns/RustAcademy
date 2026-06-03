@@ -3,29 +3,25 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-} from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+} from "@nestjs/common";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
-import { AuditService } from '../audit/audit.service';
-import { AppConfigService } from '../config';
-import { SupabaseService } from '../supabase/supabase.service';
+import { AuditService } from "../audit/audit.service";
+import { AppConfigService } from "../config";
+import { SupabaseService } from "../supabase/supabase.service";
 import {
   ContractRegistryEntryDto,
   PublishContractRegistryDto,
   RollbackContractRegistryDto,
-} from './dto/contract-registry.dto';
+} from "./dto/contract-registry.dto";
 import {
   ContractRegistryPublishedEvent,
   ContractRegistryRolledBackEvent,
   ContractRegistryPublishedEventPayload,
   ContractRegistryRolledBackEventPayload,
-} from '../events/contract-registry.events';
-import {
-  ContractChangeWebhookService,
-} from './contract-change-webhook.service';
-import {
-  ContractChangeWebhookDispatcher,
-} from './contract-change-webhook.dispatcher';
+} from "../events/contract-registry.events";
+import { ContractChangeWebhookService } from "./contract-change-webhook.service";
+import { ContractChangeWebhookDispatcher } from "./contract-change-webhook.dispatcher";
 
 interface RegistryRecord {
   name: string;
@@ -61,8 +57,10 @@ export class ContractRegistryService {
     private readonly contractChangeWebhookService: ContractChangeWebhookService,
     private readonly webhookDispatcher: ContractChangeWebhookDispatcher,
   ) {
-    this.expectedContracts = (process.env.CONTRACT_REGISTRY_EXPECTED_SET ?? 'quickex')
-      .split(',')
+    this.expectedContracts = (
+      process.env.CONTRACT_REGISTRY_EXPECTED_SET ?? " RustAcademy"
+    )
+      .split(",")
       .map((value) => value.trim().toLowerCase())
       .filter(Boolean);
   }
@@ -100,7 +98,7 @@ export class ContractRegistryService {
 
   async publish(
     dto: PublishContractRegistryDto,
-    actor = 'deployment_automation',
+    actor = "deployment_automation",
   ) {
     this.validatePassphrase(dto.networkPassphrase);
     this.validateContractSet(dto.contracts);
@@ -112,9 +110,13 @@ export class ContractRegistryService {
     );
 
     const now = new Date().toISOString();
-    const names = new Set(dto.contracts.map((contract) => contract.name.toLowerCase()));
+    const names = new Set(
+      dto.contracts.map((contract) => contract.name.toLowerCase()),
+    );
     const retained = current.map((record) =>
-      names.has(record.name) ? { ...record, active: false, updatedAt: now } : record,
+      names.has(record.name)
+        ? { ...record, active: false, updatedAt: now }
+        : record,
     );
 
     const published: RegistryRecord[] = dto.contracts.map((contract) => {
@@ -127,8 +129,8 @@ export class ContractRegistryService {
     this.writeFallback(merged);
     await this.persistSnapshot(merged);
     await this.auditService.log(
-      'contract_registry',
-      'registry.publish',
+      "contract_registry",
+      "registry.publish",
       dto.deploymentId,
       {
         actor,
@@ -143,7 +145,7 @@ export class ContractRegistryService {
     );
 
     this.logger.log(
-      `Published ${published.length} contract registry entr${published.length === 1 ? 'y' : 'ies'} at version ${nextVersion}`,
+      `Published ${published.length} contract registry entr${published.length === 1 ? "y" : "ies"} at version ${nextVersion}`,
     );
 
     await this.eventEmitter.emit(
@@ -161,11 +163,12 @@ export class ContractRegistryService {
       ),
     );
 
-    const enabledWebhooks = await this.contractChangeWebhookService.getEnabledWebhooks();
+    const enabledWebhooks =
+      await this.contractChangeWebhookService.getEnabledWebhooks();
     if (enabledWebhooks.length > 0) {
       this.webhookDispatcher.dispatch(enabledWebhooks, {
         version: nextVersion,
-        event: 'contract_registry.published',
+        event: "contract_registry.published",
         actor,
         deploymentId: dto.deploymentId,
         contracts: published.map((record) => ({
@@ -183,7 +186,7 @@ export class ContractRegistryService {
 
   async finalizeDualRead(
     contractName: string,
-    actor = 'deployment_automation',
+    actor = "deployment_automation",
   ) {
     const records = await this.readRecords();
     const targetName = contractName.toLowerCase();
@@ -218,8 +221,8 @@ export class ContractRegistryService {
     this.writeFallback(updated);
     await this.persistSnapshot(updated);
     await this.auditService.log(
-      'contract_registry',
-      'registry.finalize_dual_read',
+      "contract_registry",
+      "registry.finalize_dual_read",
       contractName,
       {
         actor,
@@ -236,12 +239,13 @@ export class ContractRegistryService {
 
   async rollback(
     dto: RollbackContractRegistryDto,
-    actor = 'deployment_automation',
+    actor = "deployment_automation",
   ) {
     const records = await this.readRecords();
     const targetName = dto.name.toLowerCase();
     const candidate = records.find(
-      (record) => record.name === targetName && record.contractVersion === dto.version,
+      (record) =>
+        record.name === targetName && record.contractVersion === dto.version,
     );
 
     if (!candidate) {
@@ -251,10 +255,11 @@ export class ContractRegistryService {
     }
 
     const now = new Date().toISOString();
-    const nextVersion = records.reduce(
-      (max, record) => Math.max(max, record.version),
-      this.fallbackVersion,
-    ) + 1;
+    const nextVersion =
+      records.reduce(
+        (max, record) => Math.max(max, record.version),
+        this.fallbackVersion,
+      ) + 1;
 
     const updated = records.map((record) => {
       if (record.name !== targetName) return record;
@@ -262,7 +267,8 @@ export class ContractRegistryService {
         ...record,
         active: record.contractVersion === dto.version,
         updatedAt: now,
-        version: record.contractVersion === dto.version ? nextVersion : record.version,
+        version:
+          record.contractVersion === dto.version ? nextVersion : record.version,
       };
     });
 
@@ -270,8 +276,8 @@ export class ContractRegistryService {
     this.writeFallback(updated);
     await this.persistSnapshot(updated);
     await this.auditService.log(
-      'contract_registry',
-      'registry.rollback',
+      "contract_registry",
+      "registry.rollback",
       dto.name,
       { actor, requestedVersion: dto.version, registryVersion: nextVersion },
     );
@@ -288,11 +294,12 @@ export class ContractRegistryService {
       ),
     );
 
-    const enabledWebhooks = await this.contractChangeWebhookService.getEnabledWebhooks();
+    const enabledWebhooks =
+      await this.contractChangeWebhookService.getEnabledWebhooks();
     if (enabledWebhooks.length > 0) {
       this.webhookDispatcher.dispatch(enabledWebhooks, {
         version: nextVersion,
-        event: 'contract_registry.rolled_back',
+        event: "contract_registry.rolled_back",
         contractName: targetName,
         contractId: candidate.contractId,
         wasmHash: candidate.wasmHash,
@@ -306,9 +313,9 @@ export class ContractRegistryService {
 
   private validatePassphrase(passphrase: string): void {
     const expected =
-      this.configService.network === 'mainnet'
-        ? 'Public Global Stellar Network ; September 2015'
-        : 'Test SDF Network ; September 2015';
+      this.configService.network === "mainnet"
+        ? "Public Global Stellar Network ; September 2015"
+        : "Test SDF Network ; September 2015";
 
     if (passphrase !== expected) {
       throw new BadRequestException(
@@ -318,19 +325,21 @@ export class ContractRegistryService {
   }
 
   private validateContractSet(contracts: ContractRegistryEntryDto[]): void {
-    const normalized = contracts.map((contract) => contract.name.toLowerCase()).sort();
+    const normalized = contracts
+      .map((contract) => contract.name.toLowerCase())
+      .sort();
     const expected = [...this.expectedContracts].sort();
 
     if (normalized.length !== expected.length) {
       throw new BadRequestException(
-        `Expected ${expected.length} contract entries (${expected.join(', ')}) but received ${normalized.length}`,
+        `Expected ${expected.length} contract entries (${expected.join(", ")}) but received ${normalized.length}`,
       );
     }
 
     for (let index = 0; index < expected.length; index += 1) {
       if (normalized[index] !== expected[index]) {
         throw new BadRequestException(
-          `Unexpected contract set. Expected ${expected.join(', ')}`,
+          `Unexpected contract set. Expected ${expected.join(", ")}`,
         );
       }
     }
@@ -378,10 +387,10 @@ export class ContractRegistryService {
     try {
       const client = this.supabaseService.getClient();
       const { data, error } = await client
-        .from('contract_registry_entries')
-        .select('*')
-        .eq('network', this.configService.network)
-        .order('version', { ascending: true });
+        .from("contract_registry_entries")
+        .select("*")
+        .eq("network", this.configService.network)
+        .order("version", { ascending: true });
 
       if (error) throw error;
       if (!data || data.length === 0) return fallback;
@@ -390,17 +399,23 @@ export class ContractRegistryService {
         name: String(row.contract_name),
         network: String(row.network),
         contractId: String(row.contract_id),
-        previousContractId: row.previous_contract_id ? String(row.previous_contract_id) : undefined,
-        effectiveLedger: row.effective_ledger ? Number(row.effective_ledger) : undefined,
-        effectiveTime: row.effective_time ? String(row.effective_time) : undefined,
+        previousContractId: row.previous_contract_id
+          ? String(row.previous_contract_id)
+          : undefined,
+        effectiveLedger: row.effective_ledger
+          ? Number(row.effective_ledger)
+          : undefined,
+        effectiveTime: row.effective_time
+          ? String(row.effective_time)
+          : undefined,
         wasmHash: String(row.wasm_hash),
         contractVersion: Number(row.contract_version),
         deploymentId: row.deployment_id ? String(row.deployment_id) : undefined,
         metadata:
-          row.metadata && typeof row.metadata === 'object'
+          row.metadata && typeof row.metadata === "object"
             ? (row.metadata as Record<string, unknown>)
             : undefined,
-        publishedBy: String(row.published_by ?? 'unknown'),
+        publishedBy: String(row.published_by ?? "unknown"),
         version: Number(row.version),
         createdAt: String(row.created_at),
         updatedAt: String(row.updated_at),
@@ -418,8 +433,11 @@ export class ContractRegistryService {
   private async persistSnapshot(records: RegistryRecord[]): Promise<void> {
     try {
       const client = this.supabaseService.getClient();
-      await client.from('contract_registry_entries').delete().eq('network', this.configService.network);
-      const { error } = await client.from('contract_registry_entries').insert(
+      await client
+        .from("contract_registry_entries")
+        .delete()
+        .eq("network", this.configService.network);
+      const { error } = await client.from("contract_registry_entries").insert(
         records.map((record) => ({
           contract_name: record.name,
           network: record.network,

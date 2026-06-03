@@ -3,12 +3,14 @@
 ## Pre-Deployment
 
 ### 1. Code Review
+
 - [ ] Review all redaction patterns in `redaction.service.ts`
 - [ ] Verify no hardcoded sensitive data in test files
 - [ ] Check that all imports are correct
 - [ ] Verify TypeScript compilation succeeds
 
 ### 2. Testing
+
 - [ ] Run unit tests: `npm run test:unit -- --testPathPattern=crash-reporting`
 - [ ] Run integration tests: `npm run test:int -- --testPathPattern=crash-reporting`
 - [ ] Manually test redaction with real sensitive data patterns
@@ -17,6 +19,7 @@
 - [ ] Test export returns null for non-opted-in user
 
 ### 3. Database Setup
+
 - [ ] Review migration file: `migrations/001_create_crash_reporting_tables.sql`
 - [ ] Test migration in development environment
 - [ ] Verify RLS policies are enabled
@@ -26,24 +29,27 @@
 ## Deployment Steps
 
 ### 1. Database Migration
+
 ```bash
 # Backup database first
-pg_dump -U postgres quickex > backup_before_crash_reporting.sql
+pg_dump -U postgres  RustAcademy > backup_before_crash_reporting.sql
 
 # Run migration
-psql -U postgres -d quickex -f src/crash-reporting/migrations/001_create_crash_reporting_tables.sql
+psql -U postgres -d  RustAcademy -f src/crash-reporting/migrations/001_create_crash_reporting_tables.sql
 
 # Verify tables
-psql -U postgres -d quickex -c "\dt crash_*"
+psql -U postgres -d  RustAcademy -c "\dt crash_*"
 ```
 
 ### 2. Deploy Code
+
 - [ ] Merge feature branch to main
 - [ ] Deploy to staging environment
 - [ ] Verify application starts successfully
 - [ ] Check logs for any errors
 
 ### 3. Smoke Tests (Staging)
+
 - [ ] Test GET /crash-reporting/settings/:userId (should return default settings)
 - [ ] Test PUT /crash-reporting/settings/:userId (enable crash reporting)
 - [ ] Trigger a test error and verify crash is captured
@@ -53,6 +59,7 @@ psql -U postgres -d quickex -c "\dt crash_*"
 - [ ] Verify no crashes captured after disabling
 
 ### 4. Production Deployment
+
 - [ ] Deploy to production
 - [ ] Monitor application logs for errors
 - [ ] Verify database connection works
@@ -61,18 +68,21 @@ psql -U postgres -d quickex -c "\dt crash_*"
 ## Post-Deployment
 
 ### 1. Monitoring
+
 - [ ] Set up alerts for crash reporting errors
 - [ ] Monitor database table sizes
 - [ ] Check for any performance impact
 - [ ] Monitor API endpoint response times
 
 ### 2. Documentation
+
 - [ ] Update API documentation with new endpoints
 - [ ] Notify support team about log export feature
 - [ ] Create user-facing documentation for opt-in process
 - [ ] Document internal procedures for accessing crash reports
 
 ### 3. Maintenance Setup
+
 - [ ] Schedule periodic cleanup of old crash reports
 - [ ] Set up monitoring for redaction failures
 - [ ] Create runbook for common issues
@@ -81,6 +91,7 @@ psql -U postgres -d quickex -c "\dt crash_*"
 ## Validation Tests
 
 ### Test 1: Redaction Validation
+
 ```bash
 # Create a test user and enable crash reporting
 curl -X PUT http://localhost:4000/crash-reporting/settings/test-user \
@@ -103,6 +114,7 @@ grep -i "@example.com" test-export.json
 ```
 
 ### Test 2: Opt-In Enforcement
+
 ```bash
 # Create a test user WITHOUT enabling crash reporting
 # Trigger an error
@@ -112,6 +124,7 @@ curl http://localhost:4000/crash-reporting/reports/test-user-2
 ```
 
 ### Test 3: Export Without Opt-In
+
 ```bash
 # Try to export logs for user who hasn't opted in
 curl http://localhost:4000/crash-reporting/export/test-user-3
@@ -123,21 +136,24 @@ curl http://localhost:4000/crash-reporting/export/test-user-3
 If issues are detected:
 
 ### 1. Immediate Actions
+
 - [ ] Disable crash reporting module in app.module.ts
 - [ ] Redeploy without crash reporting
 - [ ] Verify application stability
 
 ### 2. Database Rollback (if needed)
+
 ```bash
 # Drop tables
-psql -U postgres -d quickex -c "DROP TABLE IF EXISTS crash_reports CASCADE;"
-psql -U postgres -d quickex -c "DROP TABLE IF EXISTS crash_reporting_settings CASCADE;"
+psql -U postgres -d  RustAcademy -c "DROP TABLE IF EXISTS crash_reports CASCADE;"
+psql -U postgres -d  RustAcademy -c "DROP TABLE IF EXISTS crash_reporting_settings CASCADE;"
 
 # Restore from backup if needed
-psql -U postgres -d quickex < backup_before_crash_reporting.sql
+psql -U postgres -d  RustAcademy < backup_before_crash_reporting.sql
 ```
 
 ### 3. Code Rollback
+
 - [ ] Revert commit
 - [ ] Remove CrashReportingModule from app.module.ts
 - [ ] Redeploy
@@ -157,6 +173,7 @@ psql -U postgres -d quickex < backup_before_crash_reporting.sql
 ## Optional Enhancements (Post-Launch)
 
 ### Phase 2 Features
+
 - [ ] Add global exception filter (CrashCaptureFilter)
 - [ ] Add log capture interceptor (LogCaptureInterceptor)
 - [ ] Implement automatic cleanup job for old reports
@@ -164,6 +181,7 @@ psql -U postgres -d quickex < backup_before_crash_reporting.sql
 - [ ] Create admin dashboard for crash report analysis
 
 ### Phase 3 Features
+
 - [ ] Add support for custom redaction patterns
 - [ ] Implement log streaming to external services
 - [ ] Add crash report aggregation and analysis
@@ -187,10 +205,10 @@ psql -U postgres -d quickex < backup_before_crash_reporting.sql
 
 ## Sign-Off
 
-- [ ] Development Lead: _______________
-- [ ] QA Lead: _______________
-- [ ] Security Review: _______________
-- [ ] Product Owner: _______________
-- [ ] DevOps: _______________
+- [ ] Development Lead: ******\_\_\_******
+- [ ] QA Lead: ******\_\_\_******
+- [ ] Security Review: ******\_\_\_******
+- [ ] Product Owner: ******\_\_\_******
+- [ ] DevOps: ******\_\_\_******
 
-Date: _______________
+Date: ******\_\_\_******

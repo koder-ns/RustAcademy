@@ -15,10 +15,8 @@ export function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotificationCenter();
   const [isOpen, setIsOpen] = useState(false);
-  const [readState, setReadState] = useState<Exclude<
-    NotificationReadState,
-    "read"
-  >>("all");
+  const [readState, setReadState] =
+    useState<Exclude<NotificationReadState, "read">>("all");
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -64,7 +62,7 @@ export function NotificationBell() {
       <button
         type="button"
         aria-expanded={isOpen}
-        aria-controls="quickex-notification-panel"
+        aria-controls=" RustAcademy-notification-panel"
         aria-label={
           unreadCount > 0
             ? `Open notifications. ${unreadCount} unread.`
@@ -83,7 +81,7 @@ export function NotificationBell() {
 
       {isOpen ? (
         <div
-          id="quickex-notification-panel"
+          id=" RustAcademy-notification-panel"
           className="absolute right-0 top-14 z-50 w-[min(26rem,calc(100vw-2rem))] rounded-[2rem] border border-white/10 bg-neutral-950/98 p-5 shadow-[0_30px_80px_-25px_rgba(15,23,42,0.9)] backdrop-blur"
         >
           <div className="flex items-start justify-between gap-4">

@@ -55,7 +55,7 @@ try {
   await this.crashReportingService.captureCrash(
     userId,
     error,
-    { 
+    {
       operation: 'payment',
       amount: 100,
       // Don't include sensitive data - it will be redacted anyway
@@ -79,25 +79,27 @@ if (settings?.crashReportingEnabled) {
 ```typescript
 // Log lines are automatically captured by LogCaptureInterceptor
 // Or manually:
-this.crashReportingService.captureLogLine('Important operation started');
+this.crashReportingService.captureLogLine("Important operation started");
 ```
 
 ### Test Redaction
 
 ```typescript
-import { RedactionService } from './crash-reporting';
+import { RedactionService } from "./crash-reporting";
 
 const redactionService = new RedactionService();
 
 // Test string redaction
-const redacted = redactionService.redact('My key is GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H');
+const redacted = redactionService.redact(
+  "My key is GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
+);
 console.log(redacted); // "My key is [REDACTED_PUBLIC_KEY]"
 
 // Test object redaction
 const redactedObj = redactionService.redactObject({
-  email: 'user@example.com',
-  apiKey: 'test_key_abc123',
-  normalField: 'safe',
+  email: "user@example.com",
+  apiKey: "test_key_abc123",
+  normalField: "safe",
 });
 console.log(redactedObj);
 // { email: '[REDACTED_EMAIL]', apiKey: '[REDACTED]', normalField: 'safe' }
@@ -109,7 +111,7 @@ console.log(redactedObj);
 
 ```bash
 # Using psql
-psql -U postgres -d quickex -f src/crash-reporting/migrations/001_create_crash_reporting_tables.sql
+psql -U postgres -d  RustAcademy -f src/crash-reporting/migrations/001_create_crash_reporting_tables.sql
 
 # Or using Supabase CLI
 supabase db push
@@ -119,12 +121,12 @@ supabase db push
 
 ```sql
 -- Check if tables exist
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN ('crash_reports', 'crash_reporting_settings');
 
 -- Check RLS policies
-SELECT tablename, policyname FROM pg_policies 
+SELECT tablename, policyname FROM pg_policies
 WHERE tablename IN ('crash_reports', 'crash_reporting_settings');
 ```
 
@@ -154,18 +156,18 @@ npm run test:int -- --testPathPattern=crash-reporting.integration.spec.ts
 ```typescript
 // Test that secrets are never leaked
 const testCases = [
-  'SBZVMB74Z76QZ3ZOY3XRXEPNQN754WKRGMAG4OQIPOOB6QMHIDCNVYKY', // Stellar secret
-  'test_key_1234567890abcdefghijklmnop', // API key
-  'user@example.com', // Email
-  '192.168.1.1', // IP
+  "SBZVMB74Z76QZ3ZOY3XRXEPNQN754WKRGMAG4OQIPOOB6QMHIDCNVYKY", // Stellar secret
+  "test_key_1234567890abcdefghijklmnop", // API key
+  "user@example.com", // Email
+  "192.168.1.1", // IP
 ];
 
-testCases.forEach(sensitive => {
+testCases.forEach((sensitive) => {
   const redacted = redactionService.redact(`Test: ${sensitive}`);
   if (redacted.includes(sensitive)) {
-    console.error('LEAK DETECTED:', sensitive);
+    console.error("LEAK DETECTED:", sensitive);
   } else {
-    console.log('✓ Redacted successfully');
+    console.log("✓ Redacted successfully");
   }
 });
 ```
@@ -175,14 +177,16 @@ testCases.forEach(sensitive => {
 ### Issue: Crash reports not being captured
 
 **Solution**: Check if user has opted in:
+
 ```typescript
 const settings = await crashReportingService.getUserSettings(userId);
-console.log('Opted in:', settings?.crashReportingEnabled);
+console.log("Opted in:", settings?.crashReportingEnabled);
 ```
 
 ### Issue: Sensitive data appearing in logs
 
 **Solution**: This should never happen. If it does:
+
 1. Check the redaction patterns in `redaction.service.ts`
 2. Add a new pattern if needed
 3. Add a test case to prevent regression
@@ -191,6 +195,7 @@ console.log('Opted in:', settings?.crashReportingEnabled);
 ### Issue: Export returns null
 
 **Solution**: User must opt in first:
+
 ```bash
 curl -X PUT http://localhost:4000/crash-reporting/settings/USER_ID \
   -H "Content-Type: application/json" \
@@ -209,6 +214,7 @@ curl -X PUT http://localhost:4000/crash-reporting/settings/USER_ID \
 ## What Gets Redacted
 
 ✅ **Always Redacted:**
+
 - Stellar keys (G... and S...)
 - API keys and tokens
 - Passwords
@@ -221,6 +227,7 @@ curl -X PUT http://localhost:4000/crash-reporting/settings/USER_ID \
 - Authorization headers
 
 ✅ **Preserved:**
+
 - Request IDs
 - HTTP methods and paths
 - Status codes
@@ -230,6 +237,7 @@ curl -X PUT http://localhost:4000/crash-reporting/settings/USER_ID \
 ## Support
 
 For issues or questions:
+
 1. Check the [README.md](./README.md) for detailed documentation
 2. Review the [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)
 3. Run the tests to validate your setup

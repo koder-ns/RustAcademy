@@ -1,72 +1,127 @@
-# QuickEx Mobile App (Expo)
 
-This is the Expo-based mobile application for the QuickEx platform, a privacy-focused payment link service built on the Stellar blockchain.
+# 📱 RustAcademy Mobile
 
-## Getting Started
+> Learn Rust anywhere. Earn XLM on the go.
+---
 
-### Prerequisites
+## Overview
 
-- Node.js 18+
-- pnpm
-- Expo Go (on your mobile device) or a simulator/emulator
+RustAcademy Mobile gives learners a mobile-first experience.
 
-### Installation
+Users can:
 
-1. Install dependencies from the root:
-   ```bash
-   pnpm install
-   ```
+* Watch lessons
+* Complete quizzes
+* Chat with AI Mentor
+* Receive notifications
+* Manage wallet rewards
+* Maintain learning streaks
 
-### Running the App
+---
 
-Run the development server:
-```bash
-pnpm turbo run dev --filter=mobile
-```
+## Features
 
-This will start the Expo CLI. You can then scan the QR code with Expo Go or press `i` for iOS / `a` for Android to open in an emulator.
+### Learning
 
-## Project Structure
+* Mobile lesson player
+* Quiz system
+* Progress tracking
 
-- `app/`: Expo Router pages (index, wallet-connect, layout).
-- `components/`: Reusable UI components.
-- `constants/`: App constants and theme.
-- `hooks/`: Custom React hooks.
+### AI Mentor
+
+* Voice chat
+* Text chat
+* Code explanations
+
+### Community
+
+* Feed browsing
+* Messaging
+* Study rooms
+
+### Rewards
+
+* Wallet dashboard
+* Achievement badges
+* NFT certificates
+
+---
 
 ## Tech Stack
 
-- **Framework**: Expo (React Native)
-- **Navigation**: Expo Router (File-based)
-- **Styling**: React Native StyleSheet
-- **Blockchain**: Stellar SDK (planned)
-- **Wallet**: WalletConnect integration (planned)
+* React Native
+* Expo
+* TypeScript
+* Zustand
+* TanStack Query
+* Expo Notifications
+* Stellar SDK
 
-## Testing
+---
 
-Run unit tests:
-```bash
-pnpm --filter=mobile test
+## Environment Variables
+
+```env
+EXPO_PUBLIC_API_URL=
+
+EXPO_PUBLIC_WS_URL=
+
+EXPO_PUBLIC_STELLAR_NETWORK=testnet
 ```
 
-## Internal Release Builds
+---
 
-Internal testing builds for Android and iOS are produced using EAS. The pipeline is configured in `./.github/workflows/mobile-release.yml` and supports `dev`, `staging`, and `production` build profiles.
+## Run
 
-- Ensure `EAS_TOKEN` is set in the repository secrets.
-- Release tags matching `v*` generate production internal artifacts automatically.
-- Build metadata and environment labels are surfaced in the app Settings screen.
-- For release readiness and privacy review, see `RELEASE_CHECKLIST.md`.
+```bash
+pnpm install
 
-## Universal Links / App Links
+pnpm start
+```
 
-QuickEx deep-link verification files now live in:
+---
 
-- `app/frontend/public/.well-known/apple-app-site-association`
-- `app/frontend/public/.well-known/assetlinks.json`
+## Build
 
-Before production release, replace these placeholders with real values:
+### Android
 
-- `TEAM_ID.com.pulsefy.quickex` in the AASA file.
-- `REPLACE_WITH_RELEASE_CERT_SHA256_FINGERPRINT` in `assetlinks.json`.
+```bash
+pnpm android
+```
 
-A debug screen is available at `/deep-link-debug` to validate deep link parsing and preview the target route inside the app.
+### iOS
+
+```bash
+pnpm ios
+```
+
+---
+
+## Screens
+
+```text
+Splash
+Authentication
+Dashboard
+Courses
+Course Player
+Task Submission
+AI Mentor
+Community Feed
+Chat
+Wallet
+Profile
+```
+
+---
+
+## Notifications
+
+Supports:
+
+* New lessons
+* Task reviews
+* Reward payouts
+* Tutor messages
+* Community mentions
+

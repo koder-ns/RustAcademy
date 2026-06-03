@@ -1,5 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { createHmac } from 'crypto';
+import { Injectable, Logger } from "@nestjs/common";
+import { createHmac } from "crypto";
 
 export interface WebhookDispatchResult {
   webhookId: string;
@@ -11,9 +11,7 @@ export interface WebhookDispatchResult {
 
 @Injectable()
 export class ContractChangeWebhookDispatcher {
-  private readonly logger = new Logger(
-    ContractChangeWebhookDispatcher.name,
-  );
+  private readonly logger = new Logger(ContractChangeWebhookDispatcher.name);
 
   async dispatch(
     webhooks: { id: string; webhookUrl: string; secret: string }[],
@@ -24,7 +22,7 @@ export class ContractChangeWebhookDispatcher {
     if (!webhooks.length) return results;
 
     const body = JSON.stringify({
-      event: 'contract_registry.changed',
+      event: "contract_registry.changed",
       occurredAt: new Date().toISOString(),
       payload,
     });
@@ -32,16 +30,16 @@ export class ContractChangeWebhookDispatcher {
     await Promise.allSettled(
       webhooks.map(async (webhook) => {
         try {
-          const signature = createHmac('sha256', webhook.secret)
+          const signature = createHmac("sha256", webhook.secret)
             .update(body)
-            .digest('hex');
+            .digest("hex");
 
           const response = await fetch(webhook.webhookUrl, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              'X-QuickEx-Signature': signature,
-              'X-QuickEx-Event': 'contract_registry.changed',
+              "Content-Type": "application/json",
+              "X- RustAcademy-Signature": signature,
+              "X- RustAcademy-Event": "contract_registry.changed",
             },
             body,
           });
@@ -54,7 +52,7 @@ export class ContractChangeWebhookDispatcher {
           });
         } catch (error) {
           const message =
-            error instanceof Error ? error.message : 'Unknown error';
+            error instanceof Error ? error.message : "Unknown error";
           results.push({
             webhookId: webhook.id,
             url: webhook.webhookUrl,
