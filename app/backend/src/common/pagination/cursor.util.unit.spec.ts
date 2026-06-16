@@ -160,5 +160,35 @@ describe('Cursor Utility', () => {
       expect(collectedIds).toEqual(allIds);
       expect(new Set(collectedIds).size).toBe(collectedIds.length);
     });
+
+    it('handles identical timestamps across multiple pages without skipping or duplicating', () => {
+      // 10 rows with the EXACT SAME timestamp, but different IDs
+      const allRows = Array.from({ length: 10 }, (_, i) =>
+        makeRow(`id-${10 - i}`, `2026-01-01`),
+      );
+
+      const collectedIds: string[] = [];
+      let remaining = [...allRows];
+
+      for (let page = 0; page < 4; page++) {
+        if (remaining.length === 0) break;
+
+        const pageRows = remaining.slice(0, 4); // limit=3
+        const result = paginateResult(pageRows, 3, 'created_at');
+
+        collectedIds.push(...result.data.map((r) => r.id));
+
+        if (!result.has_more) break;
+
+        const cursor = decodeCursor(result.next_cursor!);
+        remaining = remaining.filter(
+          (r) => r.created_at < cursor!.pk || (r.created_at === cursor!.pk && r.id < cursor!.id),
+        );
+      }
+
+      const allIds = allRows.map((r) => r.id);
+      expect(collectedIds).toEqual(allIds);
+      expect(new Set(collectedIds).size).toBe(collectedIds.length);
+    });
   });
 });

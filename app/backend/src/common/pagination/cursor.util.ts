@@ -79,16 +79,14 @@ export function clampLimit(
  */
 export function applyCursorFilter<
   T extends {
-    eq: (col: string, val: unknown) => T;
-    lt: (col: string, val: string) => T;
-    gt: (col: string, val: string) => T;
+    or: (filter: string) => T;
     order: (col: string, opts: { ascending: boolean }) => T;
     limit: (n: number) => T;
   },
 >(query: T, cursor: CursorPayload | null, orderColumn: string, ascending: boolean, limit: number): T {
   const effectiveLimit = limit + 1; // fetch one extra to detect next page
 
-  let q = query.order(orderColumn, { ascending });
+  let q = query;
 
   if (cursor) {
     // For DESC order: next page rows have (orderColumn < cursor.pk)
@@ -96,14 +94,16 @@ export function applyCursorFilter<
     // For ASC order: next page rows have (orderColumn > cursor.pk)
     //   OR (orderColumn = cursor.pk AND id > cursor.id)
     if (ascending) {
-      q = q.gt(orderColumn, cursor.pk).order('id', { ascending: true }).gt('id', cursor.id) as T;
+      const filter = `${orderColumn}.gt.${cursor.pk},and(${orderColumn}.eq.${cursor.pk},id.gt.${cursor.id})`;
+      q = q.or(filter) as T;
     } else {
-      q = q.lt(orderColumn, cursor.pk).order('id', { ascending: false }).lt('id', cursor.id) as T;
+      const filter = `${orderColumn}.lt.${cursor.pk},and(${orderColumn}.eq.${cursor.pk},id.lt.${cursor.id})`;
+      q = q.or(filter) as T;
     }
   }
 
   // Deterministic tiebreaker by id
-  q = q.order('id', { ascending }).limit(effectiveLimit) as T;
+  q = q.order(orderColumn, { ascending }).order('id', { ascending }).limit(effectiveLimit) as T;
 
   return q;
 }
