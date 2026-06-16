@@ -7,7 +7,7 @@ use crate::events::{
 use crate::fee_router;
 use crate::storage;
 use crate::types::{FeeConfig, PerAssetFeeConfig, Role};
-use soroban_sdk::{Address, Env, Vec};
+use soroban_sdk::{Address, BytesN, Env, Vec};
 
 /// Initialize the contract with an admin address.
 ///
