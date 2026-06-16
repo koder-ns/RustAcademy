@@ -2,7 +2,8 @@ import {
   BadRequestException,
   Injectable,
   Logger,
-  // NotFoundException,
+  ConflictException,
+  InternalServerErrorException,
 } from "@nestjs/common";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 
@@ -48,6 +49,21 @@ export class ContractRegistryService {
   private readonly fallbackStore = new Map<string, RegistryRecord[]>();
   private readonly expectedContracts: string[];
   private fallbackVersion = 0;
+  private readonly maxRetries = 3;
+  private readonly retryDelayMs = 1000;
+
+  // Metrics counters
+  private readonly metrics = {
+    publishSuccess: 0,
+    publishFailure: 0,
+    publishRetry: 0,
+    finalizeSuccess: 0,
+    finalizeFailure: 0,
+    finalizeRetry: 0,
+    rollbackSuccess: 0,
+    rollbackFailure: 0,
+    rollbackRetry: 0,
+  };
 
   constructor(
     private readonly supabaseService: SupabaseService,
@@ -100,6 +116,7 @@ export class ContractRegistryService {
     dto: PublishContractRegistryDto,
     actor = "deployment_automation",
   ) {
+    const startTime = Date.now();
     this.validatePassphrase(dto.networkPassphrase);
     this.validateContractSet(dto.contracts);
 
@@ -108,6 +125,9 @@ export class ContractRegistryService {
       (max, record) => Math.max(max, record.version),
       this.fallbackVersion,
     );
+
+    // Use expectedVersion from DTO if provided, otherwise use current version
+    const expectedVersion = dto.expectedVersion ?? currentVersion;
 
     const now = new Date().toISOString();
     const names = new Set(
@@ -126,34 +146,43 @@ export class ContractRegistryService {
     const merged = [...retained, ...published];
 
     try {
-      const client = this.supabaseService.getClient();
-      const { data, error } = await client.rpc("publish_contract_registry", {
-        p_network: this.configService.network,
-        p_records: published.map((record) => ({
-          name: record.name,
-          contractId: record.contractId,
-          previousContractId: record.previousContractId ?? null,
-          effectiveLedger: record.effectiveLedger ?? null,
-          effectiveTime: record.effectiveTime ?? null,
-          wasmHash: record.wasmHash,
-          contractVersion: record.contractVersion,
-          deploymentId: record.deploymentId ?? null,
-          metadata: record.metadata ?? {},
-          publishedBy: record.publishedBy,
-          networkPassphrase: record.networkPassphrase,
-          active: record.active,
-          createdAt: record.createdAt,
-          updatedAt: record.updatedAt,
-        })),
-        p_expected_version: currentVersion,
-      });
+      const result = await this.retryOperation(
+        async () => {
+          const client = this.supabaseService.getClient();
+          const { data, error } = await client.rpc("publish_contract_registry", {
+            p_network: this.configService.network,
+            p_records: published.map((record) => ({
+              name: record.name,
+              contractId: record.contractId,
+              previousContractId: record.previousContractId ?? null,
+              effectiveLedger: record.effectiveLedger ?? null,
+              effectiveTime: record.effectiveTime ?? null,
+              wasmHash: record.wasmHash,
+              contractVersion: record.contractVersion,
+              deploymentId: record.deploymentId ?? null,
+              metadata: record.metadata ?? {},
+              publishedBy: record.publishedBy,
+              networkPassphrase: record.networkPassphrase,
+              active: record.active,
+              createdAt: record.createdAt,
+              updatedAt: record.updatedAt,
+            })),
+            p_expected_version: expectedVersion,
+          });
 
-      if (error) throw error;
+          if (error) {
+            this.handleDatabaseError(error);
+          }
 
-      const result = data as { success: boolean; newVersion: number; publishedCount: number; previousVersion: number };
-      if (!result?.success) {
-        throw new Error("Failed to publish contract registry");
-      }
+          const rpcResult = data as { success: boolean; newVersion: number; publishedCount: number; previousVersion: number };
+          if (!rpcResult?.success) {
+            throw new InternalServerErrorException("Failed to publish contract registry: RPC returned unsuccessful");
+          }
+
+          return rpcResult;
+        },
+        "publish_contract_registry",
+      );
 
       const nextVersion = result.newVersion;
 
@@ -185,6 +214,11 @@ export class ContractRegistryService {
       this.logger.log(
         `Published ${published.length} contract registry entr${published.length === 1 ? "y" : "ies"} at version ${nextVersion}`,
       );
+
+      // Record metrics
+      this.metrics.publishSuccess++;
+      const duration = Date.now() - startTime;
+      this.logger.debug(`Publish operation completed in ${duration}ms`);
 
       await this.eventEmitter.emit(
         ContractRegistryPublishedEvent,
@@ -221,6 +255,7 @@ export class ContractRegistryService {
 
       return this.getRegistry();
     } catch (error) {
+      this.metrics.publishFailure++;
       this.logger.error(
         `Failed to publish contract registry: ${(error as Error).message}`,
       );
@@ -228,93 +263,118 @@ export class ContractRegistryService {
     }
   }
 
-  async finalizeDualRead(
-    contractName: string,
-    actor = "deployment_automation",
-  ) {
-    const targetName = contractName.toLowerCase();
+async finalizeDualRead(
+  contractName: string,
+  actor = "deployment_automation",
+) {
+  const startTime = Date.now();
+  const targetName = contractName.toLowerCase();
 
-    try {
-      const client = this.supabaseService.getClient();
-      const { data, error } = await client.rpc("finalize_dual_read", {
-        p_network: this.configService.network,
-        p_contract_name: targetName,
-      });
+  try {
+    const result = await this.retryOperation(
+      async () => {
+        const client = this.supabaseService.getClient();
+        const { data, error } = await client.rpc("finalize_dual_read", {
+          p_network: this.configService.network,
+          p_contract_name: targetName,
+        });
 
-      if (error) throw error;
+        if (error) {
+          this.handleDatabaseError(error);
+        }
 
-      const result = data as { success: boolean; contractName: string; finalizedAt: string };
-      if (!result?.success) {
-        throw new Error("Failed to finalize dual-read");
-      }
+        const rpcResult = data as { success: boolean; contractName: string; finalizedAt: string };
+        if (!rpcResult?.success) {
+          throw new InternalServerErrorException("Failed to finalize dual-read: RPC returned unsuccessful");
+        }
 
-      // Update in-memory fallback only after successful persistence
-      const records = await this.readRecords();
-      const now = new Date().toISOString();
-      const updated = records.map((record) => {
-        if (record.name !== targetName) return record;
-        return {
-          ...record,
-          previousContractId: undefined,
-          effectiveLedger: record.effectiveLedger,
-          effectiveTime: now,
-          updatedAt: now,
-        };
-      });
+        return rpcResult;
+      },
+      "finalize_dual_read",
+    );
 
-      this.writeFallback(updated);
-
-      // Emit audit log only after durable persistence succeeds
-      await this.auditService.log(
-        "contract_registry",
-        "registry.finalize_dual_read",
-        contractName,
-        {
-          actor,
-          finalizedAt: now,
-        },
-      );
-
-      this.logger.log(
-        `Finalized dual-read for contract ${contractName} at timestamp ${now}`,
-      );
-
-      return this.getRegistry();
-    } catch (error) {
-      this.logger.error(
-        `Failed to finalize dual-read for ${contractName}: ${(error as Error).message}`,
-      );
-      throw error;
-    }
-  }
-
-  async rollback(
-    dto: RollbackContractRegistryDto,
-    actor = "deployment_automation",
-  ) {
-    const targetName = dto.name.toLowerCase();
-
-    try {
-      const client = this.supabaseService.getClient();
-      const { data, error } = await client.rpc("rollback_contract_registry", {
-        p_network: this.configService.network,
-        p_contract_name: targetName,
-        p_target_contract_version: dto.version,
-      });
-
-      if (error) throw error;
-
-      const result = data as {
-        success: boolean;
-        contractName: string;
-        targetVersion: number;
-        newRegistryVersion: number;
-        contractId: string;
-        wasmHash: string;
+    // Update in-memory fallback only after successful persistence
+    const records = await this.readRecords();
+    const now = result.finalizedAt;
+    const updated = records.map((record) => {
+      if (record.name !== targetName) return record;
+      return {
+        ...record,
+        previousContractId: undefined,
+        effectiveLedger: record.effectiveLedger,
+        effectiveTime: now,
+        updatedAt: now,
       };
-      if (!result?.success) {
-        throw new Error("Failed to rollback contract registry");
-      }
+    });
+
+    this.writeFallback(updated);
+
+    // Emit audit log only after durable persistence succeeds
+    await this.auditService.log(
+      "contract_registry",
+      "registry.finalize_dual_read",
+      contractName,
+      {
+        actor,
+        finalizedAt: now,
+      },
+    );
+
+    this.logger.log(
+      `Finalized dual-read for contract ${contractName} at timestamp ${now}`,
+    );
+
+    // Record metrics
+    this.metrics.finalizeSuccess++;
+    const duration = Date.now() - startTime;
+    this.logger.debug(`Finalize dual-read operation completed in ${duration}ms`);
+
+    return this.getRegistry();
+  } catch (error) {
+    this.metrics.finalizeFailure++;
+    this.logger.error(
+      `Failed to finalize dual-read for ${contractName}: ${(error as Error).message}`,
+    );
+    throw error;
+  }
+}
+ async rollback(
+  dto: RollbackContractRegistryDto,
+  actor = "deployment_automation",
+) {
+  const startTime = Date.now();
+  const targetName = dto.name.toLowerCase();
+
+  try {
+    const result = await this.retryOperation(
+        async () => {
+          const client = this.supabaseService.getClient();
+          const { data, error } = await client.rpc("rollback_contract_registry", {
+            p_network: this.configService.network,
+            p_contract_name: targetName,
+            p_target_contract_version: dto.version,
+          });
+
+          if (error) {
+            this.handleDatabaseError(error);
+          }
+
+          const rpcResult = data as {
+            success: boolean;
+            contractName: string;
+            targetVersion: number;
+            newRegistryVersion: number;
+            contractId: string;
+            wasmHash: string;
+          };
+          if (!rpcResult?.success) {
+            throw new InternalServerErrorException("Failed to rollback contract registry: RPC returned unsuccessful");
+          }
+
+          return rpcResult;
+        },
+        "rollback_contract_registry",
+      );
 
       const nextVersion = result.newRegistryVersion;
 
@@ -342,6 +402,11 @@ export class ContractRegistryService {
         dto.name,
         { actor, requestedVersion: dto.version, registryVersion: nextVersion },
       );
+
+      // Record metrics
+      this.metrics.rollbackSuccess++;
+      const duration = Date.now() - startTime;
+      this.logger.debug(`Rollback operation completed in ${duration}ms`);
 
       await this.eventEmitter.emit(
         ContractRegistryRolledBackEvent,
@@ -371,6 +436,7 @@ export class ContractRegistryService {
 
       return this.getRegistry();
     } catch (error) {
+      this.metrics.rollbackFailure++;
       this.logger.error(
         `Failed to rollback contract registry for ${dto.name}: ${(error as Error).message}`,
       );
@@ -497,6 +563,94 @@ export class ContractRegistryService {
     }
   }
 
+  private async retryOperation<T>(
+    operation: () => Promise<T>,
+    operationName: string,
+  ): Promise<T> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error as Error;
+        const isTransient = this.isTransientError(error);
+
+        if (!isTransient || attempt === this.maxRetries) {
+          this.logger.error(
+            `${operationName} failed after ${attempt + 1} attempt(s): ${lastError.message}`,
+          );
+          throw lastError;
+        }
+
+        this.logger.warn(
+          `${operationName} failed (attempt ${attempt + 1}/${this.maxRetries + 1}), retrying in ${this.retryDelayMs}ms: ${lastError.message}`,
+        );
+
+        // Increment retry metrics
+        if (operationName === "publish_contract_registry") {
+          this.metrics.publishRetry++;
+        } else if (operationName === "finalize_dual_read") {
+          this.metrics.finalizeRetry++;
+        } else if (operationName === "rollback_contract_registry") {
+          this.metrics.rollbackRetry++;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, this.retryDelayMs * (attempt + 1)));
+      }
+    }
+
+    throw lastError || new Error("Retry operation failed");
+  }
+
+  private isTransientError(error: unknown): boolean {
+    const errorMessage = (error as Error).message.toLowerCase();
+    const transientPatterns = [
+      "connection",
+      "timeout",
+      "network",
+      "temporary",
+      "try again",
+      "deadlock",
+      "lock wait timeout",
+    ];
+
+    return transientPatterns.some((pattern) => errorMessage.includes(pattern));
+  }
+
+  private handleDatabaseError(error: { message: string; code?: string; details?: string }): never {
+    const errorMessage = error.message.toLowerCase();
+
+    // Check for unique constraint violations
+    if (
+      errorMessage.includes("unique constraint") ||
+      errorMessage.includes("duplicate key")
+    ) {
+      throw new ConflictException(
+        "Concurrent modification detected: Another operation has modified the contract registry. Please retry.",
+      );
+    }
+
+    // Check for optimistic concurrency failures
+    if (errorMessage.includes("optimistic concurrency check failed")) {
+      throw new ConflictException(
+        "Optimistic concurrency check failed: The registry version has changed since you read it. Please retry with the latest version.",
+      );
+    }
+
+    // Check for connection errors
+    if (errorMessage.includes("connection") || errorMessage.includes("timeout")) {
+      throw new InternalServerErrorException(
+        "Database connection error. Please try again.",
+      );
+    }
+
+    // Generic database error
+    throw new InternalServerErrorException(
+      `Database error: ${error.message}`,
+    );
+  }
+
   private async persistSnapshot(records: RegistryRecord[]): Promise<void> {
     // This method is deprecated in favor of transactional RPC functions.
     // Kept for backward compatibility but should not be used in new code.
@@ -533,5 +687,9 @@ export class ContractRegistryService {
         `Unable to persist contract registry snapshot: ${(error as Error).message}`,
       );
     }
+  }
+
+  getMetrics() {
+    return { ...this.metrics };
   }
 }
