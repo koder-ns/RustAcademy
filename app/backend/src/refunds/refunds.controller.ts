@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -24,6 +25,7 @@ import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { RequireScopes } from '../auth/decorators/require-scopes.decorator';
 import { NetworkSafetyGuard } from '../feature-flags/network-safety.guard';
 import { RequiresFlag } from '../feature-flags/requires-flag.decorator';
+import { decodeCursor, clampLimit } from '../common/pagination/cursor.util';
 
 interface ApiKeyRequest extends Request {
   apiKey: { id: string };
@@ -99,6 +101,14 @@ export class RefundsController {
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: number,
   ) {
-    return this.refundsService.listRefunds(cursor, Number(limit || 20));
+    let parsedCursor = null;
+    if (cursor) {
+      parsedCursor = decodeCursor(cursor);
+      if (!parsedCursor) {
+        throw new BadRequestException('Invalid cursor format provided.');
+      }
+    }
+    const safeLimit = clampLimit(limit);
+    return this.refundsService.listRefunds(parsedCursor, safeLimit);
   }
 }

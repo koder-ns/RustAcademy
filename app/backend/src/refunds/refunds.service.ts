@@ -16,6 +16,7 @@ import {
   isEscrowRefundable,
   isLinkRefundable,
 } from './refunds.eligibility';
+import { applyCursorFilter, paginateResult, CursorPayload } from '../common/pagination/cursor.util';
 
 @Injectable()
 export class RefundsService {
@@ -129,52 +130,21 @@ export class RefundsService {
   }
 
   async listRefunds(
-    cursor?: string,
-    limit: number = 20,
+    cursor: CursorPayload | null,
+    limit: number,
   ): Promise<{ data: RefundAttemptRecord[]; next_cursor: string | null; has_more: boolean }> {
     const client = this.supabaseService.getClient();
-    const effectiveLimit = Math.min(100, Math.max(1, limit));
 
     let query = client
       .from('refund_attempts')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false });
+      .select('*');
 
-    // Decode cursor
-    if (cursor) {
-      try {
-        const json = Buffer.from(cursor, 'base64url').toString('utf-8');
-        const parsed = JSON.parse(json);
-        if (typeof parsed.pk === 'string' && typeof parsed.id === 'string') {
-          query = query
-            .lt('created_at', parsed.pk)
-            .or(`created_at.eq.${parsed.pk},id.lt.${parsed.id}`);
-        }
-      } catch {
-        // invalid cursor – start from beginning
-      }
-    }
-
-    query = query.limit(effectiveLimit + 1);
+    query = applyCursorFilter(query, cursor, 'created_at', false, limit);
 
     const { data, error } = await query;
     if (error) throw error;
 
-    const rows = (data ?? []) as RefundAttemptRecord[];
-    const hasMore = rows.length > effectiveLimit;
-    const resultData = hasMore ? rows.slice(0, effectiveLimit) : rows;
-
-    let nextCursor: string | null = null;
-    if (hasMore && resultData.length > 0) {
-      const last = resultData[resultData.length - 1];
-      nextCursor = Buffer.from(
-        JSON.stringify({ pk: last.created_at, id: last.id }),
-        'utf-8',
-      ).toString('base64url');
-    }
-
-    return { data: resultData, next_cursor: nextCursor, has_more: hasMore };
+    return paginateResult((data ?? []) as RefundAttemptRecord[], limit, 'created_at');
   }
 
   async getRefundByIdempotencyKey(
