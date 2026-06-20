@@ -39,7 +39,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                 },
                 {
-                  "i128": "744692601"
+                  "i128": "40728531"
                 }
               ]
             }
@@ -61,16 +61,16 @@
                   "address": "CD3FXVGYSLQFFTW3UH6WFF2OKZH7VERGZJZAMJHTGHBWO4F6URWEJL23"
                 },
                 {
-                  "i128": "744692601"
+                  "i128": "40728531"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                 },
                 {
-                  "bytes": "e421c4c5801b284a9ea629ef8db6f3db75f69f4d0393b35a7309cec381034fce"
+                  "bytes": "3a315313927b514dcee05047d38ffdda529ae8ece43096a9f8310c8fc788bd06"
                 },
                 {
-                  "u64": "65289"
+                  "u64": "7027"
                 },
                 "void"
               ]
@@ -90,7 +90,7 @@
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
                     },
                     {
-                      "i128": "744692601"
+                      "i128": "40728531"
                     }
                   ]
                 }
@@ -114,16 +114,16 @@
                   "address": "CD3FXVGYSLQFFTW3UH6WFF2OKZH7VERGZJZAMJHTGHBWO4F6URWEJL23"
                 },
                 {
-                  "i128": "744692601"
+                  "i128": "40728531"
                 },
                 {
-                  "bytes": "6ab588037e95c766c7138010afc25fcaeb952fde2730f26e8f15451e87029789"
+                  "bytes": "faab0b46a61f4bcdc58921821f1faa8e50eae80ce6170f33175522bd9d2bfbdb"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                 },
                 {
-                  "bytes": "e421c4c5801b284a9ea629ef8db6f3db75f69f4d0393b35a7309cec381034fce"
+                  "bytes": "3a315313927b514dcee05047d38ffdda529ae8ece43096a9f8310c8fc788bd06"
                 }
               ]
             }
@@ -136,7 +136,7 @@
   "ledger": {
     "protocol_version": 23,
     "sequence_number": 0,
-    "timestamp": 32644,
+    "timestamp": 3513,
     "network_id": "0000000000000000000000000000000000000000000000000000000000000000",
     "base_reserve": 0,
     "min_persistent_entry_ttl": 4096,
@@ -292,7 +292,7 @@
                   "symbol": "Escrow"
                 },
                 {
-                  "bytes": "6ab588037e95c766c7138010afc25fcaeb952fde2730f26e8f15451e87029789"
+                  "bytes": "faab0b46a61f4bcdc58921821f1faa8e50eae80ce6170f33175522bd9d2bfbdb"
                 }
               ]
             },
@@ -312,7 +312,7 @@
                       "symbol": "Escrow"
                     },
                     {
-                      "bytes": "6ab588037e95c766c7138010afc25fcaeb952fde2730f26e8f15451e87029789"
+                      "bytes": "faab0b46a61f4bcdc58921821f1faa8e50eae80ce6170f33175522bd9d2bfbdb"
                     }
                   ]
                 },
@@ -324,7 +324,7 @@
                         "symbol": "amount_due"
                       },
                       "val": {
-                        "i128": "744692601"
+                        "i128": "40728531"
                       }
                     },
                     {
@@ -332,7 +332,7 @@
                         "symbol": "amount_paid"
                       },
                       "val": {
-                        "i128": "744692601"
+                        "i128": "40728531"
                       }
                     },
                     {
@@ -370,7 +370,7 @@
                         "symbol": "expires_at"
                       },
                       "val": {
-                        "u64": "65289"
+                        "u64": "7027"
                       }
                     },
                     {
@@ -420,7 +420,7 @@
                   "symbol": "EscrowIdMap"
                 },
                 {
-                  "bytes": "7ba1d0e14948e1f102642a33eda9aeaec617d44c7f62a4ceedf7f8e76d43a60f"
+                  "bytes": "2ce627ccdf2418eb16886d6cd8bfb38977f3820167f39c10b36847b6e9a92286"
                 }
               ]
             },
@@ -440,13 +440,13 @@
                       "symbol": "EscrowIdMap"
                     },
                     {
-                      "bytes": "7ba1d0e14948e1f102642a33eda9aeaec617d44c7f62a4ceedf7f8e76d43a60f"
+                      "bytes": "2ce627ccdf2418eb16886d6cd8bfb38977f3820167f39c10b36847b6e9a92286"
                     }
                   ]
                 },
                 "durability": "persistent",
                 "val": {
-                  "bytes": "6ab588037e95c766c7138010afc25fcaeb952fde2730f26e8f15451e87029789"
+                  "bytes": "faab0b46a61f4bcdc58921821f1faa8e50eae80ce6170f33175522bd9d2bfbdb"
                 }
               }
             },
@@ -864,7 +864,7 @@
                         "symbol": "amount"
                       },
                       "val": {
-                        "i128": "744692601"
+                        "i128": "40728531"
                       }
                     },
                     {
@@ -1050,7 +1050,7 @@
               }
             ],
             "data": {
-              "i128": "744692601"
+              "i128": "40728531"
             }
           }
         }
@@ -1072,7 +1072,7 @@
                 "symbol": "EscrowWithdrawn"
               },
               {
-                "bytes": "6ab588037e95c766c7138010afc25fcaeb952fde2730f26e8f15451e87029789"
+                "bytes": "faab0b46a61f4bcdc58921821f1faa8e50eae80ce6170f33175522bd9d2bfbdb"
               },
               {
                 "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
@@ -1085,44 +1085,12 @@
                     "symbol": "amount"
                   },
                   "val": {
-                    "i128": "744692601"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "arbiter_fee"
-                  },
-                  "val": {
-                    "i128": "0"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "collector_fee"
-                  },
-                  "val": {
-                    "i128": "0"
+                    "i128": "40728531"
                   }
                 },
                 {
                   "key": {
                     "symbol": "fee"
-                  },
-                  "val": {
-                    "i128": "0"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "net_payout"
-                  },
-                  "val": {
-                    "i128": "744692601"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "platform_fee"
                   },
                   "val": {
                     "i128": "0"
@@ -1141,7 +1109,7 @@
                     "symbol": "timestamp"
                   },
                   "val": {
-                    "u64": "32644"
+                    "u64": "3513"
                   }
                 },
                 {
