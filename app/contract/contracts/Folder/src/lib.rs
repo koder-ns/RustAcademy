@@ -80,6 +80,31 @@ pub use types::FeeRatio;
 /// Disputed --> Spent   : resolve_dispute() [arbiter decides for recipient]
 /// Disputed --> Refunded: resolve_dispute() [arbiter decides for owner]
 /// ```
+///
+/// ## Access Model (Issue #53)
+///
+/// Every public entry point falls into one access class, and every
+/// state-mutating method is gated accordingly. Unauthorized calls fail with a
+/// stable error code rather than silently succeeding.
+///
+/// | Class      | Gate                                             | Methods (examples) |
+/// |------------|--------------------------------------------------|--------------------|
+/// | **Admin**  | `require_admin` (+ `require_initialized`)         | `set_paused`, `pause_features`, `set_fee_config`, `set_admin`, `migrate`, `upgrade`, `start/complete/cancel_upgrade`, `grant/revoke_role`, `rotate_fee_collector` |
+/// | **Owner**  | caller `require_auth()`                            | `deposit*`, `withdraw`, `refund`, `set_privacy`, `enable_privacy`, `stealth_withdraw` |
+/// | **Arbiter**| arbiter `require_auth()` + membership check       | `resolve_dispute`, `vote_for_dispute`, `resolve_dispute_multi_sig` |
+/// | **Public** | none (read-only / pure)                           | `get_*`, `privacy_status`, `privacy_history`, `verify_amount_commitment`, `health_check` |
+///
+/// ### Mode gating
+///
+/// - **Global pause** (`is_paused`) and **per-feature pause** ([`PauseFlag`])
+///   block the corresponding state-mutating operations with
+///   [`OperationPaused`](errors::RustAcademyError::OperationPaused) /
+///   [`ContractPaused`](errors::RustAcademyError::ContractPaused).
+/// - **Emergency mode** blocks deposits and freezes admin/pause configuration
+///   changes once activated (it is irreversible).
+/// - **Upgrade in progress** restricts the upgrade lifecycle methods.
+///
+/// Read-only getters remain callable in every mode by design.
 #[contract]
 pub struct RustAcademyContract;
 
@@ -130,14 +155,31 @@ impl RustAcademyContract {
     /// Records the level in storage and appends it to the account's privacy history.
     /// For boolean on/off privacy, prefer [`set_privacy`]( RustAcademyContract::set_privacy).
     ///
+    /// Access: **owner** — `account` must authorize the call. Gated by the
+    /// [`PauseFlag::SetPrivacy`] feature flag.
+    ///
     /// # Arguments
     /// * `env` - The contract environment
-    /// * `account` - The account to configure
+    /// * `account` - The account to configure (must authorize)
     /// * `privacy_level` - Numeric level (0 = off, higher = more privacy; interpretation is application-specific)
-    pub fn enable_privacy(env: Env, account: Address, privacy_level: u32) -> bool {
+    ///
+    /// # Errors
+    /// * `OperationPaused` - The `SetPrivacy` feature is paused.
+    pub fn enable_privacy(
+        env: Env,
+        account: Address,
+        privacy_level: u32,
+    ) -> Result<bool, RustAcademyError> {
+        // Owner-gated: only the account itself may change its privacy level.
+        // Previously this method had no authorization, letting any caller write
+        // another account's privacy level and history (Issue #53).
+        account.require_auth();
+        if is_feature_paused(&env, PauseFlag::SetPrivacy) {
+            return Err(RustAcademyError::OperationPaused);
+        }
         set_privacy_level(&env, &account, privacy_level);
         add_privacy_history(&env, &account, privacy_level);
-        true
+        Ok(true)
     }
 
     /// Get the current numeric privacy level for an account.
@@ -174,6 +216,9 @@ impl RustAcademyContract {
     /// * `PrivacyAlreadySet` - Privacy state is already at the requested value
     pub fn set_privacy(env: Env, owner: Address, enabled: bool) -> Result<(), RustAcademyError> {
         admin::require_initialized(&env)?;
+        if is_feature_paused(&env, PauseFlag::SetPrivacy) {
+            return Err(RustAcademyError::OperationPaused);
+        }
         privacy::set_privacy(&env, owner, enabled)
     }
 
@@ -279,6 +324,9 @@ impl RustAcademyContract {
         amount: i128,
         salt: Bytes,
     ) -> Result<BytesN<32>, RustAcademyError> {
+        if is_feature_paused(&env, PauseFlag::CreateAmountCommitment) {
+            return Err(RustAcademyError::OperationPaused);
+        }
         commitment::create_amount_commitment(&env, owner, amount, salt)
     }
 

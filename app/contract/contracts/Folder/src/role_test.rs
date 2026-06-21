@@ -177,3 +177,57 @@ fn test_insufficient_role_error() {
         _ => panic!("Expected InsufficientRole error"),
     }
 }
+
+// ============================================================================
+// Issue #53 — function visibility / feature gating
+// ============================================================================
+
+/// `enable_privacy` is rejected while the `SetPrivacy` feature is paused.
+#[test]
+fn test_enable_privacy_blocked_when_set_privacy_feature_paused() {
+    let ctx = TestContext::with_admin();
+    ctx.client
+        .pause_features(&ctx.admin, &(storage::PauseFlag::SetPrivacy as u64));
+
+    let res = ctx.client.try_enable_privacy(&ctx.alice, &1);
+    assert!(res.is_err());
+}
+
+/// `set_privacy` is rejected while the same `SetPrivacy` feature is paused.
+#[test]
+fn test_set_privacy_blocked_when_set_privacy_feature_paused() {
+    let ctx = TestContext::with_admin();
+    ctx.client
+        .pause_features(&ctx.admin, &(storage::PauseFlag::SetPrivacy as u64));
+
+    let res = ctx.client.try_set_privacy(&ctx.alice, &true);
+    assert!(res.is_err());
+}
+
+/// `create_amount_commitment` is rejected while its feature flag is paused.
+#[test]
+fn test_create_amount_commitment_blocked_when_feature_paused() {
+    let ctx = TestContext::with_admin();
+    ctx.client.pause_features(
+        &ctx.admin,
+        &(storage::PauseFlag::CreateAmountCommitment as u64),
+    );
+
+    let salt = ctx.salt(b"gate");
+    let res = ctx
+        .client
+        .try_create_amount_commitment(&ctx.alice, &1_000i128, &salt);
+    assert!(res.is_err());
+}
+
+/// Sanity: the gated calls still succeed when their features are not paused.
+#[test]
+fn test_gated_privacy_and_commitment_work_when_unpaused() {
+    let ctx = TestContext::with_admin();
+    assert!(ctx.client.enable_privacy(&ctx.alice, &2));
+
+    let salt = ctx.salt(b"ok");
+    let _ = ctx
+        .client
+        .create_amount_commitment(&ctx.alice, &1_000i128, &salt);
+}
