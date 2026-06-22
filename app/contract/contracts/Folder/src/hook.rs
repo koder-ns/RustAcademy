@@ -1,4 +1,4 @@
-use crate::{errors:: RustAcademyError, storage, types::HookEventKind};
+use crate::{errors:: RustAcademyError, events, storage, types::HookEventKind};
 use soroban_sdk::{Address, BytesN, Env, IntoVal, Symbol, Vec};
 
 pub fn register_hook(env: &Env, hook_contract: Address) -> Result<(),  RustAcademyError> {
@@ -6,8 +6,9 @@ pub fn register_hook(env: &Env, hook_contract: Address) -> Result<(),  RustAcade
     if hooks.contains(hook_contract.clone()) {
         return Err( RustAcademyError::HookAlreadyRegistered);
     }
-    hooks.push_back(hook_contract);
+    hooks.push_back(hook_contract.clone());
     storage::set_registered_hooks(env, &hooks);
+    events::publish_hook_registered(env, hook_contract);
     Ok(())
 }
 
@@ -26,6 +27,7 @@ pub fn unregister_hook(env: &Env, hook_contract: Address) -> Result<(),  RustAca
         return Err( RustAcademyError::HookNotRegistered);
     }
     storage::set_registered_hooks(env, &updated);
+    events::publish_hook_unregistered(env, hook_contract);
     Ok(())
 }
 

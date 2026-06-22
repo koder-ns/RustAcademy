@@ -336,6 +336,7 @@ pub fn set_upgrade_window(
 ) -> Result<(), RustAcademyError> {
     require_admin(env, caller)?;
     storage::set_upgrade_window(env, start, end);
+    crate::events::publish_upgrade_window_set(env, caller.clone(), start, end);
     Ok(())
 }
 
@@ -607,6 +608,7 @@ pub fn set_pause_flags(
     require_any_role(env, caller, &[Role::Admin, Role::Operator])?;
 
     storage::set_pause_flags(env, caller, flags_to_enable, flags_to_disable);
+    crate::events::publish_pause_flags_changed(env, caller.clone(), flags_to_enable, flags_to_disable);
     Ok(())
 }
 

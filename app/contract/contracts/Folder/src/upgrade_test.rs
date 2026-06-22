@@ -34,7 +34,7 @@ use crate::{
 use soroban_sdk::{
     contract, contractimpl,
     testutils::{Address as _, Events, Ledger},
-    token, Address, Bytes, BytesN, Env, Symbol,
+    token, Address, Bytes, BytesN, Env, Symbol, TryIntoVal,
 };
 
 // ============================================================================
@@ -783,24 +783,53 @@ fn upgrade_safety_gate_emits_events() {
     // Set a valid window.
     client.set_upgrade_window(&gs.admin, &1u64, &0u64);
 
-    // Capture event count before upgrade ceremony.
-    let events_before = env.events().all().len();
-
-    // Start upgrade → should emit UpgradeStarted event.
+    // Start upgrade → must emit UpgradeStarted event (AC3).
     client.start_upgrade(&gs.admin, &CURRENT_CONTRACT_VERSION, &dummy_hash);
+    {
+        let events = env.events().all();
+        let found = (0..events.len()).any(|i| {
+            let (addr, topics, _) = events.get(i).unwrap();
+            if addr != gs.contract_id {
+                return false;
+            }
+            if topics.len() < 2 {
+                return false;
+            }
+            let t1: Symbol = match topics.get(1).unwrap().try_into_val(&env) {
+                Ok(v) => v,
+                Err(_) => return false,
+            };
+            t1 == Symbol::new(&env, "UpgradeStarted")
+        });
+        assert!(found, "start_upgrade must emit UpgradeStarted event (AC3)");
+    }
 
     // Perform actual upgrade()
     client.upgrade(&gs.admin, &dummy_hash);
 
-    // Complete upgrade → internally calls migrate and emits UpgradeCompleted event.
+    // Complete upgrade → internally calls migrate and emits UpgradeCompleted event (AC3).
     client.complete_upgrade(&gs.admin, &CURRENT_CONTRACT_VERSION);
-
-    // Verify at least UpgradeStarted + UpgradeCompleted were emitted (AC3).
-    let events_after = env.events().all().len();
-    assert!(
-        events_after > events_before,
-        "upgrade ceremony must emit events (AC3: indexers can track upgrades from events alone)"
-    );
+    {
+        let events = env.events().all();
+        let found = (0..events.len()).any(|i| {
+            let (addr, topics, _) = events.get(i).unwrap();
+            if addr != gs.contract_id {
+                return false;
+            }
+            if topics.len() < 2 {
+                return false;
+            }
+            let t1: Symbol = match topics.get(1).unwrap().try_into_val(&env) {
+                Ok(v) => v,
+                Err(_) => return false,
+            };
+            t1 == Symbol::new(&env, "UpgradeCompleted")
+        });
+        assert!(
+            found,
+            "complete_upgrade must emit UpgradeCompleted event (AC3: indexers can track upgrades from events alone)"
+        );
+    }
 }
 
 #[test]

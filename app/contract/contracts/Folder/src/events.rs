@@ -295,6 +295,57 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
         payload_keys: &["amount", "ledger_sequence", "schema_version", "timestamp", "token"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
+    EventSchema {
+        name: "UpgradeStarted",
+        topics: &[EVENT_TOPIC_ADMIN, "UpgradeStarted", "admin"],
+        payload_keys: &[
+            "ledger_sequence",
+            "new_version",
+            "new_wasm_hash",
+            "old_version",
+            "schema_version",
+            "timestamp",
+            "window_end",
+            "window_start",
+        ],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "UpgradeCompleted",
+        topics: &[EVENT_TOPIC_ADMIN, "UpgradeCompleted", "admin"],
+        payload_keys: &[
+            "ledger_sequence",
+            "new_version",
+            "old_version",
+            "schema_version",
+            "timestamp",
+        ],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "HookRegistered",
+        topics: &[EVENT_TOPIC_ADMIN, "HookRegistered", "hook_contract"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "HookUnregistered",
+        topics: &[EVENT_TOPIC_ADMIN, "HookUnregistered", "hook_contract"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "UpgradeWindowSet",
+        topics: &[EVENT_TOPIC_ADMIN, "UpgradeWindowSet", "admin"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp", "window_end", "window_start"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "PauseFlagsChanged",
+        topics: &[EVENT_TOPIC_ADMIN, "PauseFlagsChanged", "admin"],
+        payload_keys: &["flags_disabled", "flags_enabled", "ledger_sequence", "schema_version", "timestamp"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
 ];
 
 #[allow(dead_code)]
@@ -1270,6 +1321,108 @@ pub(crate) fn publish_per_asset_fee_set(
         collector_fee_denominator: collector_fee.denominator,
         schema_version: EVENT_SCHEMA_VERSION,
         ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "HookRegistered"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HookRegisteredEvent {
+    #[topic]
+    pub hook_contract: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_hook_registered(env: &Env, hook_contract: Address) {
+    HookRegisteredEvent {
+        hook_contract,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "HookUnregistered"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HookUnregisteredEvent {
+    #[topic]
+    pub hook_contract: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_hook_unregistered(env: &Env, hook_contract: Address) {
+    HookUnregisteredEvent {
+        hook_contract,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "UpgradeWindowSet"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UpgradeWindowSetEvent {
+    #[topic]
+    pub admin: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub window_start: u64,
+    pub window_end: u64,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_upgrade_window_set(
+    env: &Env,
+    admin: Address,
+    window_start: u64,
+    window_end: u64,
+) {
+    UpgradeWindowSetEvent {
+        admin,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        window_start,
+        window_end,
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "PauseFlagsChanged"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PauseFlagsChangedEvent {
+    #[topic]
+    pub admin: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub flags_enabled: u64,
+    pub flags_disabled: u64,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_pause_flags_changed(
+    env: &Env,
+    admin: Address,
+    flags_enabled: u64,
+    flags_disabled: u64,
+) {
+    PauseFlagsChangedEvent {
+        admin,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        flags_enabled,
+        flags_disabled,
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
