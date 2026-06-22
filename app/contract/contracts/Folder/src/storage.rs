@@ -54,6 +54,7 @@ pub enum RecordType {
     StealthEscrow,
     EscrowIdMap,
     DisputeExpiry,
+    Privacy,
 }
 
 /// TTL policy configuration.
@@ -85,6 +86,10 @@ fn get_ttl_policy(record_type: RecordType) -> TtlPolicy {
             ttl: SIX_MONTHS_IN_LEDGERS,
         },
         RecordType::DisputeExpiry => TtlPolicy {
+            threshold: LEDGER_THRESHOLD,
+            ttl: SIX_MONTHS_IN_LEDGERS,
+        },
+        RecordType::Privacy => TtlPolicy {
             threshold: LEDGER_THRESHOLD,
             ttl: SIX_MONTHS_IN_LEDGERS,
         },
@@ -579,18 +584,24 @@ pub fn is_paused(env: &Env) -> bool {
 pub fn set_privacy_level(env: &Env, account: &Address, level: u32) {
     let key = DataKey::PrivacyLevel(account.clone());
     env.storage().persistent().set(&key, &level);
+    set_or_extend_ttl(env, &key, RecordType::Privacy);
 }
 
 /// Get privacy level for an account.
 pub fn get_privacy_level(env: &Env, account: &Address) -> Option<u32> {
     let key = DataKey::PrivacyLevel(account.clone());
-    env.storage().persistent().get(&key)
+    let result = env.storage().persistent().get(&key);
+    if result.is_some() {
+        set_or_extend_ttl(env, &key, RecordType::Privacy);
+    }
+    result
 }
 
 /// Add to privacy history for an account.
 ///
-/// **Contract**: Pushes `level` to the front of the history (newest first).
-/// History is unbounded; consider capping in future if needed.
+/// **Contract**: Pushes `level` to the front of the history (newest-first).
+/// History is capped at [`MAX_PRIVACY_HISTORY`] entries; the oldest entries
+/// are evicted when the cap is exceeded so per-account storage stays bounded.
 pub fn add_privacy_history(env: &Env, account: &Address, level: u32) {
     let key = DataKey::PrivacyHistory(account.clone());
     let mut history: Vec<u32> = env
@@ -600,11 +611,12 @@ pub fn add_privacy_history(env: &Env, account: &Address, level: u32) {
         .unwrap_or(Vec::new(env));
     history.push_front(level);
     // Bounded retention: evict the oldest entries beyond the cap so this
-    // per-account index cannot accumulate unbounded storage (Issue #51).
+    // per-account index cannot accumulate unbounded storage (Issue #15).
     while history.len() > MAX_PRIVACY_HISTORY {
         history.pop_back();
     }
     env.storage().persistent().set(&key, &history);
+    set_or_extend_ttl(env, &key, RecordType::Privacy);
 }
 
 /// Get privacy history for an account.
@@ -612,10 +624,11 @@ pub fn add_privacy_history(env: &Env, account: &Address, level: u32) {
 /// **Contract**: Returns empty vec if never set. Order is newest-first.
 pub fn get_privacy_history(env: &Env, account: &Address) -> Vec<u32> {
     let key = DataKey::PrivacyHistory(account.clone());
-    env.storage()
-        .persistent()
-        .get(&key)
-        .unwrap_or(Vec::new(env))
+    let result = env.storage().persistent().get(&key);
+    if result.is_some() {
+        set_or_extend_ttl(env, &key, RecordType::Privacy);
+    }
+    result.unwrap_or(Vec::new(env))
 }
 
 // -----------------------------------------------------------------------------
