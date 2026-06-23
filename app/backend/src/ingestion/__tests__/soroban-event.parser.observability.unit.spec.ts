@@ -6,7 +6,6 @@ import { xdr, nativeToScVal } from "@stellar/stellar-sdk";
 import {
   SorobanEventParser,
   RawHorizonContractEvent,
-  ParserObservabilityCallbacks,
 } from "../soroban-event.parser";
 import {
   RustAcademy_EVENT_TOPICS,
