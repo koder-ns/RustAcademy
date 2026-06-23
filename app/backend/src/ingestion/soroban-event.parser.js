@@ -83,18 +83,62 @@ var SorobanEventParser = /** @class */ (function () {
                     return this.parseEscrowWithdrawn(topics, dataVal, base, layout.indexedOffset);
                 case "EscrowRefunded":
                     return this.parseEscrowRefunded(topics, dataVal, base, layout.indexedOffset);
+                case "EscrowDisputed":
+                    return this.parseEscrowDisputed(topics, dataVal, base, layout.indexedOffset);
+                case "EscrowFinalized":
+                    return this.parseEscrowFinalized(topics, dataVal, base, layout.indexedOffset);
+                case "PartialPayment":
+                    return this.parsePartialPayment(topics, dataVal, base, layout.indexedOffset);
+                case "ArbiterVoteCast":
+                    return this.parseArbiterVoteCast(topics, dataVal, base, layout.indexedOffset);
+                case "DisputeResolved":
+                    return this.parseDisputeResolved(topics, dataVal, base, layout.indexedOffset);
+                case "DisputeTimeoutSet":
+                    return this.parseDisputeTimeoutSet(topics, dataVal, base, layout.indexedOffset);
+                case "DisputeAutoResolved":
+                    return this.parseDisputeAutoResolved(topics, dataVal, base, layout.indexedOffset);
                 case "PrivacyToggled":
                     return this.parsePrivacyToggled(topics, dataVal, base, layout.indexedOffset);
-                case "ContractPaused":
-                    return this.parseContractPaused(topics, dataVal, base, layout.indexedOffset);
-                case "AdminChanged":
-                    return this.parseAdminChanged(topics, dataVal, base, layout.indexedOffset);
-                case "ContractUpgraded":
-                    return this.parseContractUpgraded(topics, dataVal, base, layout.indexedOffset);
                 case "EphemeralKeyRegistered":
                     return this.parseEphemeralKeyRegistered(topics, dataVal, base, layout.indexedOffset);
                 case "StealthWithdrawn":
                     return this.parseStealthWithdrawn(topics, dataVal, base, layout.indexedOffset);
+                case "AdminChanged":
+                    return this.parseAdminChanged(topics, dataVal, base, layout.indexedOffset);
+                case "ContractInitialized":
+                    return this.parseContractInitialized(topics, dataVal, base, layout.indexedOffset);
+                case "ContractMigrated":
+                    return this.parseContractMigrated(topics, dataVal, base, layout.indexedOffset);
+                case "ContractPaused":
+                    return this.parseContractPaused(topics, dataVal, base, layout.indexedOffset);
+                case "ContractUpgraded":
+                    return this.parseContractUpgraded(topics, dataVal, base, layout.indexedOffset);
+                case "DisputeExpiryActionSet":
+                    return this.parseDisputeExpiryActionSet(topics, dataVal, base, layout.indexedOffset);
+                case "DisputeTimeoutConfigSet":
+                    return this.parseDisputeTimeoutConfigSet(topics, dataVal, base, layout.indexedOffset);
+                case "EmergencyModeActivated":
+                    return this.parseEmergencyModeActivated(topics, dataVal, base, layout.indexedOffset);
+                case "FeeCollectorRotated":
+                    return this.parseFeeCollectorRotated(topics, dataVal, base, layout.indexedOffset);
+                case "FeeConfigChanged":
+                    return this.parseFeeConfigChanged(topics, dataVal, base, layout.indexedOffset);
+                case "HookRegistered":
+                    return this.parseHookRegistered(topics, dataVal, base, layout.indexedOffset);
+                case "HookUnregistered":
+                    return this.parseHookUnregistered(topics, dataVal, base, layout.indexedOffset);
+                case "PauseFlagsChanged":
+                    return this.parsePauseFlagsChanged(topics, dataVal, base, layout.indexedOffset);
+                case "PerAssetFeeSet":
+                    return this.parsePerAssetFeeSet(topics, dataVal, base, layout.indexedOffset);
+                case "PlatformWalletChanged":
+                    return this.parsePlatformWalletChanged(topics, dataVal, base, layout.indexedOffset);
+                case "UpgradeCompleted":
+                    return this.parseUpgradeCompleted(topics, dataVal, base, layout.indexedOffset);
+                case "UpgradeStarted":
+                    return this.parseUpgradeStarted(topics, dataVal, base, layout.indexedOffset);
+                case "UpgradeWindowSet":
+                    return this.parseUpgradeWindowSet(topics, dataVal, base, layout.indexedOffset);
                 default:
                     this.logger.debug("Unrecognised event name: ".concat(layout.eventName));
                     return null;
@@ -127,6 +171,51 @@ var SorobanEventParser = /** @class */ (function () {
         var map = this.dataToMap(data);
         return __assign(__assign({ eventType: "EscrowRefunded" }, base), { commitment: commitment, owner: owner, token: this.decodeAddress(map["token"]), amount: BigInt((0, stellar_sdk_1.scValToNative)(map["amount"])) });
     };
+    SorobanEventParser.prototype.parseEscrowDisputed = function (topics, data, base, indexedOffset) {
+        var commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+        var arbiter = this.decodeAddress(topics[indexedOffset + 1]);
+        return __assign(__assign({ eventType: "EscrowDisputed" }, base), { commitment: commitment, arbiter: arbiter });
+    };
+    SorobanEventParser.prototype.parseEscrowFinalized = function (topics, data, base, indexedOffset) {
+        var commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+        var owner = this.decodeAddress(topics[indexedOffset + 1]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "EscrowFinalized" }, base), { commitment: commitment, owner: owner, token: this.decodeAddress(map["token"]), totalAmount: BigInt((0, stellar_sdk_1.scValToNative)(map["total_amount"])) });
+    };
+    SorobanEventParser.prototype.parsePartialPayment = function (topics, data, base, indexedOffset) {
+        var commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+        var payer = this.decodeAddress(topics[indexedOffset + 1]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "PartialPayment" }, base), { commitment: commitment, payer: payer, token: this.decodeAddress(map["token"]), paymentAmount: BigInt((0, stellar_sdk_1.scValToNative)(map["payment_amount"])), amountPaid: BigInt((0, stellar_sdk_1.scValToNative)(map["amount_paid"])), amountDue: BigInt((0, stellar_sdk_1.scValToNative)(map["amount_due"])) });
+    };
+    // ---------------------------------------------------------------------------
+    // Dispute event parsers
+    // ---------------------------------------------------------------------------
+    SorobanEventParser.prototype.parseArbiterVoteCast = function (topics, data, base, indexedOffset) {
+        var commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+        var arbiter = this.decodeAddress(topics[indexedOffset + 1]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "ArbiterVoteCast" }, base), { commitment: commitment, arbiter: arbiter, resolveForOwner: Boolean((0, stellar_sdk_1.scValToNative)(map["resolve_for_owner"])), voteCount: Number((0, stellar_sdk_1.scValToNative)(map["vote_count"])), threshold: Number((0, stellar_sdk_1.scValToNative)(map["threshold"])) });
+    };
+    SorobanEventParser.prototype.parseDisputeResolved = function (topics, data, base, indexedOffset) {
+        var commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+        var resolvedForOwner = Boolean((0, stellar_sdk_1.scValToNative)(topics[indexedOffset + 1]));
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "DisputeResolved" }, base), { commitment: commitment, resolvedForOwner: resolvedForOwner, totalVotes: Number((0, stellar_sdk_1.scValToNative)(map["total_votes"])), threshold: Number((0, stellar_sdk_1.scValToNative)(map["threshold"])), amount: BigInt((0, stellar_sdk_1.scValToNative)(map["amount"])) });
+    };
+    SorobanEventParser.prototype.parseDisputeTimeoutSet = function (topics, data, base, indexedOffset) {
+        var _a;
+        var commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "DisputeTimeoutSet" }, base), { commitment: commitment, action: (_a = this.decodeSymbol(map["action"])) !== null && _a !== void 0 ? _a : "", expiresAt: BigInt((0, stellar_sdk_1.scValToNative)(map["expires_at"])) });
+    };
+    SorobanEventParser.prototype.parseDisputeAutoResolved = function (topics, data, base, indexedOffset) {
+        var _a;
+        var commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+        var action = (_a = this.decodeSymbol(topics[indexedOffset + 1])) !== null && _a !== void 0 ? _a : "";
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "DisputeAutoResolved" }, base), { commitment: commitment, action: action, recipient: this.decodeAddress(map["recipient"]), amount: BigInt((0, stellar_sdk_1.scValToNative)(map["amount"])) });
+    };
     // ---------------------------------------------------------------------------
     // Admin / Privacy event parsers
     // ---------------------------------------------------------------------------
@@ -149,6 +238,75 @@ var SorobanEventParser = /** @class */ (function () {
         var newWasmHash = this.decodeBytes32Hex(topics[indexedOffset]);
         var admin = this.decodeAddress(topics[indexedOffset + 1]);
         return __assign(__assign({ eventType: "ContractUpgraded" }, base), { newWasmHash: newWasmHash, admin: admin });
+    };
+    SorobanEventParser.prototype.parseContractInitialized = function (topics, data, base, indexedOffset) {
+        var admin = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "ContractInitialized" }, base), { admin: admin, contractVersion: Number((0, stellar_sdk_1.scValToNative)(map["contract_version"])), eventSchemaVersion: Number((0, stellar_sdk_1.scValToNative)(map["event_schema_version"])), paused: Boolean((0, stellar_sdk_1.scValToNative)(map["paused"])) });
+    };
+    SorobanEventParser.prototype.parseContractMigrated = function (topics, data, base, indexedOffset) {
+        var admin = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "ContractMigrated" }, base), { admin: admin, fromVersion: Number((0, stellar_sdk_1.scValToNative)(map["from_version"])), toVersion: Number((0, stellar_sdk_1.scValToNative)(map["to_version"])) });
+    };
+    SorobanEventParser.prototype.parseDisputeExpiryActionSet = function (topics, data, base, _indexedOffset) {
+        var _a;
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "DisputeExpiryActionSet" }, base), { action: (_a = this.decodeSymbol(map["action"])) !== null && _a !== void 0 ? _a : "" });
+    };
+    SorobanEventParser.prototype.parseDisputeTimeoutConfigSet = function (topics, data, base, _indexedOffset) {
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "DisputeTimeoutConfigSet" }, base), { timeoutSecs: BigInt((0, stellar_sdk_1.scValToNative)(map["timeout_secs"])) });
+    };
+    SorobanEventParser.prototype.parseEmergencyModeActivated = function (topics, data, base, indexedOffset) {
+        var admin = this.decodeAddress(topics[indexedOffset]);
+        return __assign(__assign({ eventType: "EmergencyModeActivated" }, base), { admin: admin });
+    };
+    SorobanEventParser.prototype.parseFeeCollectorRotated = function (topics, data, base, indexedOffset) {
+        var newCollector = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "FeeCollectorRotated" }, base), { newCollector: newCollector, rotationIndex: Number((0, stellar_sdk_1.scValToNative)(map["rotation_index"])) });
+    };
+    SorobanEventParser.prototype.parseFeeConfigChanged = function (topics, data, base, _indexedOffset) {
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "FeeConfigChanged" }, base), { feeBps: Number((0, stellar_sdk_1.scValToNative)(map["fee_bps"])) });
+    };
+    SorobanEventParser.prototype.parseHookRegistered = function (topics, data, base, indexedOffset) {
+        var hookContract = this.decodeAddress(topics[indexedOffset]);
+        return __assign(__assign({ eventType: "HookRegistered" }, base), { hookContract: hookContract });
+    };
+    SorobanEventParser.prototype.parseHookUnregistered = function (topics, data, base, indexedOffset) {
+        var hookContract = this.decodeAddress(topics[indexedOffset]);
+        return __assign(__assign({ eventType: "HookUnregistered" }, base), { hookContract: hookContract });
+    };
+    SorobanEventParser.prototype.parsePauseFlagsChanged = function (topics, data, base, indexedOffset) {
+        var admin = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "PauseFlagsChanged" }, base), { admin: admin, flagsEnabled: BigInt((0, stellar_sdk_1.scValToNative)(map["flags_enabled"])), flagsDisabled: BigInt((0, stellar_sdk_1.scValToNative)(map["flags_disabled"])) });
+    };
+    SorobanEventParser.prototype.parsePerAssetFeeSet = function (topics, data, base, indexedOffset) {
+        var token = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "PerAssetFeeSet" }, base), { token: token, feeBps: Number((0, stellar_sdk_1.scValToNative)(map["fee_bps"])), arbiterBps: Number((0, stellar_sdk_1.scValToNative)(map["arbiter_bps"])) });
+    };
+    SorobanEventParser.prototype.parsePlatformWalletChanged = function (topics, data, base, indexedOffset) {
+        var wallet = this.decodeAddress(topics[indexedOffset]);
+        return __assign(__assign({ eventType: "PlatformWalletChanged" }, base), { wallet: wallet });
+    };
+    SorobanEventParser.prototype.parseUpgradeCompleted = function (topics, data, base, indexedOffset) {
+        var admin = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "UpgradeCompleted" }, base), { admin: admin, oldVersion: Number((0, stellar_sdk_1.scValToNative)(map["old_version"])), newVersion: Number((0, stellar_sdk_1.scValToNative)(map["new_version"])) });
+    };
+    SorobanEventParser.prototype.parseUpgradeStarted = function (topics, data, base, indexedOffset) {
+        var admin = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "UpgradeStarted" }, base), { admin: admin, oldVersion: Number((0, stellar_sdk_1.scValToNative)(map["old_version"])), newVersion: Number((0, stellar_sdk_1.scValToNative)(map["new_version"])), newWasmHash: this.decodeBytes32HexFromMap(map["new_wasm_hash"]), windowStart: BigInt((0, stellar_sdk_1.scValToNative)(map["window_start"])), windowEnd: BigInt((0, stellar_sdk_1.scValToNative)(map["window_end"])) });
+    };
+    SorobanEventParser.prototype.parseUpgradeWindowSet = function (topics, data, base, indexedOffset) {
+        var admin = this.decodeAddress(topics[indexedOffset]);
+        var map = this.dataToMap(data);
+        return __assign(__assign({ eventType: "UpgradeWindowSet" }, base), { admin: admin, windowStart: BigInt((0, stellar_sdk_1.scValToNative)(map["window_start"])), windowEnd: BigInt((0, stellar_sdk_1.scValToNative)(map["window_end"])) });
     };
     // ---------------------------------------------------------------------------
     // Stealth address event parsers (Privacy v2 – Issue #157)
@@ -216,6 +374,10 @@ var SorobanEventParser = /** @class */ (function () {
         return stellar_sdk_1.Address.fromScVal(val).toString();
     };
     SorobanEventParser.prototype.decodeBytes32Hex = function (val) {
+        var bytes = (0, stellar_sdk_1.scValToNative)(val);
+        return bytes.toString("hex");
+    };
+    SorobanEventParser.prototype.decodeBytes32HexFromMap = function (val) {
         var bytes = (0, stellar_sdk_1.scValToNative)(val);
         return bytes.toString("hex");
     };

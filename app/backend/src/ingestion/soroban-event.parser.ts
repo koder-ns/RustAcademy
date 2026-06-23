@@ -7,10 +7,32 @@ import type {
   EscrowDepositedEvent,
   EscrowWithdrawnEvent,
   EscrowRefundedEvent,
+  EscrowDisputedEvent,
+  EscrowFinalizedEvent,
+  PartialPaymentEvent,
+  ArbiterVoteCastEvent,
+  DisputeResolvedEvent,
+  DisputeTimeoutSetEvent,
+  DisputeAutoResolvedEvent,
   PrivacyToggledEvent,
   ContractPausedEvent,
   AdminChangedEvent,
   ContractUpgradedEvent,
+  ContractInitializedEvent,
+  ContractMigratedEvent,
+  DisputeExpiryActionSetEvent,
+  DisputeTimeoutConfigSetEvent,
+  EmergencyModeActivatedEvent,
+  FeeCollectorRotatedEvent,
+  FeeConfigChangedEvent,
+  HookRegisteredEvent,
+  HookUnregisteredEvent,
+  PauseFlagsChangedEvent,
+  PerAssetFeeSetEvent,
+  PlatformWalletChangedEvent,
+  UpgradeCompletedEvent,
+  UpgradeStartedEvent,
+  UpgradeWindowSetEvent,
   EphemeralKeyRegisteredEvent,
   StealthWithdrawnEvent,
 } from "./types/contract-event.types";
@@ -130,68 +152,67 @@ export class SorobanEventParser {
 
       switch (layout.eventName) {
         case "EscrowDeposited":
-          return this.parseEscrowDeposited(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
+          return this.parseEscrowDeposited(topics, dataVal, base, layout.indexedOffset);
         case "EscrowWithdrawn":
-          return this.parseEscrowWithdrawn(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
+          return this.parseEscrowWithdrawn(topics, dataVal, base, layout.indexedOffset);
         case "EscrowRefunded":
-          return this.parseEscrowRefunded(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
+          return this.parseEscrowRefunded(topics, dataVal, base, layout.indexedOffset);
+        case "EscrowDisputed":
+          return this.parseEscrowDisputed(topics, dataVal, base, layout.indexedOffset);
+        case "EscrowFinalized":
+          return this.parseEscrowFinalized(topics, dataVal, base, layout.indexedOffset);
+        case "PartialPayment":
+          return this.parsePartialPayment(topics, dataVal, base, layout.indexedOffset);
+        case "ArbiterVoteCast":
+          return this.parseArbiterVoteCast(topics, dataVal, base, layout.indexedOffset);
+        case "DisputeResolved":
+          return this.parseDisputeResolved(topics, dataVal, base, layout.indexedOffset);
+        case "DisputeTimeoutSet":
+          return this.parseDisputeTimeoutSet(topics, dataVal, base, layout.indexedOffset);
+        case "DisputeAutoResolved":
+          return this.parseDisputeAutoResolved(topics, dataVal, base, layout.indexedOffset);
         case "PrivacyToggled":
-          return this.parsePrivacyToggled(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
-        case "ContractPaused":
-          return this.parseContractPaused(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
-        case "AdminChanged":
-          return this.parseAdminChanged(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
-        case "ContractUpgraded":
-          return this.parseContractUpgraded(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
+          return this.parsePrivacyToggled(topics, dataVal, base, layout.indexedOffset);
         case "EphemeralKeyRegistered":
-          return this.parseEphemeralKeyRegistered(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
+          return this.parseEphemeralKeyRegistered(topics, dataVal, base, layout.indexedOffset);
         case "StealthWithdrawn":
-          return this.parseStealthWithdrawn(
-            topics,
-            dataVal,
-            base,
-            layout.indexedOffset,
-          );
+          return this.parseStealthWithdrawn(topics, dataVal, base, layout.indexedOffset);
+        case "AdminChanged":
+          return this.parseAdminChanged(topics, dataVal, base, layout.indexedOffset);
+        case "ContractInitialized":
+          return this.parseContractInitialized(topics, dataVal, base, layout.indexedOffset);
+        case "ContractMigrated":
+          return this.parseContractMigrated(topics, dataVal, base, layout.indexedOffset);
+        case "ContractPaused":
+          return this.parseContractPaused(topics, dataVal, base, layout.indexedOffset);
+        case "ContractUpgraded":
+          return this.parseContractUpgraded(topics, dataVal, base, layout.indexedOffset);
+        case "DisputeExpiryActionSet":
+          return this.parseDisputeExpiryActionSet(topics, dataVal, base, layout.indexedOffset);
+        case "DisputeTimeoutConfigSet":
+          return this.parseDisputeTimeoutConfigSet(topics, dataVal, base, layout.indexedOffset);
+        case "EmergencyModeActivated":
+          return this.parseEmergencyModeActivated(topics, dataVal, base, layout.indexedOffset);
+        case "FeeCollectorRotated":
+          return this.parseFeeCollectorRotated(topics, dataVal, base, layout.indexedOffset);
+        case "FeeConfigChanged":
+          return this.parseFeeConfigChanged(topics, dataVal, base, layout.indexedOffset);
+        case "HookRegistered":
+          return this.parseHookRegistered(topics, dataVal, base, layout.indexedOffset);
+        case "HookUnregistered":
+          return this.parseHookUnregistered(topics, dataVal, base, layout.indexedOffset);
+        case "PauseFlagsChanged":
+          return this.parsePauseFlagsChanged(topics, dataVal, base, layout.indexedOffset);
+        case "PerAssetFeeSet":
+          return this.parsePerAssetFeeSet(topics, dataVal, base, layout.indexedOffset);
+        case "PlatformWalletChanged":
+          return this.parsePlatformWalletChanged(topics, dataVal, base, layout.indexedOffset);
+        case "UpgradeCompleted":
+          return this.parseUpgradeCompleted(topics, dataVal, base, layout.indexedOffset);
+        case "UpgradeStarted":
+          return this.parseUpgradeStarted(topics, dataVal, base, layout.indexedOffset);
+        case "UpgradeWindowSet":
+          return this.parseUpgradeWindowSet(topics, dataVal, base, layout.indexedOffset);
         default:
           this.logger.debug(`Unrecognised event name: ${layout.eventName}`);
           return null;
@@ -211,16 +232,7 @@ export class SorobanEventParser {
   private parseEscrowDeposited(
     topics: xdr.ScVal[],
     data: xdr.ScVal,
-    base: Omit<
-      EscrowDepositedEvent,
-      | "eventType"
-      | "commitment"
-      | "owner"
-      | "token"
-      | "amount"
-      | "amountPaid"
-      | "expiresAt"
-    >,
+    base: Omit<EscrowDepositedEvent, "eventType" | "commitment" | "owner" | "token" | "amount" | "amountPaid" | "expiresAt">,
     indexedOffset: number,
   ): EscrowDepositedEvent {
     const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
@@ -242,10 +254,7 @@ export class SorobanEventParser {
   private parseEscrowWithdrawn(
     topics: xdr.ScVal[],
     data: xdr.ScVal,
-    base: Omit<
-      EscrowWithdrawnEvent,
-      "eventType" | "commitment" | "owner" | "token" | "amount"
-    >,
+    base: Omit<EscrowWithdrawnEvent, "eventType" | "commitment" | "owner" | "token" | "amount">,
     indexedOffset: number,
   ): EscrowWithdrawnEvent {
     const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
@@ -265,10 +274,7 @@ export class SorobanEventParser {
   private parseEscrowRefunded(
     topics: xdr.ScVal[],
     data: xdr.ScVal,
-    base: Omit<
-      EscrowRefundedEvent,
-      "eventType" | "commitment" | "owner" | "token" | "amount"
-    >,
+    base: Omit<EscrowRefundedEvent, "eventType" | "commitment" | "owner" | "token" | "amount">,
     indexedOffset: number,
   ): EscrowRefundedEvent {
     const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
@@ -285,8 +291,146 @@ export class SorobanEventParser {
     };
   }
 
+  private parseEscrowDisputed(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<EscrowDisputedEvent, "eventType" | "commitment" | "arbiter">,
+    indexedOffset: number,
+  ): EscrowDisputedEvent {
+    const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+    const arbiter = this.decodeAddress(topics[indexedOffset + 1]);
+
+    return { eventType: "EscrowDisputed", ...base, commitment, arbiter };
+  }
+
+  private parseEscrowFinalized(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<EscrowFinalizedEvent, "eventType" | "commitment" | "owner" | "token" | "totalAmount">,
+    indexedOffset: number,
+  ): EscrowFinalizedEvent {
+    const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+    const owner = this.decodeAddress(topics[indexedOffset + 1]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "EscrowFinalized",
+      ...base,
+      commitment,
+      owner,
+      token: this.decodeAddress(map["token"]),
+      totalAmount: BigInt(scValToNative(map["total_amount"])),
+    };
+  }
+
+  private parsePartialPayment(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<PartialPaymentEvent, "eventType" | "commitment" | "payer" | "token" | "paymentAmount" | "amountPaid" | "amountDue">,
+    indexedOffset: number,
+  ): PartialPaymentEvent {
+    const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+    const payer = this.decodeAddress(topics[indexedOffset + 1]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "PartialPayment",
+      ...base,
+      commitment,
+      payer,
+      token: this.decodeAddress(map["token"]),
+      paymentAmount: BigInt(scValToNative(map["payment_amount"])),
+      amountPaid: BigInt(scValToNative(map["amount_paid"])),
+      amountDue: BigInt(scValToNative(map["amount_due"])),
+    };
+  }
+
   // ---------------------------------------------------------------------------
-  // Admin / Privacy event parsers
+  // Dispute event parsers
+  // ---------------------------------------------------------------------------
+
+  private parseArbiterVoteCast(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<ArbiterVoteCastEvent, "eventType" | "commitment" | "arbiter" | "resolveForOwner" | "voteCount" | "threshold">,
+    indexedOffset: number,
+  ): ArbiterVoteCastEvent {
+    const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+    const arbiter = this.decodeAddress(topics[indexedOffset + 1]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "ArbiterVoteCast",
+      ...base,
+      commitment,
+      arbiter,
+      resolveForOwner: Boolean(scValToNative(map["resolve_for_owner"])),
+      voteCount: Number(scValToNative(map["vote_count"])),
+      threshold: Number(scValToNative(map["threshold"])),
+    };
+  }
+
+  private parseDisputeResolved(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<DisputeResolvedEvent, "eventType" | "commitment" | "resolvedForOwner" | "totalVotes" | "threshold" | "amount">,
+    indexedOffset: number,
+  ): DisputeResolvedEvent {
+    const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+    const resolvedForOwner = Boolean(scValToNative(topics[indexedOffset + 1]));
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "DisputeResolved",
+      ...base,
+      commitment,
+      resolvedForOwner,
+      totalVotes: Number(scValToNative(map["total_votes"])),
+      threshold: Number(scValToNative(map["threshold"])),
+      amount: BigInt(scValToNative(map["amount"])),
+    };
+  }
+
+  private parseDisputeTimeoutSet(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<DisputeTimeoutSetEvent, "eventType" | "commitment" | "action" | "expiresAt">,
+    indexedOffset: number,
+  ): DisputeTimeoutSetEvent {
+    const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "DisputeTimeoutSet",
+      ...base,
+      commitment,
+      action: this.decodeSymbol(map["action"]) ?? "",
+      expiresAt: BigInt(scValToNative(map["expires_at"])),
+    };
+  }
+
+  private parseDisputeAutoResolved(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<DisputeAutoResolvedEvent, "eventType" | "commitment" | "action" | "recipient" | "amount">,
+    indexedOffset: number,
+  ): DisputeAutoResolvedEvent {
+    const commitment = this.decodeBytes32Hex(topics[indexedOffset]);
+    const action = this.decodeSymbol(topics[indexedOffset + 1]) ?? "";
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "DisputeAutoResolved",
+      ...base,
+      commitment,
+      action,
+      recipient: this.decodeAddress(map["recipient"]),
+      amount: BigInt(scValToNative(map["amount"])),
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Privacy event parsers
   // ---------------------------------------------------------------------------
 
   private parsePrivacyToggled(
@@ -306,57 +450,6 @@ export class SorobanEventParser {
     };
   }
 
-  private parseContractPaused(
-    topics: xdr.ScVal[],
-    data: xdr.ScVal,
-    base: Omit<ContractPausedEvent, "eventType" | "admin" | "paused">,
-    indexedOffset: number,
-  ): ContractPausedEvent {
-    const admin = this.decodeAddress(topics[indexedOffset]);
-    const map = this.dataToMap(data);
-
-    return {
-      eventType: "ContractPaused",
-      ...base,
-      admin,
-      paused: Boolean(scValToNative(map["paused"])),
-    };
-  }
-
-  private parseAdminChanged(
-    topics: xdr.ScVal[],
-    data: xdr.ScVal,
-    base: Omit<AdminChangedEvent, "eventType" | "oldAdmin" | "newAdmin">,
-    indexedOffset: number,
-  ): AdminChangedEvent {
-    const oldAdmin = this.decodeAddress(topics[indexedOffset]);
-    const newAdmin = this.decodeAddress(topics[indexedOffset + 1]);
-
-    return {
-      eventType: "AdminChanged",
-      ...base,
-      oldAdmin,
-      newAdmin,
-    };
-  }
-
-  private parseContractUpgraded(
-    topics: xdr.ScVal[],
-    data: xdr.ScVal,
-    base: Omit<ContractUpgradedEvent, "eventType" | "newWasmHash" | "admin">,
-    indexedOffset: number,
-  ): ContractUpgradedEvent {
-    const newWasmHash = this.decodeBytes32Hex(topics[indexedOffset]);
-    const admin = this.decodeAddress(topics[indexedOffset + 1]);
-
-    return {
-      eventType: "ContractUpgraded",
-      ...base,
-      newWasmHash,
-      admin,
-    };
-  }
-
   // ---------------------------------------------------------------------------
   // Stealth address event parsers (Privacy v2 – Issue #157)
   // ---------------------------------------------------------------------------
@@ -364,15 +457,7 @@ export class SorobanEventParser {
   private parseEphemeralKeyRegistered(
     topics: xdr.ScVal[],
     data: xdr.ScVal,
-    base: Omit<
-      EphemeralKeyRegisteredEvent,
-      | "eventType"
-      | "stealthAddress"
-      | "ephPub"
-      | "token"
-      | "amount"
-      | "expiresAt"
-    >,
+    base: Omit<EphemeralKeyRegisteredEvent, "eventType" | "stealthAddress" | "ephPub" | "token" | "amount" | "expiresAt">,
     indexedOffset: number,
   ): EphemeralKeyRegisteredEvent {
     const stealthAddress = this.decodeBytes32Hex(topics[indexedOffset]);
@@ -393,10 +478,7 @@ export class SorobanEventParser {
   private parseStealthWithdrawn(
     topics: xdr.ScVal[],
     data: xdr.ScVal,
-    base: Omit<
-      StealthWithdrawnEvent,
-      "eventType" | "stealthAddress" | "recipient" | "token" | "amount"
-    >,
+    base: Omit<StealthWithdrawnEvent, "eventType" | "stealthAddress" | "recipient" | "token" | "amount">,
     indexedOffset: number,
   ): StealthWithdrawnEvent {
     const stealthAddress = this.decodeBytes32Hex(topics[indexedOffset]);
@@ -410,6 +492,290 @@ export class SorobanEventParser {
       recipient,
       token: this.decodeAddress(map["token"]),
       amount: BigInt(scValToNative(map["amount"])),
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Admin event parsers
+  // ---------------------------------------------------------------------------
+
+  private parseAdminChanged(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<AdminChangedEvent, "eventType" | "oldAdmin" | "newAdmin">,
+    indexedOffset: number,
+  ): AdminChangedEvent {
+    const oldAdmin = this.decodeAddress(topics[indexedOffset]);
+    const newAdmin = this.decodeAddress(topics[indexedOffset + 1]);
+
+    return { eventType: "AdminChanged", ...base, oldAdmin, newAdmin };
+  }
+
+  private parseContractInitialized(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<ContractInitializedEvent, "eventType" | "admin" | "contractVersion" | "eventSchemaVersion" | "paused">,
+    indexedOffset: number,
+  ): ContractInitializedEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "ContractInitialized",
+      ...base,
+      admin,
+      contractVersion: Number(scValToNative(map["contract_version"])),
+      eventSchemaVersion: Number(scValToNative(map["event_schema_version"])),
+      paused: Boolean(scValToNative(map["paused"])),
+    };
+  }
+
+  private parseContractMigrated(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<ContractMigratedEvent, "eventType" | "admin" | "fromVersion" | "toVersion">,
+    indexedOffset: number,
+  ): ContractMigratedEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "ContractMigrated",
+      ...base,
+      admin,
+      fromVersion: Number(scValToNative(map["from_version"])),
+      toVersion: Number(scValToNative(map["to_version"])),
+    };
+  }
+
+  private parseContractPaused(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<ContractPausedEvent, "eventType" | "admin" | "paused">,
+    indexedOffset: number,
+  ): ContractPausedEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "ContractPaused",
+      ...base,
+      admin,
+      paused: Boolean(scValToNative(map["paused"])),
+    };
+  }
+
+  private parseContractUpgraded(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<ContractUpgradedEvent, "eventType" | "newWasmHash" | "admin">,
+    indexedOffset: number,
+  ): ContractUpgradedEvent {
+    const newWasmHash = this.decodeBytes32Hex(topics[indexedOffset]);
+    const admin = this.decodeAddress(topics[indexedOffset + 1]);
+
+    return { eventType: "ContractUpgraded", ...base, newWasmHash, admin };
+  }
+
+  private parseDisputeExpiryActionSet(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<DisputeExpiryActionSetEvent, "eventType" | "action">,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _indexedOffset: number,
+  ): DisputeExpiryActionSetEvent {
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "DisputeExpiryActionSet",
+      ...base,
+      action: this.decodeSymbol(map["action"]) ?? "",
+    };
+  }
+
+  private parseDisputeTimeoutConfigSet(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<DisputeTimeoutConfigSetEvent, "eventType" | "timeoutSecs">,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _indexedOffset: number,
+  ): DisputeTimeoutConfigSetEvent {
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "DisputeTimeoutConfigSet",
+      ...base,
+      timeoutSecs: BigInt(scValToNative(map["timeout_secs"])),
+    };
+  }
+
+  private parseEmergencyModeActivated(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<EmergencyModeActivatedEvent, "eventType" | "admin">,
+    indexedOffset: number,
+  ): EmergencyModeActivatedEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+
+    return { eventType: "EmergencyModeActivated", ...base, admin };
+  }
+
+  private parseFeeCollectorRotated(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<FeeCollectorRotatedEvent, "eventType" | "newCollector" | "rotationIndex">,
+    indexedOffset: number,
+  ): FeeCollectorRotatedEvent {
+    const newCollector = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "FeeCollectorRotated",
+      ...base,
+      newCollector,
+      rotationIndex: Number(scValToNative(map["rotation_index"])),
+    };
+  }
+
+  private parseFeeConfigChanged(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<FeeConfigChangedEvent, "eventType" | "feeBps">,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _indexedOffset: number,
+  ): FeeConfigChangedEvent {
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "FeeConfigChanged",
+      ...base,
+      feeBps: Number(scValToNative(map["fee_bps"])),
+    };
+  }
+
+  private parseHookRegistered(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<HookRegisteredEvent, "eventType" | "hookContract">,
+    indexedOffset: number,
+  ): HookRegisteredEvent {
+    const hookContract = this.decodeAddress(topics[indexedOffset]);
+
+    return { eventType: "HookRegistered", ...base, hookContract };
+  }
+
+  private parseHookUnregistered(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<HookUnregisteredEvent, "eventType" | "hookContract">,
+    indexedOffset: number,
+  ): HookUnregisteredEvent {
+    const hookContract = this.decodeAddress(topics[indexedOffset]);
+
+    return { eventType: "HookUnregistered", ...base, hookContract };
+  }
+
+  private parsePauseFlagsChanged(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<PauseFlagsChangedEvent, "eventType" | "admin" | "flagsEnabled" | "flagsDisabled">,
+    indexedOffset: number,
+  ): PauseFlagsChangedEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "PauseFlagsChanged",
+      ...base,
+      admin,
+      flagsEnabled: BigInt(scValToNative(map["flags_enabled"])),
+      flagsDisabled: BigInt(scValToNative(map["flags_disabled"])),
+    };
+  }
+
+  private parsePerAssetFeeSet(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<PerAssetFeeSetEvent, "eventType" | "token" | "feeBps" | "arbiterBps">,
+    indexedOffset: number,
+  ): PerAssetFeeSetEvent {
+    const token = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "PerAssetFeeSet",
+      ...base,
+      token,
+      feeBps: Number(scValToNative(map["fee_bps"])),
+      arbiterBps: Number(scValToNative(map["arbiter_bps"])),
+    };
+  }
+
+  private parsePlatformWalletChanged(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<PlatformWalletChangedEvent, "eventType" | "wallet">,
+    indexedOffset: number,
+  ): PlatformWalletChangedEvent {
+    const wallet = this.decodeAddress(topics[indexedOffset]);
+
+    return { eventType: "PlatformWalletChanged", ...base, wallet };
+  }
+
+  private parseUpgradeCompleted(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<UpgradeCompletedEvent, "eventType" | "admin" | "oldVersion" | "newVersion">,
+    indexedOffset: number,
+  ): UpgradeCompletedEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "UpgradeCompleted",
+      ...base,
+      admin,
+      oldVersion: Number(scValToNative(map["old_version"])),
+      newVersion: Number(scValToNative(map["new_version"])),
+    };
+  }
+
+  private parseUpgradeStarted(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<UpgradeStartedEvent, "eventType" | "admin" | "oldVersion" | "newVersion" | "newWasmHash" | "windowStart" | "windowEnd">,
+    indexedOffset: number,
+  ): UpgradeStartedEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "UpgradeStarted",
+      ...base,
+      admin,
+      oldVersion: Number(scValToNative(map["old_version"])),
+      newVersion: Number(scValToNative(map["new_version"])),
+      newWasmHash: this.decodeBytes32HexFromMap(map["new_wasm_hash"]),
+      windowStart: BigInt(scValToNative(map["window_start"])),
+      windowEnd: BigInt(scValToNative(map["window_end"])),
+    };
+  }
+
+  private parseUpgradeWindowSet(
+    topics: xdr.ScVal[],
+    data: xdr.ScVal,
+    base: Omit<UpgradeWindowSetEvent, "eventType" | "admin" | "windowStart" | "windowEnd">,
+    indexedOffset: number,
+  ): UpgradeWindowSetEvent {
+    const admin = this.decodeAddress(topics[indexedOffset]);
+    const map = this.dataToMap(data);
+
+    return {
+      eventType: "UpgradeWindowSet",
+      ...base,
+      admin,
+      windowStart: BigInt(scValToNative(map["window_start"])),
+      windowEnd: BigInt(scValToNative(map["window_end"])),
     };
   }
 
@@ -478,11 +844,15 @@ export class SorobanEventParser {
   private decodeAddress(val: xdr.ScVal): string {
     const native = scValToNative(val);
     if (typeof native === "string") return native;
-    // It may already be an Address object
     return Address.fromScVal(val).toString();
   }
 
   private decodeBytes32Hex(val: xdr.ScVal): string {
+    const bytes: Buffer = scValToNative(val);
+    return bytes.toString("hex");
+  }
+
+  private decodeBytes32HexFromMap(val: xdr.ScVal): string {
     const bytes: Buffer = scValToNative(val);
     return bytes.toString("hex");
   }
