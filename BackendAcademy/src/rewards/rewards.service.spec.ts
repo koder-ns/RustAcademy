@@ -6,6 +6,8 @@ import {
   levelForXp,
   xpThresholdForLevel,
   xpToNextLevel,
+  PRIZE_POOL_DEFAULT_CURRENCY,
+  PRIZE_DISTRIBUTION_PERCENTAGES,
   STREAK_MILESTONE_DAYS,
   STREAK_MILESTONE_XP,
   LEVEL_MILESTONE_INTERVAL,
@@ -239,6 +241,190 @@ describe('RewardsService', () => {
     });
   });
 
+  // ---- Leaderboard ----
+
+  describe('getLeaderboard()', () => {
+    const USERS = ['lead-alice', 'lead-bob', 'lead-charlie'];
+
+    beforeEach(() => {
+      // Reset users and give them distinct XP values
+      for (const u of USERS) service.resetXp(u);
+      service.addXp(USERS[0], 500); // alice: 500
+      service.addXp(USERS[1], 900); // bob:   900  ← highest
+      service.addXp(USERS[2], 200); // charlie: 200
+    });
+
+    it('returns entries sorted by XP descending', () => {
+      const { leaderboard } = service.getLeaderboard(10);
+      expect(leaderboard[0].userId).toBe(USERS[1]); // bob first
+      expect(leaderboard[1].userId).toBe(USERS[0]); // alice second
+      expect(leaderboard[2].userId).toBe(USERS[2]); // charlie third
+    });
+
+    it('respects the topN parameter', () => {
+      const { leaderboard } = service.getLeaderboard(2);
+      expect(leaderboard).toHaveLength(2);
+    });
+
+    it('reports totalParticipants correctly', () => {
+      const { totalParticipants } = service.getLeaderboard(10);
+      expect(totalParticipants).toBeGreaterThanOrEqual(USERS.length);
+    });
+
+    it('assigns increasing rank numbers', () => {
+      const { leaderboard } = service.getLeaderboard(10);
+      leaderboard.forEach((entry, i) => {
+        expect(entry.rank).toBe(i + 1);
+      });
+    });
+
+    it('each entry has a non-empty title', () => {
+      const { leaderboard } = service.getLeaderboard(10);
+      for (const entry of leaderboard) {
+        expect(typeof entry.title).toBe('string');
+        expect(entry.title.length).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  describe('getUserLeaderboardPosition(userId)', () => {
+    const USERS = ['rank-alice', 'rank-bob', 'rank-charlie'];
+
+    beforeEach(() => {
+      // Reset users from all suites so ranks are predictable
+      const allKnown = [
+        ...USERS,
+        'test-user-abc',
+        'brand-new-user',
+        'u',
+        'lead-alice',
+        'lead-bob',
+        'lead-charlie',
+      ];
+      for (const u of allKnown) service.resetXp(u);
+      service.addXp(USERS[0], 100); // alice:   100
+      service.addXp(USERS[1], 700); // bob:     700  ← highest
+      service.addXp(USERS[2], 400); // charlie: 400
+    });
+
+    it('returns rank 1 for the top user', () => {
+      const pos = service.getUserLeaderboardPosition(USERS[1]);
+      expect(pos.rank).toBe(1);
+    });
+
+    it('returns correct rank for a middle user', () => {
+      const pos = service.getUserLeaderboardPosition(USERS[2]);
+      expect(pos.rank).toBe(2);
+    });
+
+    it('returns correct rank for the last user', () => {
+      const pos = service.getUserLeaderboardPosition(USERS[0]);
+      expect(pos.rank).toBe(3);
+    });
+
+    it('throws NotFoundException for unknown user', () => {
+      expect(() =>
+        service.getUserLeaderboardPosition('ghost-user'),
+      ).toThrow(NotFoundException);
+    });
+
+    it('includes totalParticipants count', () => {
+      const pos = service.getUserLeaderboardPosition(USERS[1]);
+      expect(pos.totalParticipants).toBeGreaterThanOrEqual(USERS.length);
+    });
+  });
+
+  // ---- Prize pool ----
+
+  describe('getPrizePool() / createPrizePool()', () => {
+    it('getPrizePool returns null when no pool exists', () => {
+      expect(service.getPrizePool()).toBeNull();
+    });
+
+    it('createPrizePool creates a pool with correct values', () => {
+      const pool = service.createPrizePool(5000, 'XLM');
+      expect(pool.totalAmount).toBe(5000);
+      expect(pool.currency).toBe('XLM');
+      expect(pool.distributedAt).toBeNull();
+      expect(pool.distribution).toEqual([]);
+      expect(pool.id).toMatch(/^prize_/);
+    });
+
+    it('createPrizePool uses default currency when omitted', () => {
+      const pool = service.createPrizePool(100);
+      expect(pool.currency).toBe(PRIZE_POOL_DEFAULT_CURRENCY);
+    });
+
+    it('createPrizePool throws on non-positive amount', () => {
+      expect(() => service.createPrizePool(0)).toThrow();
+      expect(() => service.createPrizePool(-10)).toThrow();
+    });
+
+    it('getPrizePool returns the latest pool', () => {
+      service.createPrizePool(100);
+      const second = service.createPrizePool(200);
+      const latest = service.getPrizePool();
+      expect(latest!.id).toBe(second.id);
+      expect(latest!.totalAmount).toBe(200);
+    });
+  });
+
+  describe('distributePrizes()', () => {
+    const USERS = ['dist-alice', 'dist-bob', 'dist-charlie'];
+
+    beforeEach(() => {
+      for (const u of USERS) service.resetXp(u);
+      service.addXp(USERS[0], 100);
+      service.addXp(USERS[1], 200);
+      service.addXp(USERS[2], 300);
+    });
+
+    it('auto-creates a pool if none exists', () => {
+      const result = service.distributePrizes();
+      expect(result.totalAmount).toBeGreaterThan(0);
+      expect(result.distributedAt).toBeInstanceOf(Date);
+    });
+
+    it('distributes prizes to top 10 leaderboard members', () => {
+      const result = service.distributePrizes();
+      expect(result.distribution.length).toBeGreaterThan(0);
+      expect(result.distribution.length).toBeLessThanOrEqual(10);
+    });
+
+    it('top rank receives the largest amount', () => {
+      const result = service.distributePrizes();
+      const amounts = result.distribution.map((d) => d.amount);
+      for (let i = 1; i < amounts.length; i++) {
+        expect(amounts[i - 1]).toBeGreaterThanOrEqual(amounts[i]);
+      }
+    });
+
+    it('distribution amounts use the configured percentages', () => {
+      const result = service.distributePrizes();
+      for (const dist of result.distribution) {
+        const config = PRIZE_DISTRIBUTION_PERCENTAGES.find(
+          (c) => c.rank === dist.rank,
+        );
+        expect(config).toBeDefined();
+        if (config) {
+          const expected = Math.floor(
+            (result.totalAmount * config.percentage) / 100,
+          );
+          expect(dist.amount).toBe(expected);
+        }
+      }
+    });
+
+    it('marks the pool as distributed', () => {
+      const result = service.distributePrizes();
+      expect(result.distributedAt).toBeInstanceOf(Date);
+    });
+
+    it('is idempotent — second call returns same result', () => {
+      const first = service.distributePrizes();
+      const second = service.distributePrizes();
+      expect(second.id).toBe(first.id);
+      expect(second.distributedAt).toEqual(first.distributedAt);
   // ---- recordActivity ----
 
   describe('recordActivity(userId, date, xpAmount)', () => {
