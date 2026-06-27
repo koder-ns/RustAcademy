@@ -30,3 +30,76 @@ export interface UserProgressionResponse {
 export interface ThresholdsResponse {
   thresholds: LevelThreshold[];
 }
+
+// ---------------------------------------------------------------------------
+// Leaderboard types
+// ---------------------------------------------------------------------------
+
+/**
+ * A single entry on the leaderboard.
+ */
+export interface LeaderboardEntry {
+  /** Position (1-based) */
+  rank: number;
+  userId: string;
+  xp: number;
+  level: number;
+  /** Human-readable level title */
+  title: string;
+}
+
+/**
+ * Response shape for GET /rewards/leaderboard
+ */
+export interface LeaderboardResponse {
+  leaderboard: LeaderboardEntry[];
+  /** Total number of participants in the XP system */
+  totalParticipants: number;
+}
+
+/**
+ * Response shape for GET /rewards/leaderboard/:userId
+ */
+export interface UserLeaderboardPosition {
+  userId: string;
+  /** Current 1-based rank */
+  rank: number;
+  xp: number;
+  level: number;
+  title: string;
+  totalParticipants: number;
+}
+
+// ---------------------------------------------------------------------------
+// Prize pool types
+// ---------------------------------------------------------------------------
+
+/**
+ * A single prize distribution to a user.
+ */
+export interface PrizeDistribution {
+  rank: number;
+  userId: string;
+  amount: number;
+  distributedAt: Date;
+}
+
+/**
+ * Response shape for prize pool endpoints.
+ */
+export interface PrizePoolResponse {
+  id: string;
+  totalAmount: number;
+  currency: string;
+  distributedAt: Date | null;
+  createdAt: Date;
+  distribution: PrizeDistribution[];
+}
+
+/**
+ * Body shape for POST /rewards/prize-pool
+ */
+export interface CreatePrizePoolRequest {
+  totalAmount: number;
+  currency?: string;
+}
