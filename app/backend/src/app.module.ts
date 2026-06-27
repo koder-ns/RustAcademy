@@ -50,6 +50,7 @@ import { throttlerModuleProfiles } from "./config/rate-limit.config";
 import { EnvironmentParityModule } from "./environment-parity/environment-parity.module";
 import { IndexerLagModule } from "./indexer-lag";
 import { SupportBundleModule } from "./support-bundle/support-bundle.module";
+import { ChatModule } from "./chat/chat.module";
 
 type AppImport =
   | Type<unknown>
@@ -95,6 +96,7 @@ type AppImport =
       EnvironmentParityModule,
       IndexerLagModule,
       SupportBundleModule,
+      ChatModule,
     ];
 
     // In development, if SUPABASE_URL points to a localhost placeholder (i.e. you don't

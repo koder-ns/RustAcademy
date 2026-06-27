@@ -1,3 +1,6 @@
+export { UserProfileModule } from './user-profile.module';
+export { UserProfileService } from './user-profile.service';
+export { UserProfileEntity } from './user-profile.entity';
 export { TutorProfileModule } from './tutor-profile.module';
 export { TutorProfileService } from './tutor-profile.service';
 export { TutorProfileEntity } from './tutor-profile.entity';
