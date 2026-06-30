@@ -21,6 +21,7 @@ import { AppConfigModule } from './config/config.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { SearchModule } from './search/search.module';
 import { PaymentsModule } from './payments/payments.module';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { PaymentsModule } from './payments/payments.module';
     TaskModule,
     SearchModule,
     PaymentsModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [
