@@ -10,7 +10,8 @@ import { ContractHealthController } from './contracts.controller';
 import { ContractHealthService } from './contracts.service';
 
 @Module({
-  controllers: [ContractHealthController],
-  providers: [ContractHealthService],
+  controllers: [ContractsController],
+  providers: [ContractsService],
+  exports: [ContractsService],
 })
 export class ContractsModule {}
