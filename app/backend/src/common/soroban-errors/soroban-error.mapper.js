@@ -119,6 +119,21 @@ var ERROR_MAPPINGS = [
         code: soroban_error_codes_1.SorobanErrorCode.INVALID_WASM_HASH,
         message: 'The WASM hash provided for the contract upgrade is invalid.',
     },
+    {
+        pattern: /upgrade.*window.*not.*active|upgrade.*window.*inactive/i,
+        code: soroban_error_codes_1.SorobanErrorCode.UPGRADE_WINDOW_NOT_ACTIVE,
+        message: 'The upgrade window is not currently active. Please try again during the scheduled window.',
+    },
+    {
+        pattern: /upgrade.*already.*in.*progress/i,
+        code: soroban_error_codes_1.SorobanErrorCode.UPGRADE_ALREADY_IN_PROGRESS,
+        message: 'An upgrade is already in progress. Please wait for it to complete before starting a new one.',
+    },
+    {
+        pattern: /upgrade.*not.*in.*progress|no.*upgrade.*in.*progress/i,
+        code: soroban_error_codes_1.SorobanErrorCode.UPGRADE_NOT_IN_PROGRESS,
+        message: 'No upgrade is currently in progress. Start an upgrade first before performing this operation.',
+    },
     // ── Input / params ────────────────────────────────────────────────────────
     {
         pattern: /account.*does not exist|account.*not.*found/i,

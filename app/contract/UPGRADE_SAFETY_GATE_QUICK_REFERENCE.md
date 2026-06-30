@@ -31,10 +31,10 @@ start_upgrade(env, caller, new_version) -> Result<(),  RustAcademyError>
 - **Must be called during active window** (AC1)
 - Sets `UpgradeInProgress = true`
 - Emits: `UpgradeStarted { admin, old_version, new_version, ... }`
-- **Errors**:
-  - `InvalidAmount`: Window not active
-  - `ContractPaused`: Already in-progress
-  - `InsufficientRole`: Not admin
+ - **Errors**:
+   - `UpgradeWindowNotActive`: Window not active
+   - `UpgradeAlreadyInProgress`: Already in-progress
+   - `InsufficientRole`: Not admin
 
 ### 4. Update WASM
 
@@ -42,9 +42,12 @@ start_upgrade(env, caller, new_version) -> Result<(),  RustAcademyError>
 upgrade(env, caller, new_wasm_hash) -> Result<(),  RustAcademyError>
 ```
 
-- Swaps contract code (no storage changes)
-- Emits: `ContractUpgraded { admin, new_wasm_hash, ... }`
-- **Error**: `InsufficientRole` if not admin
+ - Swaps contract code (no storage changes)
+ - Emits: `ContractUpgraded { admin, new_wasm_hash, ... }`
+ - **Errors**:
+   - `UpgradeNotInProgress`: No upgrade in progress
+   - `UpgradeWindowNotActive`: Window not active
+   - `InsufficientRole`: Not admin
 
 ### 5. Complete Upgrade (Admin)
 
@@ -57,9 +60,10 @@ complete_upgrade(env, caller, new_version) -> Result<u32,  RustAcademyError>
 - Sets `UpgradeInProgress = false`
 - Emits: `UpgradeCompleted { admin, old_version, new_version, ... }`
 - **Returns**: New contract version
-- **Errors**:
-  - `InternalError`: Not in-progress, or invariants failed
-  - `InvalidContractVersion`: Version mismatch
+ - **Errors**:
+   - `UpgradeNotInProgress`: No upgrade in progress
+   - `InternalError`: Invariants failed post-upgrade
+   - `InvalidContractVersion`: Version mismatch
 
 ---
 
@@ -79,13 +83,14 @@ Day 2 @ 14:15: admin.complete_upgrade(2u32)
 
 ---
 
-## Error Codes (Repurposed)
+## Error Codes (Semantic)
 
-| Error            | Code | Meaning                        |
-| ---------------- | ---- | ------------------------------ |
-| `InvalidAmount`  | 100  | Upgrade window not active      |
-| `ContractPaused` | 300  | Upgrade already in-progress    |
-| `InternalError`  | 900  | Invariants failed post-upgrade |
+| Error                     | Code | Meaning                        |
+| ------------------------- | ---- | ------------------------------ |
+| `UpgradeWindowNotActive`  | 502  | Upgrade window not active      |
+| `UpgradeAlreadyInProgress`| 503  | Upgrade already in-progress    |
+| `UpgradeNotInProgress`    | 504  | No upgrade in progress         |
+| `InternalError`           | 900  | Invariants failed post-upgrade |
 
 ---
 
@@ -168,7 +173,7 @@ Post-upgrade checks that **must** hold:
 A: No. The original `migrate()` still works standalone. These are optional extra guards.
 
 **Q: Can I call `complete_upgrade()` without `start_upgrade()`?**  
-A: No. `complete_upgrade()` checks `UpgradeInProgress` flag first → returns `InternalError`.
+A: No. `complete_upgrade()` checks `UpgradeInProgress` flag first → returns `UpgradeNotInProgress`.
 
 **Q: What if invariants fail during `complete_upgrade()`?**  
 A: Contract panics → all storage changes rolled back → upgrade aborted. Retry after fixing.

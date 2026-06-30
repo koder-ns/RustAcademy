@@ -73,6 +73,20 @@ cargo test test_cross_asset -- --nocapture
 cargo test --package  RustAcademy -- --include-ignored
 ```
 
+## Supported Escrow Limits
+
+The escrow entry points are bounded so Soroban resource use stays predictable.
+
+- Deposit-family calls support 1 token transfer path.
+- `deposit_with_arbiters` supports up to 10 arbiters.
+- Deposit-family calls support 0 fee recipients.
+- `withdraw` supports 1 token transfer path.
+- `withdraw` supports up to 3 fee recipients: recipient, optional platform wallet, optional collector.
+- Deposit and withdraw salts are supported up to 512 bytes for bounded execution.
+
+Clients can preflight these limits with `get_escrow_operation_limits`,
+`estimate_deposit_resources`, and `estimate_withdraw_resources`.
+
 ### Expected Output
 
 When the network is working properly, you should see:

@@ -81,7 +81,16 @@ describe("SorobanEventIndexerService - Resiliency & Hardening", () => {
     service = new SorobanEventIndexerService(
       mocks.config, mocks.checkpointRepo, mocks.escrowRepo,
       mocks.privacyRepo, mocks.adminRepo, mocks.stealthRepo,
-      mocks.metrics, mocks.eventEmitter
+      mocks.metrics, mocks.eventEmitter,
+      {
+        recordUnknownEvent: jest.fn(),
+        recordFieldMismatch: jest.fn(),
+        recordUnexpectedFields: jest.fn(),
+        recordUnsupportedVersion: jest.fn(),
+        recordIncompatibleVersion: jest.fn(),
+        recordParseError: jest.fn(),
+        getHealthSummary: jest.fn(),
+      } as unknown as import("../schema-observability.service").SchemaObservabilityService
     );
   });
 
@@ -111,7 +120,7 @@ describe("SorobanEventIndexerService - Resiliency & Hardening", () => {
         _embedded: { records: recordsPage1 },
         _links: { next: { href: "https://horizon.stellar.org/contract_events?cursor=100-1" } },
       }),
-    } as Response);
+    } as unknown as Response);
 
     await service.indexLedgerRange(CONTRACT_ID, 100, 105, undefined, false);
 
@@ -143,7 +152,7 @@ describe("SorobanEventIndexerService - Resiliency & Hardening", () => {
         _embedded: { records: recordsPage2 },
         _links: {},
       }),
-    } as Response);
+    } as unknown as Response);
 
     const recoveryResult = await service.indexLedgerRange(CONTRACT_ID, 100, 105, undefined, false);
     expect(recoveryResult.processed).toBe(1);
@@ -170,7 +179,7 @@ describe("SorobanEventIndexerService - Resiliency & Hardening", () => {
       formData: jest.fn(),
       text: jest.fn(),
       json: async () => ({ _embedded: { records }, _links: {} }),
-    } as Response);
+    } as unknown as Response);
 
     await service.indexLedgerRange(CONTRACT_ID, 100, 105, {
       previousContractId: prevContract,

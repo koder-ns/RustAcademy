@@ -1,4 +1,4 @@
-use soroban_sdk::{contractevent, Address, BytesN, Env};
+use soroban_sdk::{contractevent, Address, BytesN, Env, Symbol};
 
 /// Canonical event schema version.
 ///
@@ -41,12 +41,23 @@ pub struct EventCompatibility {
     pub compatible_versions: &'static [u32],
 }
 
+/// Deterministic replay metadata fields present in every v2+ event payload.
+///
+/// The `ledger_sequence` field (from `env.ledger().sequence()`) enables
+/// backend indexers to cross-validate the contract-reported ledger against
+/// the Horizon-reported ledger, and together with `tx_hash` and `paging_token`
+/// forms a complete, stable deduplication key for any event delivery.
+#[allow(dead_code)]
+pub const EVENT_REPLAY_FIELDS: &[&str] = &["ledger_sequence", "schema_version", "timestamp"];
+
+// payload_keys are sorted alphabetically. "ledger_sequence" sorts between
+// 'f*' keys and 's*' keys, i.e. after "fee*"/"from_version" and before "paused"/"recipient"/"schema_version".
 #[allow(dead_code)]
 pub const EVENT_SCHEMAS: &[EventSchema] = &[
     EventSchema {
         name: "AdminChanged",
         topics: &[EVENT_TOPIC_ADMIN, "AdminChanged", "old_admin", "new_admin"],
-        payload_keys: &["schema_version", "timestamp"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
@@ -58,6 +69,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
             "arbiter",
         ],
         payload_keys: &[
+            "ledger_sequence",
             "resolve_for_owner",
             "schema_version",
             "threshold",
@@ -69,7 +81,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
     EventSchema {
         name: "ContractMigrated",
         topics: &[EVENT_TOPIC_ADMIN, "ContractMigrated", "admin"],
-        payload_keys: &["from_version", "schema_version", "timestamp", "to_version"],
+        payload_keys: &["from_version", "ledger_sequence", "schema_version", "timestamp", "to_version"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
@@ -78,6 +90,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
         payload_keys: &[
             "contract_version",
             "event_schema_version",
+            "ledger_sequence",
             "paused",
             "schema_version",
             "timestamp",
@@ -87,7 +100,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
     EventSchema {
         name: "ContractPaused",
         topics: &[EVENT_TOPIC_ADMIN, "ContractPaused", "admin"],
-        payload_keys: &["paused", "schema_version", "timestamp"],
+        payload_keys: &["ledger_sequence", "paused", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
@@ -98,7 +111,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
             "new_wasm_hash",
             "admin",
         ],
-        payload_keys: &["schema_version", "timestamp"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
@@ -111,6 +124,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
         ],
         payload_keys: &[
             "amount",
+            "ledger_sequence",
             "schema_version",
             "threshold",
             "timestamp",
@@ -119,9 +133,54 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
+        name: "DisputeTimeoutSet",
+        topics: &[
+            EVENT_TOPIC_DISPUTE,
+            "DisputeTimeoutSet",
+            "escrow_id",
+        ],
+        payload_keys: &[
+            "action",
+            "expires_at",
+            "ledger_sequence",
+            "schema_version",
+            "timestamp",
+        ],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "DisputeAutoResolved",
+        topics: &[
+            EVENT_TOPIC_DISPUTE,
+            "DisputeAutoResolved",
+            "escrow_id",
+            "action",
+        ],
+        payload_keys: &[
+            "amount",
+            "ledger_sequence",
+            "recipient",
+            "schema_version",
+            "timestamp",
+        ],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "DisputeExpiryActionSet",
+        topics: &[EVENT_TOPIC_ADMIN, "DisputeExpiryActionSet"],
+        payload_keys: &["action", "ledger_sequence", "schema_version", "timestamp"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "DisputeTimeoutConfigSet",
+        topics: &[EVENT_TOPIC_ADMIN, "DisputeTimeoutConfigSet"],
+        payload_keys: &["ledger_sequence", "schema_version", "timeout_secs", "timestamp"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
         name: "EmergencyModeActivated",
         topics: &[EVENT_TOPIC_ADMIN, "EmergencyModeActivated", "admin"],
-        payload_keys: &["schema_version", "timestamp"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
@@ -136,6 +195,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
             "amount_due",
             "amount_paid",
             "expires_at",
+            "ledger_sequence",
             "schema_version",
             "timestamp",
             "token",
@@ -149,6 +209,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
             "amount_due",
             "amount_paid",
             "expires_at",
+            "ledger_sequence",
             "schema_version",
             "timestamp",
             "token",
@@ -158,37 +219,37 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
     EventSchema {
         name: "EscrowDisputed",
         topics: &[EVENT_TOPIC_ESCROW, "EscrowDisputed", "escrow_id", "arbiter"],
-        payload_keys: &["schema_version", "timestamp"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
         name: "EscrowFinalized",
         topics: &[EVENT_TOPIC_ESCROW, "EscrowFinalized", "escrow_id", "owner"],
-        payload_keys: &["schema_version", "timestamp", "token", "total_amount"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp", "token", "total_amount"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
         name: "EscrowRefunded",
         topics: &[EVENT_TOPIC_ESCROW, "EscrowRefunded", "escrow_id", "owner"],
-        payload_keys: &["amount", "schema_version", "timestamp", "token"],
+        payload_keys: &["amount", "ledger_sequence", "schema_version", "timestamp", "token"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
         name: "EscrowWithdrawn",
         topics: &[EVENT_TOPIC_ESCROW, "EscrowWithdrawn", "escrow_id", "owner"],
-        payload_keys: &["amount", "fee", "schema_version", "timestamp", "token"],
+        payload_keys: &["amount", "fee", "ledger_sequence", "schema_version", "timestamp", "token"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
         name: "FeeCollectorRotated",
         topics: &[EVENT_TOPIC_ADMIN, "FeeCollectorRotated", "new_collector"],
-        payload_keys: &["rotation_index", "schema_version", "timestamp"],
+        payload_keys: &["ledger_sequence", "rotation_index", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
         name: "FeeConfigChanged",
         topics: &[EVENT_TOPIC_ADMIN, "FeeConfigChanged"],
-        payload_keys: &["fee_bps", "schema_version", "timestamp"],
+        payload_keys: &["fee_bps", "ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
@@ -197,6 +258,7 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
         payload_keys: &[
             "amount_due",
             "amount_paid",
+            "ledger_sequence",
             "payment_amount",
             "schema_version",
             "timestamp",
@@ -207,19 +269,19 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
     EventSchema {
         name: "PerAssetFeeSet",
         topics: &[EVENT_TOPIC_ADMIN, "PerAssetFeeSet", "token"],
-        payload_keys: &["arbiter_bps", "fee_bps", "schema_version", "timestamp"],
+        payload_keys: &["arbiter_bps", "fee_bps", "ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
         name: "PlatformWalletChanged",
         topics: &[EVENT_TOPIC_ADMIN, "PlatformWalletChanged", "wallet"],
-        payload_keys: &["schema_version", "timestamp"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
         name: "PrivacyToggled",
         topics: &[EVENT_TOPIC_PRIVACY, "PrivacyToggled", "owner"],
-        payload_keys: &["enabled", "schema_version", "timestamp"],
+        payload_keys: &["enabled", "ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
     EventSchema {
@@ -230,7 +292,58 @@ pub const EVENT_SCHEMAS: &[EventSchema] = &[
             "stealth_address",
             "recipient",
         ],
-        payload_keys: &["amount", "schema_version", "timestamp", "token"],
+        payload_keys: &["amount", "ledger_sequence", "schema_version", "timestamp", "token"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "UpgradeStarted",
+        topics: &[EVENT_TOPIC_ADMIN, "UpgradeStarted", "admin"],
+        payload_keys: &[
+            "ledger_sequence",
+            "new_version",
+            "new_wasm_hash",
+            "old_version",
+            "schema_version",
+            "timestamp",
+            "window_end",
+            "window_start",
+        ],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "UpgradeCompleted",
+        topics: &[EVENT_TOPIC_ADMIN, "UpgradeCompleted", "admin"],
+        payload_keys: &[
+            "ledger_sequence",
+            "new_version",
+            "old_version",
+            "schema_version",
+            "timestamp",
+        ],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "HookRegistered",
+        topics: &[EVENT_TOPIC_ADMIN, "HookRegistered", "hook_contract"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "HookUnregistered",
+        topics: &[EVENT_TOPIC_ADMIN, "HookUnregistered", "hook_contract"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "UpgradeWindowSet",
+        topics: &[EVENT_TOPIC_ADMIN, "UpgradeWindowSet", "admin"],
+        payload_keys: &["ledger_sequence", "schema_version", "timestamp", "window_end", "window_start"],
+        schema_version: EVENT_SCHEMA_VERSION,
+    },
+    EventSchema {
+        name: "PauseFlagsChanged",
+        topics: &[EVENT_TOPIC_ADMIN, "PauseFlagsChanged", "admin"],
+        payload_keys: &["flags_disabled", "flags_enabled", "ledger_sequence", "schema_version", "timestamp"],
         schema_version: EVENT_SCHEMA_VERSION,
     },
 ];
@@ -262,6 +375,26 @@ pub const EVENT_COMPATIBILITY: &[EventCompatibility] = &[
         current_version: EVENT_SCHEMA_VERSION,
         compatible_versions: &[1, EVENT_SCHEMA_VERSION],
     },
+    EventCompatibility {
+        name: "DisputeTimeoutSet",
+        current_version: EVENT_SCHEMA_VERSION,
+        compatible_versions: &[EVENT_SCHEMA_VERSION],
+    },
+    EventCompatibility {
+        name: "DisputeAutoResolved",
+        current_version: EVENT_SCHEMA_VERSION,
+        compatible_versions: &[EVENT_SCHEMA_VERSION],
+    },
+    EventCompatibility {
+        name: "DisputeExpiryActionSet",
+        current_version: EVENT_SCHEMA_VERSION,
+        compatible_versions: &[EVENT_SCHEMA_VERSION],
+    },
+    EventCompatibility {
+        name: "DisputeTimeoutConfigSet",
+        current_version: EVENT_SCHEMA_VERSION,
+        compatible_versions: &[EVENT_SCHEMA_VERSION],
+    },
 ];
 
 #[contractevent(topics = ["TOPIC_ADMIN", "EmergencyModeActivated"])]
@@ -270,6 +403,7 @@ pub struct EmergencyModeActivatedEvent {
     #[topic]
     pub admin: Address,
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -277,6 +411,7 @@ pub(crate) fn publish_emergency_mode_activated(env: &Env, admin: Address) {
     EmergencyModeActivatedEvent {
         admin,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -289,6 +424,7 @@ pub struct PrivacyToggledEvent {
     pub owner: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub enabled: bool,
     pub timestamp: u64,
 }
@@ -303,6 +439,7 @@ pub struct EscrowWithdrawnEvent {
     pub owner: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub token: Address,
     pub amount: i128,
     pub fee: i128,
@@ -323,6 +460,7 @@ pub struct EscrowDepositedEvent {
     pub owner: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub token: Address,
     pub amount_due: i128,
     pub amount_paid: i128,
@@ -334,6 +472,7 @@ pub(crate) fn publish_privacy_toggled(env: &Env, owner: Address, enabled: bool) 
     PrivacyToggledEvent {
         owner,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         enabled,
         timestamp: env.ledger().timestamp(),
     }
@@ -348,6 +487,7 @@ pub struct ContractInitializedEvent {
     pub admin: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub contract_version: u32,
     pub event_schema_version: u32,
     pub paused: bool,
@@ -365,6 +505,7 @@ pub(crate) fn publish_contract_initialized(
     ContractInitializedEvent {
         admin,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         contract_version,
         event_schema_version,
         paused,
@@ -381,6 +522,7 @@ pub struct ContractPausedEvent {
     pub admin: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub paused: bool,
     pub timestamp: u64,
 }
@@ -390,6 +532,7 @@ pub(crate) fn publish_contract_paused(env: &Env, admin: Address, paused: bool) {
     ContractPausedEvent {
         admin,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         paused,
         timestamp: env.ledger().timestamp(),
     }
@@ -407,6 +550,7 @@ pub struct AdminChangedEvent {
     pub new_admin: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -416,6 +560,7 @@ pub(crate) fn publish_admin_changed(env: &Env, old_admin: Address, new_admin: Ad
         old_admin,
         new_admin,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -431,6 +576,7 @@ pub struct ContractUpgradedEvent {
     pub admin: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -441,6 +587,7 @@ pub struct UpgradeStartedEvent {
     pub admin: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub old_version: u32,
     pub new_version: u32,
     pub new_wasm_hash: BytesN<32>,
@@ -456,6 +603,7 @@ pub struct UpgradeCompletedEvent {
     pub admin: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub old_version: u32,
     pub new_version: u32,
     pub timestamp: u64,
@@ -466,6 +614,7 @@ pub(crate) fn publish_contract_upgraded(env: &Env, new_wasm_hash: BytesN<32>, ad
         new_wasm_hash,
         admin: admin.clone(),
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -483,6 +632,7 @@ pub(crate) fn publish_upgrade_started(
     UpgradeStartedEvent {
         admin: admin.clone(),
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         old_version,
         new_version,
         new_wasm_hash,
@@ -502,6 +652,7 @@ pub(crate) fn publish_upgrade_completed(
     UpgradeCompletedEvent {
         admin: admin.clone(),
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         old_version,
         new_version,
         timestamp: env.ledger().timestamp(),
@@ -516,6 +667,7 @@ pub struct ContractMigratedEvent {
     pub admin: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub from_version: u32,
     pub to_version: u32,
     pub timestamp: u64,
@@ -530,6 +682,7 @@ pub(crate) fn publish_contract_migrated(
     ContractMigratedEvent {
         admin: admin.clone(),
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         from_version,
         to_version,
         timestamp: env.ledger().timestamp(),
@@ -553,6 +706,7 @@ pub(crate) fn publish_escrow_withdrawn(
         escrow_id: commitment,
         owner,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         token,
         amount,
         fee,
@@ -578,6 +732,7 @@ pub(crate) fn publish_escrow_deposited(
         escrow_id: commitment,
         owner,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         token,
         amount_due,
         amount_paid,
@@ -597,6 +752,7 @@ pub struct EscrowRefundedEvent {
     pub owner: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub token: Address,
     pub amount: i128,
     pub timestamp: u64,
@@ -612,6 +768,7 @@ pub struct PartialPaymentEvent {
     pub payer: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub token: Address,
     pub payment_amount: i128,
     pub amount_paid: i128,
@@ -629,6 +786,7 @@ pub struct EscrowFinalizedEvent {
     pub owner: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub token: Address,
     pub total_amount: i128,
     pub timestamp: u64,
@@ -644,6 +802,7 @@ pub struct EscrowDisputedEvent {
     pub arbiter: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -652,6 +811,7 @@ pub(crate) fn publish_escrow_disputed(env: &Env, commitment: BytesN<32>, arbiter
         escrow_id: commitment,
         arbiter,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -668,6 +828,7 @@ pub(crate) fn publish_escrow_refunded(
         escrow_id: commitment,
         owner,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         token,
         amount,
         timestamp: env.ledger().timestamp(),
@@ -687,6 +848,7 @@ pub struct AuxIndicesCleanedEvent {
     #[topic]
     pub escrow_id: BytesN<32>,
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     /// Number of auxiliary index entries removed during cleanup.
     pub indices_removed: u32,
     pub timestamp: u64,
@@ -700,6 +862,7 @@ pub(crate) fn publish_aux_indices_cleaned(
     AuxIndicesCleanedEvent {
         escrow_id: commitment,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         indices_removed,
         timestamp: env.ledger().timestamp(),
     }
@@ -719,6 +882,7 @@ pub(crate) fn publish_partial_payment(
         escrow_id: commitment,
         payer,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         token,
         payment_amount,
         amount_paid,
@@ -739,6 +903,7 @@ pub(crate) fn publish_escrow_finalized(
         escrow_id: commitment,
         owner,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         token,
         total_amount,
         timestamp: env.ledger().timestamp(),
@@ -762,6 +927,7 @@ pub struct EphemeralKeyRegisteredEvent {
     pub eph_pub: BytesN<32>,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub token: Address,
     pub amount_due: i128,
     pub amount_paid: i128,
@@ -782,6 +948,7 @@ pub(crate) fn publish_ephemeral_key_registered(
         stealth_address,
         eph_pub,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         token,
         amount_due,
         amount_paid,
@@ -803,6 +970,7 @@ pub struct StealthWithdrawnEvent {
     pub recipient: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub token: Address,
     pub amount: i128,
     pub timestamp: u64,
@@ -819,6 +987,7 @@ pub(crate) fn publish_stealth_withdrawn(
         stealth_address,
         recipient,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         token,
         amount,
         timestamp: env.ledger().timestamp(),
@@ -835,6 +1004,7 @@ pub struct StealthEscrowCleanedEvent {
     #[topic]
     pub stealth_address: BytesN<32>,
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -842,6 +1012,7 @@ pub(crate) fn publish_stealth_escrow_cleaned(env: &Env, stealth_address: BytesN<
     StealthEscrowCleanedEvent {
         stealth_address,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -851,6 +1022,7 @@ pub(crate) fn publish_stealth_escrow_cleaned(env: &Env, stealth_address: BytesN<
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct FeeConfigChangedEvent {
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub fee_bps: u32,
     pub timestamp: u64,
 }
@@ -858,6 +1030,7 @@ pub struct FeeConfigChangedEvent {
 pub(crate) fn publish_fee_config_changed(env: &Env, fee_bps: u32) {
     FeeConfigChangedEvent {
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         fee_bps,
         timestamp: env.ledger().timestamp(),
     }
@@ -870,6 +1043,7 @@ pub struct PlatformWalletChangedEvent {
     #[topic]
     pub wallet: Address,
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -877,6 +1051,7 @@ pub(crate) fn publish_platform_wallet_changed(env: &Env, wallet: Address) {
     PlatformWalletChangedEvent {
         wallet,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -896,6 +1071,7 @@ pub struct ArbiterVoteCastEvent {
     pub arbiter: Address,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub resolve_for_owner: bool,
     pub vote_count: u32,
     pub threshold: u32,
@@ -914,6 +1090,7 @@ pub(crate) fn publish_arbiter_vote_cast(
         escrow_id: commitment,
         arbiter,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         resolve_for_owner,
         vote_count,
         threshold,
@@ -932,6 +1109,7 @@ pub struct DisputeResolvedEvent {
     pub resolved_for_owner: bool,
 
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub total_votes: u32,
     pub threshold: u32,
     pub amount: i128,
@@ -950,9 +1128,127 @@ pub(crate) fn publish_dispute_resolved(
         escrow_id: commitment,
         resolved_for_owner,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         total_votes,
         threshold,
         amount,
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+// ---------------------------------------------------------------------------
+// Dispute timeout / auto-resolution events (Issue #49)
+// ---------------------------------------------------------------------------
+
+pub(crate) fn dispute_action_symbol(env: &Env, action: crate::types::DisputeExpiryAction) -> Symbol {
+    match action {
+        crate::types::DisputeExpiryAction::RefundOwner => Symbol::new(env, "refund_owner"),
+        crate::types::DisputeExpiryAction::PayArbiter => Symbol::new(env, "pay_arbiter"),
+    }
+}
+
+#[contractevent(topics = ["TOPIC_DISPUTE", "DisputeTimeoutSet"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeTimeoutSetEvent {
+    #[topic]
+    pub escrow_id: BytesN<32>,
+
+    pub action: Symbol,
+    pub expires_at: u64,
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_dispute_timeout_set(
+    env: &Env,
+    commitment: BytesN<32>,
+    action: crate::types::DisputeExpiryAction,
+    expires_at: u64,
+) {
+    DisputeTimeoutSetEvent {
+        escrow_id: commitment,
+        action: dispute_action_symbol(env, action),
+        expires_at,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_DISPUTE", "DisputeAutoResolved"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeAutoResolvedEvent {
+    #[topic]
+    pub escrow_id: BytesN<32>,
+
+    #[topic]
+    pub action: Symbol,
+
+    pub recipient: Address,
+    pub amount: i128,
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_dispute_auto_resolved(
+    env: &Env,
+    commitment: BytesN<32>,
+    action: crate::types::DisputeExpiryAction,
+    recipient: Address,
+    amount: i128,
+) {
+    DisputeAutoResolvedEvent {
+        escrow_id: commitment,
+        action: dispute_action_symbol(env, action),
+        recipient,
+        amount,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "DisputeExpiryActionSet"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeExpiryActionSetEvent {
+    pub action: Symbol,
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_dispute_expiry_action_set(
+    env: &Env,
+    action: crate::types::DisputeExpiryAction,
+) {
+    DisputeExpiryActionSetEvent {
+        action: dispute_action_symbol(env, action),
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "DisputeTimeoutConfigSet"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeTimeoutConfigSetEvent {
+    pub timeout_secs: u64,
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_dispute_timeout_config_set(env: &Env, timeout_secs: u64) {
+    DisputeTimeoutConfigSetEvent {
+        timeout_secs,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -967,6 +1263,7 @@ pub struct FeeCollectorRotatedEvent {
     pub new_collector: Address,
     pub rotation_index: u32,
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -979,6 +1276,7 @@ pub(crate) fn publish_fee_collector_rotated(
         new_collector,
         rotation_index,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);
@@ -998,6 +1296,7 @@ pub struct PerAssetFeeSetEvent {
     pub collector_fee_numerator: u32,
     pub collector_fee_denominator: u32,
     pub schema_version: u32,
+    pub ledger_sequence: u32,
     pub timestamp: u64,
 }
 
@@ -1021,6 +1320,109 @@ pub(crate) fn publish_per_asset_fee_set(
         collector_fee_numerator: collector_fee.numerator,
         collector_fee_denominator: collector_fee.denominator,
         schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "HookRegistered"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HookRegisteredEvent {
+    #[topic]
+    pub hook_contract: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_hook_registered(env: &Env, hook_contract: Address) {
+    HookRegisteredEvent {
+        hook_contract,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "HookUnregistered"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct HookUnregisteredEvent {
+    #[topic]
+    pub hook_contract: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_hook_unregistered(env: &Env, hook_contract: Address) {
+    HookUnregisteredEvent {
+        hook_contract,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "UpgradeWindowSet"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UpgradeWindowSetEvent {
+    #[topic]
+    pub admin: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub window_start: u64,
+    pub window_end: u64,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_upgrade_window_set(
+    env: &Env,
+    admin: Address,
+    window_start: u64,
+    window_end: u64,
+) {
+    UpgradeWindowSetEvent {
+        admin,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        window_start,
+        window_end,
+        timestamp: env.ledger().timestamp(),
+    }
+    .publish(env);
+}
+
+#[contractevent(topics = ["TOPIC_ADMIN", "PauseFlagsChanged"])]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct PauseFlagsChangedEvent {
+    #[topic]
+    pub admin: Address,
+
+    pub schema_version: u32,
+    pub ledger_sequence: u32,
+    pub flags_enabled: u64,
+    pub flags_disabled: u64,
+    pub timestamp: u64,
+}
+
+pub(crate) fn publish_pause_flags_changed(
+    env: &Env,
+    admin: Address,
+    flags_enabled: u64,
+    flags_disabled: u64,
+) {
+    PauseFlagsChangedEvent {
+        admin,
+        schema_version: EVENT_SCHEMA_VERSION,
+        ledger_sequence: env.ledger().sequence(),
+        flags_enabled,
+        flags_disabled,
         timestamp: env.ledger().timestamp(),
     }
     .publish(env);

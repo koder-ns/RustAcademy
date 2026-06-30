@@ -112,6 +112,21 @@ describe('mapSorobanError', () => {
     expect(result.code).toBe(SorobanErrorCode.INVALID_WASM_HASH);
   });
 
+  it('maps "upgrade window not active" to UPGRADE_WINDOW_NOT_ACTIVE', () => {
+    const result = mapSorobanError('upgrade window not active');
+    expect(result.code).toBe(SorobanErrorCode.UPGRADE_WINDOW_NOT_ACTIVE);
+  });
+
+  it('maps "upgrade already in progress" to UPGRADE_ALREADY_IN_PROGRESS', () => {
+    const result = mapSorobanError('upgrade already in progress');
+    expect(result.code).toBe(SorobanErrorCode.UPGRADE_ALREADY_IN_PROGRESS);
+  });
+
+  it('maps "no upgrade in progress" to UPGRADE_NOT_IN_PROGRESS', () => {
+    const result = mapSorobanError('no upgrade in progress');
+    expect(result.code).toBe(SorobanErrorCode.UPGRADE_NOT_IN_PROGRESS);
+  });
+
   // ── Admin ───────────────────────────────────────────────────────────────
 
   it('maps "not admin" to NOT_ADMIN', () => {

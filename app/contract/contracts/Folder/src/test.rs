@@ -2,12 +2,13 @@ use crate::{
     errors:: RustAcademyError,
     events::{
         EVENT_COMPATIBILITY, EVENT_SCHEMAS, EVENT_SCHEMA_VERSION, EVENT_TOPIC_ADMIN,
-        EVENT_TOPIC_ESCROW, EVENT_TOPIC_PRIVACY,
+        EVENT_TOPIC_DISPUTE, EVENT_TOPIC_ESCROW, EVENT_TOPIC_PRIVACY,
     },
     storage::{
         put_escrow, DataKey, PauseFlag, CURRENT_CONTRACT_VERSION, LEGACY_CONTRACT_VERSION,
         PRIVACY_ENABLED_KEY,
     },
+    types::{DisputeExpiryAction},
     EscrowEntry, EscrowStatus,  RustAcademyContract,  RustAcademyContractClient,
 };
 
@@ -391,7 +392,7 @@ fn event_data_map(env: &Env, data: Val) -> Map<Symbol, Val> {
 #[test]
 fn test_event_schema_catalog_locks_canonical_topics_and_payloads() {
     assert_eq!(EVENT_SCHEMA_VERSION, 2);
-    assert_eq!(EVENT_SCHEMAS.len(), 21);
+    assert_eq!(EVENT_SCHEMAS.len(), 31);
 
     let escrow_deposited = EVENT_SCHEMAS
         .iter()
@@ -407,6 +408,7 @@ fn test_event_schema_catalog_locks_canonical_topics_and_payloads() {
             "amount_due",
             "amount_paid",
             "expires_at",
+            "ledger_sequence",
             "schema_version",
             "timestamp",
             "token"
@@ -760,9 +762,112 @@ fn test_canonical_error_code_ranges() {
     assert_eq!( RustAcademyError::EscrowExpired as u32, 307);
     assert_eq!( RustAcademyError::EscrowNotExpired as u32, 308);
     assert_eq!( RustAcademyError::InvalidOwner as u32, 309);
+    assert_eq!( RustAcademyError::PayloadTooLarge as u32, 329);
+    assert_eq!( RustAcademyError::TooManyFeeRecipients as u32, 330);
+    assert_eq!( RustAcademyError::TooManyTokens as u32, 331);
 
     // Internal/unexpected conditions (900-999)
     assert_eq!( RustAcademyError::InternalError as u32, 900);
+}
+
+#[test]
+fn test_get_escrow_operation_limits_reports_supported_bounds() {
+    let (env, client) = setup();
+    let limits = client.get_escrow_operation_limits();
+
+    assert_eq!(limits.max_salt_bytes, 512);
+    assert_eq!(limits.deposit_max_token_count, 1);
+    assert_eq!(limits.deposit_max_arbiter_count, 10);
+    assert_eq!(limits.deposit_max_fee_recips, 0);
+    assert_eq!(limits.withdraw_max_token_count, 1);
+    assert_eq!(limits.withdraw_max_arbiter_count, 0);
+    assert_eq!(limits.withdraw_max_fee_recips, 3);
+    assert!(limits.deposit_max_cpu_instructions >= 465_139);
+    assert!(limits.withdraw_max_cpu_instructions >= 452_582);
+
+    let token = create_test_token(&env);
+    let deposit_estimate = client
+        .try_estimate_deposit_resources(&512, &10)
+        .unwrap()
+        .unwrap();
+    assert_eq!(deposit_estimate.token_count, 1);
+    assert_eq!(deposit_estimate.arbiter_count, 10);
+    assert_eq!(deposit_estimate.fee_recipient_count, 0);
+
+    let withdraw_estimate = client
+        .try_estimate_withdraw_resources(&token, &512)
+        .unwrap()
+        .unwrap();
+    assert_eq!(withdraw_estimate.token_count, 1);
+    assert_eq!(withdraw_estimate.arbiter_count, 0);
+    assert_eq!(withdraw_estimate.salt_bytes, 512);
+}
+
+#[test]
+fn test_deposit_rejects_large_but_otherwise_valid_salt_payloads() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &2_000);
+
+    let salt = Bytes::from_array(&env, &[7u8; 513]);
+    let result = client.try_deposit(&token, &1_000i128, &owner, &salt, &0u64, &None);
+    assert_contract_error(result, RustAcademyError::PayloadTooLarge);
+}
+
+#[test]
+fn test_withdraw_rejects_large_but_otherwise_valid_salt_payloads() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount = 1_000i128;
+    let salt = Bytes::from_array(&env, &[9u8; 513]);
+    let commitment = client.create_amount_commitment(&owner, &amount, &salt);
+
+    setup_escrow(
+        &env,
+        &client.address,
+        &token,
+        amount,
+        commitment.clone(),
+        0,
+    );
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&client.address, &amount);
+
+    let result = client.try_withdraw(&token, &amount, &commitment, &owner, &salt);
+    assert_contract_error(result, RustAcademyError::PayloadTooLarge);
+}
+
+#[test]
+fn test_budget_envelopes_cover_supported_deposit_and_withdraw_paths() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let collector = Address::generate(&env);
+    let amount = 1_000_000i128;
+    let salt = Bytes::from_slice(&env, b"budget-envelope-salt");
+    let limits = client.get_escrow_operation_limits();
+
+    client.initialize(&admin);
+    client.set_platform_wallet(&admin, &collector);
+    client.rotate_fee_collector(&admin, &collector);
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &(amount * 2));
+
+    env.cost_estimate().budget().reset_default();
+    let commitment = client.deposit(&token, &amount, &owner, &salt, &0u64, &None);
+    assert!(env.cost_estimate().budget().cpu_instruction_cost() <= limits.deposit_max_cpu_instructions);
+    assert!(env.cost_estimate().budget().memory_bytes_cost() <= limits.deposit_max_memory_bytes);
+
+    env.cost_estimate().budget().reset_default();
+    client.withdraw(&token, &amount, &commitment, &owner, &salt);
+    assert!(env.cost_estimate().budget().cpu_instruction_cost() <= limits.withdraw_max_cpu_instructions);
+    assert!(env.cost_estimate().budget().memory_bytes_cost() <= limits.withdraw_max_memory_bytes);
 }
 
 /// Regression suite: deposit with commitment — create escrow (golden path).
@@ -836,6 +941,8 @@ fn test_event_snapshot_escrow_deposited_schema() {
     assert!(data_map.get(Symbol::new(&env, "amount_paid")).is_some());
     assert!(data_map.get(Symbol::new(&env, "expires_at")).is_some());
     assert!(data_map.get(Symbol::new(&env, "timestamp")).is_some());
+    // Replay metadata: contract-reported ledger sequence for deduplication.
+    assert!(data_map.get(Symbol::new(&env, "ledger_sequence")).is_some());
 }
 
 #[test]
@@ -2321,6 +2428,299 @@ fn test_refund_fails_during_dispute() {
     );
 }
 
+// ============================================================================
+// Dispute timeout / auto-resolution tests (Issue #49)
+// ============================================================================
+
+#[test]
+fn test_dispute_records_expiry_metadata() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let amount: i128 = 5000;
+    let salt = Bytes::from_slice(&env, b"timeout_metadata_salt");
+
+    client.initialize(&admin);
+    client.set_dispute_timeout(&admin, &10u64);
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+    let commitment = client.deposit(
+        &token,
+        &amount,
+        &owner,
+        &salt,
+        &1000,
+        &Some(arbiter.clone()),
+    );
+
+    let now = env.ledger().timestamp();
+    client.dispute(&commitment);
+
+    let expiry = client.get_dispute_expiry(&commitment).unwrap();
+    assert_eq!(expiry.expires_at, now + 10);
+    assert_eq!(expiry.action, DisputeExpiryAction::RefundOwner);
+}
+
+#[test]
+fn test_set_dispute_expiry_action_requires_admin() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let rando = Address::generate(&env);
+
+    client.initialize(&admin);
+    let res = client.try_set_dispute_expiry_action(&rando, &DisputeExpiryAction::PayArbiter);
+    assert_eq!(
+        res,
+        Err(Ok(crate::errors:: RustAcademyError::InsufficientRole))
+    );
+
+    client.set_dispute_expiry_action(&admin, &DisputeExpiryAction::PayArbiter);
+    assert_eq!(
+        client.get_dispute_expiry_action(),
+        DisputeExpiryAction::PayArbiter
+    );
+}
+
+#[test]
+fn test_resolve_expired_dispute_refunds_owner() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let amount: i128 = 5000;
+    let salt = Bytes::from_slice(&env, b"auto_resolve_owner_salt");
+
+    client.initialize(&admin);
+    client.set_dispute_timeout(&admin, &10u64);
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+    let commitment = client.deposit(
+        &token,
+        &amount,
+        &owner,
+        &salt,
+        &1000,
+        &Some(arbiter.clone()),
+    );
+
+    client.dispute(&commitment);
+    let expiry = client.get_dispute_expiry(&commitment).unwrap();
+
+    // Fast forward past the dispute timeout.
+    env.ledger().set_timestamp(expiry.expires_at + 1);
+
+    client.resolve_expired_dispute(&commitment);
+
+    assert_eq!(
+        client.get_commitment_state(&commitment),
+        Some(EscrowStatus::Refunded)
+    );
+    assert_eq!(token_client.balance(&owner), amount);
+    assert_eq!(token_client.balance(&client.address), 0);
+    assert!(client.get_dispute_expiry(&commitment).is_none());
+}
+
+#[test]
+fn test_resolve_expired_dispute_pays_arbiter() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let amount: i128 = 5000;
+    let salt = Bytes::from_slice(&env, b"auto_resolve_arbiter_salt");
+
+    client.initialize(&admin);
+    client.set_dispute_timeout(&admin, &10u64);
+    client.set_dispute_expiry_action(&admin, &DisputeExpiryAction::PayArbiter);
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+    let commitment = client.deposit(
+        &token,
+        &amount,
+        &owner,
+        &salt,
+        &1000,
+        &Some(arbiter.clone()),
+    );
+
+    client.dispute(&commitment);
+    let expiry = client.get_dispute_expiry(&commitment).unwrap();
+
+    env.ledger().set_timestamp(expiry.expires_at + 1);
+
+    client.resolve_expired_dispute(&commitment);
+
+    assert_eq!(
+        client.get_commitment_state(&commitment),
+        Some(EscrowStatus::Spent)
+    );
+    assert_eq!(token_client.balance(&arbiter), amount);
+    assert_eq!(token_client.balance(&client.address), 0);
+    assert!(client.get_dispute_expiry(&commitment).is_none());
+}
+
+#[test]
+fn test_resolve_expired_dispute_fails_before_timeout() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let amount: i128 = 5000;
+    let salt = Bytes::from_slice(&env, b"before_timeout_salt");
+
+    client.initialize(&admin);
+    client.set_dispute_timeout(&admin, &10u64);
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+    let commitment = client.deposit(
+        &token,
+        &amount,
+        &owner,
+        &salt,
+        &1000,
+        &Some(arbiter.clone()),
+    );
+
+    client.dispute(&commitment);
+    let expiry = client.get_dispute_expiry(&commitment).unwrap();
+
+    // Advance to just before expiry.
+    env.ledger().set_timestamp(expiry.expires_at - 1);
+
+    let res = client.try_resolve_expired_dispute(&commitment);
+    assert_eq!(
+        res,
+        Err(Ok(crate::errors:: RustAcademyError::DisputeNotExpired))
+    );
+}
+
+#[test]
+fn test_auto_resolved_dispute_can_be_cleaned_up() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let amount: i128 = 5000;
+    let salt = Bytes::from_slice(&env, b"cleanup_salt");
+
+    client.initialize(&admin);
+    client.set_dispute_timeout(&admin, &10u64);
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+    let commitment = client.deposit(
+        &token,
+        &amount,
+        &owner,
+        &salt,
+        &1000,
+        &Some(arbiter.clone()),
+    );
+
+    client.dispute(&commitment);
+    let expiry = client.get_dispute_expiry(&commitment).unwrap();
+    env.ledger().set_timestamp(expiry.expires_at + 1);
+
+    client.resolve_expired_dispute(&commitment);
+
+    // Cleanup of the now-terminal escrow should succeed and remove stale
+    // dispute metadata as well.
+    client.cleanup_escrow(&commitment);
+    assert!(client.get_commitment_state(&commitment).is_none());
+    assert!(client.get_dispute_expiry(&commitment).is_none());
+}
+
+#[test]
+fn test_normal_dispute_resolution_clears_expiry_metadata() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let amount: i128 = 5000;
+    let salt = Bytes::from_slice(&env, b"normal_resolve_clears_salt");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+    let commitment = client.deposit(
+        &token,
+        &amount,
+        &owner,
+        &salt,
+        &1000,
+        &Some(arbiter.clone()),
+    );
+
+    client.dispute(&commitment);
+    assert!(client.get_dispute_expiry(&commitment).is_some());
+
+    let recipient = Address::generate(&env);
+    client.resolve_dispute(&arbiter, &commitment, &false, &recipient);
+
+    assert!(client.get_dispute_expiry(&commitment).is_none());
+}
+
+#[test]
+fn test_resolve_expired_dispute_emits_auto_resolved_event() {
+    let (env, client) = setup();
+    let admin = Address::generate(&env);
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let arbiter = Address::generate(&env);
+    let amount: i128 = 5000;
+    let salt = Bytes::from_slice(&env, b"event_salt");
+
+    client.initialize(&admin);
+    client.set_dispute_timeout(&admin, &10u64);
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+    let commitment = client.deposit(
+        &token,
+        &amount,
+        &owner,
+        &salt,
+        &1000,
+        &Some(arbiter.clone()),
+    );
+
+    client.dispute(&commitment);
+    let expiry = client.get_dispute_expiry(&commitment).unwrap();
+    env.ledger().set_timestamp(expiry.expires_at + 1);
+
+    client.resolve_expired_dispute(&commitment);
+
+    let all = env.events().all();
+    let mut found = false;
+    for i in 0..all.len() {
+        let event = all.get(i).unwrap();
+        if event.0 != client.address {
+            continue;
+        }
+        let topics = event.1;
+        if topics.len() < 2 {
+            continue;
+        }
+        let t0: Symbol = topics.get(0).unwrap().try_into_val(&env).unwrap();
+        let t1: Symbol = topics.get(1).unwrap().try_into_val(&env).unwrap();
+        if t0 == Symbol::new(&env, EVENT_TOPIC_DISPUTE)
+            && t1 == Symbol::new(&env, "DisputeAutoResolved")
+        {
+            found = true;
+        }
+    }
+    assert!(found);
+}
+
 #[test]
 fn test_get_escrow_details_shows_arbiter_to_owner_and_arbiter() {
     let (env, client) = setup();
@@ -3340,6 +3740,148 @@ fn test_multi_payment_sequence() {
 }
 
 // ============================================================================
+// deposit_with_arbiters — multi-sig escrow creation API (Issue #14)
+// ============================================================================
+
+#[test]
+fn test_deposit_with_arbiters_creates_escrow_and_is_disputable() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let a1 = Address::generate(&env);
+    let a2 = Address::generate(&env);
+    let a3 = Address::generate(&env);
+    let amount: i128 = 3000;
+    let salt = Bytes::from_slice(&env, b"multisig_creation");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+
+    let mut arbiters = Vec::new(&env);
+    arbiters.push_back(a1.clone());
+    arbiters.push_back(a2.clone());
+    arbiters.push_back(a3.clone());
+
+    let commitment = client.deposit_with_arbiters(&token, &amount, &owner, &salt, &0, &arbiters, &2);
+
+    // Escrow exists and is Pending.
+    assert_eq!(client.get_commitment_state(&commitment), Some(EscrowStatus::Pending));
+}
+
+#[test]
+fn test_deposit_with_arbiters_accepts_supported_upper_bound() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &5_000);
+    let salt = Bytes::from_slice(&env, b"max-arbiters-supported");
+
+    let mut arbiters = Vec::new(&env);
+    for _ in 0..10 {
+        arbiters.push_back(Address::generate(&env));
+    }
+
+    let commitment =
+        client.deposit_with_arbiters(&token, &1_000i128, &owner, &salt, &0u64, &arbiters, &10);
+    assert_eq!(client.get_commitment_state(&commitment), Some(EscrowStatus::Pending));
+}
+
+#[test]
+fn test_deposit_with_arbiters_rejects_zero_threshold() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount: i128 = 1000;
+    let salt = Bytes::from_slice(&env, b"zero_threshold");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+
+    let mut arbiters = Vec::new(&env);
+    arbiters.push_back(Address::generate(&env));
+
+    let result = client.try_deposit_with_arbiters(&token, &amount, &owner, &salt, &0, &arbiters, &0);
+    assert_eq!(result.unwrap_err().unwrap(), crate::errors:: RustAcademyError::InvalidThreshold);
+}
+
+#[test]
+fn test_deposit_with_arbiters_rejects_threshold_exceeding_count() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount: i128 = 1000;
+    let salt = Bytes::from_slice(&env, b"exceed_threshold");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+
+    let mut arbiters = Vec::new(&env);
+    arbiters.push_back(Address::generate(&env));
+    arbiters.push_back(Address::generate(&env));
+
+    // threshold=3 exceeds arbiter count=2
+    let result = client.try_deposit_with_arbiters(&token, &amount, &owner, &salt, &0, &arbiters, &3);
+    assert_eq!(result.unwrap_err().unwrap(), crate::errors:: RustAcademyError::InvalidThreshold);
+}
+
+#[test]
+fn test_deposit_with_arbiters_rejects_duplicate_arbiters() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount: i128 = 1000;
+    let salt = Bytes::from_slice(&env, b"dup_arbiter");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+
+    let dup = Address::generate(&env);
+    let mut arbiters = Vec::new(&env);
+    arbiters.push_back(dup.clone());
+    arbiters.push_back(dup.clone()); // duplicate
+
+    let result = client.try_deposit_with_arbiters(&token, &amount, &owner, &salt, &0, &arbiters, &1);
+    assert_eq!(result.unwrap_err().unwrap(), crate::errors:: RustAcademyError::DuplicateArbiter);
+}
+
+#[test]
+fn test_deposit_with_arbiters_rejects_above_supported_upper_bound() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &5_000);
+    let salt = Bytes::from_slice(&env, b"too-many-arbiters");
+
+    let mut arbiters = Vec::new(&env);
+    for _ in 0..11 {
+        arbiters.push_back(Address::generate(&env));
+    }
+
+    let result =
+        client.try_deposit_with_arbiters(&token, &1_000i128, &owner, &salt, &0u64, &arbiters, &11);
+    assert_contract_error(result, RustAcademyError::TooManyArbiters);
+}
+
+#[test]
+fn test_deposit_with_arbiters_rejects_empty_arbiters() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount: i128 = 1000;
+    let salt = Bytes::from_slice(&env, b"empty_arbiters");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &amount);
+
+    let arbiters: Vec<Address> = Vec::new(&env);
+
+    let result = client.try_deposit_with_arbiters(&token, &amount, &owner, &salt, &0, &arbiters, &1);
+    assert_eq!(result.unwrap_err().unwrap(), crate::errors:: RustAcademyError::InvalidThreshold);
+}
+
+// ============================================================================
 // Multi-Sig Arbiter Tests
 // ============================================================================
 
@@ -3486,4 +4028,79 @@ fn test_single_arbiter_still_works() {
         Some(EscrowStatus::Spent)
     );
     assert_eq!(token_client.balance(&recipient), amount);
+}
+
+// ============================================================================
+// deposit_partial duplicate detection and escrow ID mapping (Issue #13)
+// ============================================================================
+
+#[test]
+fn test_deposit_partial_identical_retry_returns_existing_commitment() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount_due: i128 = 1000;
+    let initial: i128 = 300;
+    let salt = Bytes::from_slice(&env, b"idempotent_salt_partial");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &(initial * 2));
+
+    let c1 = client.deposit_partial(&token, &amount_due, &initial, &owner, &salt, &0, &None);
+    // Identical retry must return the same commitment, not create a duplicate.
+    let c2 = client.deposit_partial(&token, &amount_due, &initial, &owner, &salt, &0, &None);
+    assert_eq!(c1, c2);
+}
+
+#[test]
+fn test_deposit_partial_duplicate_commitment_rejected() {
+    // Two partial deposits with the same (amount_due, salt) must not overwrite each other.
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount_due: i128 = 1000;
+    let salt = Bytes::from_slice(&env, b"dup_check_salt");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &2000);
+
+    client.deposit_partial(&token, &amount_due, &200, &owner, &salt, &0, &None);
+    // Changing initial_payment but same (amount_due, salt) key → CommitmentAlreadyExists.
+    let result = client.try_deposit_partial(&token, &amount_due, &300, &owner, &salt, &0, &None);
+    assert!(result.is_err());
+    assert_eq!(
+        result.unwrap_err().unwrap(),
+        crate::errors:: RustAcademyError::CommitmentAlreadyExists
+    );
+}
+
+#[test]
+fn test_deposit_partial_has_escrow_id_mapping() {
+    let (env, client) = setup();
+    let token = create_test_token(&env);
+    let owner = Address::generate(&env);
+    let amount_due: i128 = 2000;
+    let initial: i128 = 500;
+    let salt = Bytes::from_slice(&env, b"id_map_salt");
+
+    let token_client = token::StellarAssetClient::new(&env, &token);
+    token_client.mint(&owner, &initial);
+
+    let commitment = client.deposit_partial(&token, &amount_due, &initial, &owner, &salt, &0, &None);
+
+    // Backend / indexer can correlate the commitment to a stable escrow ID.
+    let escrow_id = crate::escrow_id::derive_partial_escrow_id(
+        &env,
+        &token,
+        amount_due,
+        initial,
+        &owner,
+        &Bytes::from_slice(&env, b"id_map_salt"),
+        0,
+        &None,
+    )
+    .unwrap();
+
+    let mapped = client.get_escrow_id_commitment(&escrow_id);
+    assert_eq!(mapped, Some(commitment));
 }

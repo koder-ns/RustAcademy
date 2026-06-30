@@ -402,6 +402,42 @@ fn test_privacy_history_is_bounded() {
 }
 
 #[test]
+fn test_privacy_level_ttl_extended_on_write_and_read() {
+    let env = Env::default();
+    let contract_id = env.register(crate:: RustAcademyContract, ());
+    env.as_contract(&contract_id, || {
+        let account = Address::generate(&env);
+
+        // Write sets TTL.
+        set_privacy_level(&env, &account, 2);
+        assert_eq!(get_privacy_level(&env, &account), Some(2));
+
+        // Update extends TTL and value is accurate.
+        set_privacy_level(&env, &account, 5);
+        assert_eq!(get_privacy_level(&env, &account), Some(5));
+    });
+}
+
+#[test]
+fn test_privacy_history_ttl_extended_on_write_and_read() {
+    let env = Env::default();
+    let contract_id = env.register(crate:: RustAcademyContract, ());
+    env.as_contract(&contract_id, || {
+        let account = Address::generate(&env);
+
+        add_privacy_history(&env, &account, 1);
+        add_privacy_history(&env, &account, 2);
+        add_privacy_history(&env, &account, 3);
+
+        let history = get_privacy_history(&env, &account);
+        // Newest-first ordering is maintained and TTL was extended.
+        assert_eq!(history.len(), 3);
+        assert_eq!(history.get(0).unwrap(), 3u32);
+        assert_eq!(history.get(2).unwrap(), 1u32);
+    });
+}
+
+#[test]
 fn test_cleanup_stealth_escrow_removes_terminal_entry() {
     use crate::types::StealthEscrowEntry;
     use soroban_sdk::BytesN;
@@ -413,7 +449,7 @@ fn test_cleanup_stealth_escrow_removes_terminal_entry() {
         let entry = StealthEscrowEntry {
             token: Address::generate(&env),
             amount_due: 500,
-            amount_paid: 500,
+            amount_paid: 0, // Terminal entries must have zero balance (INV-S-1)
             eph_pub: BytesN::from_array(&env, &[3u8; 32]),
             status: EscrowStatus::Spent,
             created_at: 0,

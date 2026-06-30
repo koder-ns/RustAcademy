@@ -37,11 +37,17 @@
    /** Amount provided is zero or negative. */
    INVALID_AMOUNT = 'CONTRACT_INVALID_AMOUNT',
 
-   // ── Version / upgrade ─────────────────────────────────────────────────────
-   /** Contract schema version is not supported by this client. */
-   VERSION_MISMATCH = 'CONTRACT_VERSION_MISMATCH',
-   /** WASM hash provided for upgrade is invalid. */
-   INVALID_WASM_HASH = 'CONTRACT_INVALID_WASM_HASH',
+    // ── Version / upgrade ─────────────────────────────────────────────────────
+    /** Contract schema version is not supported by this client. */
+    VERSION_MISMATCH = 'CONTRACT_VERSION_MISMATCH',
+    /** WASM hash provided for upgrade is invalid. */
+    INVALID_WASM_HASH = 'CONTRACT_INVALID_WASM_HASH',
+    /** Upgrade window is not currently active; start_upgrade is blocked. */
+    UPGRADE_WINDOW_NOT_ACTIVE = 'CONTRACT_UPGRADE_WINDOW_NOT_ACTIVE',
+    /** An upgrade is already in progress; start_upgrade cannot be called again. */
+    UPGRADE_ALREADY_IN_PROGRESS = 'CONTRACT_UPGRADE_ALREADY_IN_PROGRESS',
+    /** No upgrade is currently in progress; upgrade or complete_upgrade cannot proceed. */
+    UPGRADE_NOT_IN_PROGRESS = 'CONTRACT_UPGRADE_NOT_IN_PROGRESS',
 
    // ── Admin ─────────────────────────────────────────────────────────────────
    /** Caller is not the contract admin. */

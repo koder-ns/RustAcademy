@@ -133,7 +133,7 @@ admin_account.complete_upgrade(contract, 2u32)?;
 - ✅ `start_upgrade()` fails after window end time
 - ✅ `start_upgrade()` succeeds within window `[start, end)`
 
-**Error Code**: `InvalidAmount` (repurposed as "upgrade window not active")
+**Error Code**: `UpgradeWindowNotActive`
 
 ### AC2: Post-Upgrade Invariants Enforced Deterministically
 
@@ -235,13 +235,15 @@ pub struct UpgradeCompletedEvent {
 
 ## Error Codes
 
-New or repurposed errors:
+New upgrade-specific errors:
 
-| Error            | Code | Trigger                        | Context                                     |
-| ---------------- | ---- | ------------------------------ | ------------------------------------------- |
-| `InvalidAmount`  | 100  | Upgrade window not active      | `start_upgrade()` outside `[start, end)`    |
-| `ContractPaused` | 300  | Upgrade already in progress    | `start_upgrade()` called twice              |
-| `InternalError`  | 900  | Post-upgrade invariants failed | `complete_upgrade()` after failed migration |
+| Error                     | Code | Trigger                        | Context                                     |
+| ------------------------- | ---- | ------------------------------ | ------------------------------------------- |
+| `UpgradeWindowNotActive`  | 502  | Upgrade window not active      | `start_upgrade()` outside `[start, end)`    |
+| `UpgradeAlreadyInProgress`| 503  | Upgrade already in progress    | `start_upgrade()` called twice              |
+| `UpgradeNotInProgress`    | 504  | No upgrade in progress         | `upgrade()` / `complete_upgrade()` without `start_upgrade()` |
+
+Legacy repurposed codes removed; backend now maps these to stable API codes.
 
 ---
 
@@ -291,7 +293,7 @@ let new_version = admin.complete_upgrade(contract, 2u32)?;
 ```rust
 // Same setup as above; but now it's Day 1, 13:00 UTC (before window)
 admin.start_upgrade(contract, 2u32)?;
-// → Err: InvalidAmount ("upgrade window not active")
+// → Err: UpgradeWindowNotActive ("upgrade window not active")
 ```
 
 ---

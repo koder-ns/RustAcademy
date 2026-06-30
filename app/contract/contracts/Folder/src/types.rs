@@ -3,7 +3,7 @@
 //! See [`crate::storage`] for the storage schema and key layout.
 
 use crate::errors::RustAcademyError;
-use soroban_sdk::{contracttype, Address, BytesN, Vec};
+use soroban_sdk::{contracttype, Address, BytesN, Symbol, Vec};
 
 /// Explicit fee ratio used to prescale a payout share.
 ///
@@ -151,6 +151,37 @@ pub struct DisputeVote {
     pub voted_at: u64,
 }
 
+/// Deterministic outcome for a dispute that has passed its resolution timeout.
+///
+/// Used by the auto-resolution path to transition stale disputes into a terminal
+/// state without requiring an arbiter vote.
+#[contracttype]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum DisputeExpiryAction {
+    /// Refund the escrowed funds back to the original owner.
+    RefundOwner,
+    /// Pay the escrowed funds to the assigned arbiter.
+    PayArbiter,
+}
+
+impl Default for DisputeExpiryAction {
+    fn default() -> Self {
+        DisputeExpiryAction::RefundOwner
+    }
+}
+
+/// Dispute timeout metadata stored per escrow.
+///
+/// Recorded when a dispute is opened and consulted during auto-resolution.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DisputeExpiry {
+    /// Ledger timestamp after which the dispute may be auto-resolved.
+    pub expires_at: u64,
+    /// Deterministic action to take once the timeout is reached.
+    pub action: DisputeExpiryAction,
+}
+
 /// Parameters for registering an ephemeral key (stealth deposit).
 ///
 /// Bundles the 8 arguments of `register_ephemeral_key` into a single struct
@@ -282,6 +313,49 @@ pub struct OracleFeeConfig {
     pub schema_version: u32,
 }
 
+/// Supported escrow operation bounds and published worst-case budget envelopes.
+///
+/// These limits are part of the public contract surface so integrators can
+/// preflight deposits and withdrawals before submitting transactions.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct EscrowOperationLimits {
+    /// Maximum salt bytes accepted for resource-bounded deposit and withdraw flows.
+    pub max_salt_bytes: u32,
+    /// Maximum token transfer paths supported by a deposit call.
+    pub deposit_max_token_count: u32,
+    /// Maximum arbiters supported by the deposit family (`deposit_with_arbiters`).
+    pub deposit_max_arbiter_count: u32,
+    /// Maximum fee recipients touched by deposit paths.
+    pub deposit_max_fee_recips: u32,
+    /// Published worst-case CPU budget envelope for supported deposit payloads.
+    pub deposit_max_cpu_instructions: u64,
+    /// Published worst-case memory budget envelope for supported deposit payloads.
+    pub deposit_max_memory_bytes: u64,
+    /// Maximum token transfer paths supported by a withdraw call.
+    pub withdraw_max_token_count: u32,
+    /// Maximum arbiters consulted by the standard withdraw path.
+    pub withdraw_max_arbiter_count: u32,
+    /// Maximum fee recipients touched by a withdraw call.
+    pub withdraw_max_fee_recips: u32,
+    /// Published worst-case CPU budget envelope for supported withdraw payloads.
+    pub withdraw_max_cpu_instructions: u64,
+    /// Published worst-case memory budget envelope for supported withdraw payloads.
+    pub withdraw_max_memory_bytes: u64,
+}
+
+/// Resource estimate for a concrete escrow operation shape.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct EscrowOperationEstimate {
+    pub token_count: u32,
+    pub arbiter_count: u32,
+    pub fee_recipient_count: u32,
+    pub salt_bytes: u32,
+    pub estimated_cpu_instructions: u64,
+    pub estimated_memory_bytes: u64,
+}
+
 /// Deployment metadata returned by [`crate:: RustAcademyContract::get_deployment_metadata`].
 ///
 /// Clients and indexers can call this view to validate compatibility without
@@ -316,6 +390,93 @@ pub struct DeploymentMetadata {
     pub contract_id: Address,
 }
 
+/// Contract health summary returned by read-only metadata probes.
+///
+/// This struct is intentionally non-mutating: all values are derived from
+/// existing contract state and can be called by anyone.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ContractHealth {
+    /// Human-readable status symbol, e.g. `Symbol::new(env, "healthy")`.
+    pub status: Symbol,
+    /// True when the legacy global pause flag is set.
+    pub paused: bool,
+    /// True when the contract is in emergency mode.
+    pub emergency_mode: bool,
+    /// True when an upgrade is currently in progress.
+    pub upgrade_in_progress: bool,
+}
+
+/// Feature flags describing the capabilities supported by this contract build.
+///
+/// Consumers can use these flags to detect whether optional flows (e.g. upgrade
+/// gating, stealth escrows) are available before sending writes.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FeatureFlags {
+    pub upgrade_gating: bool,
+    pub privacy: bool,
+    pub partial_payment: bool,
+    pub stealth: bool,
+    pub fee_router: bool,
+    pub oracle_fees: bool,
+    pub hooks: bool,
+}
+
+/// State of the upgrade gating mechanism.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UpgradeState {
+    /// Whether an upgrade is in progress (between start_upgrade and complete_upgrade).
+    pub in_progress: bool,
+    /// Version recorded during start_upgrade, if any.
+    pub pending_version: Option<u32>,
+    /// WASM hash recorded during start_upgrade, if any.
+    pub pending_wasm_hash: Option<BytesN<32>>,
+    /// Whether the current ledger timestamp is within the active upgrade window.
+    pub window_active: bool,
+    /// Start of the upgrade window (epoch seconds). 0 means no window set.
+    pub window_start: u64,
+    /// End of the upgrade window (epoch seconds). 0 means no upper bound.
+    pub window_end: u64,
+}
+
+/// Versions supported by the current deployment.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SupportedVersions {
+    /// Current stored contract version.
+    pub contract_version: u32,
+    /// Current event schema version.
+    pub event_schema_version: u32,
+    /// Minimum contract version this build can migrate from.
+    pub min_contract_version: u32,
+    /// Minimum event schema version this build can emit.
+    pub min_event_schema_version: u32,
+    /// All event schema versions supported by this build (sorted ascending).
+    pub supported_event_versions: Vec<u32>,
+}
+
+/// Result of a schema-compatibility probe against a caller-supplied version pair.
+#[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct SchemaCompatibility {
+    /// Whether the requested contract version is supported by this deployment.
+    pub contract_compatible: bool,
+    /// Whether the requested event schema version is supported by this deployment.
+    pub event_compatible: bool,
+    /// True only when both requested versions are compatible.
+    pub overall_compatible: bool,
+    /// Current stored contract version.
+    pub current_contract: u32,
+    /// Current event schema version.
+    pub current_event: u32,
+    /// Requested contract version from the caller.
+    pub requested_contract: u32,
+    /// Requested event schema version from the caller.
+    pub requested_event: u32,
+}
+
 /// Hook event kinds used for external callbacks.
 #[contracttype]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -337,4 +498,28 @@ pub enum Role {
     Operator = 2,
     /// Authorized to resolve disputes across escrows.
     Arbiter = 3,
+}
+
+/// Build-time manifest embedded in the WASM artifact.
+///
+/// This metadata is generated at compile time and provides deterministic
+/// correlation between deployed WASM artifacts and their source code.
+///
+/// ## Invariants
+///
+/// - `git_hash` is set to the full commit hash if available, otherwise "unknown"
+/// - `build_timestamp` is the UNIX epoch time when the WASM was built
+/// - `source_hash` is a deterministic hash of all Rust source files
+/// - `schema_version` is the manifest format version (increment on breaking changes)
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BuildManifest {
+    /// Full git commit hash of the build source.
+    pub git_hash: BytesN<32>,
+    /// Build timestamp in seconds since UNIX epoch.
+    pub build_timestamp: u64,
+    /// Hash of the source files (first 32 bytes of BLAKE3 hash).
+    pub source_hash: BytesN<32>,
+    /// Schema version for the build manifest format.
+    pub schema_version: u32,
 }

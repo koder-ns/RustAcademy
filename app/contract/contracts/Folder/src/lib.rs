@@ -7,6 +7,7 @@ mod bench_test;
 mod commitment;
 #[cfg(test)]
 mod commitment_test;
+mod dispute;
 mod errors;
 mod escrow;
 mod escrow_id;
@@ -22,6 +23,7 @@ mod fee_test;
 #[cfg(test)]
 mod fuzz_test;
 mod hook;
+mod metadata;
 #[cfg(test)]
 mod metadata_test;
 pub mod nonce;
@@ -48,8 +50,10 @@ mod upgrade_test;
 use errors::RustAcademyError;
 use storage::*;
 use types::{
-    DeploymentMetadata, EscrowEntry, EscrowStatus, FeeConfig, OracleFeeConfig,
-    PerAssetFeeConfig, PrivacyAwareEscrowView, Role, StealthDepositParams,
+    ContractHealth, DeploymentMetadata, DisputeExpiryAction, EscrowEntry,
+    EscrowOperationEstimate, EscrowOperationLimits, EscrowStatus, FeatureFlags, FeeConfig,
+    OracleFeeConfig, PerAssetFeeConfig, PrivacyAwareEscrowView, Role, SchemaCompatibility,
+    StealthDepositParams, SupportedVersions, UpgradeState,
 };
 
 pub use types::FeeRatio;
@@ -69,6 +73,21 @@ pub use types::FeeRatio;
 ///
 /// The contract uses Soroban's standardized token interface which works uniformly across
 /// all asset types. No special wrap/unwrap logic is required from users.
+///
+/// ## Supported Escrow Limits
+///
+/// The contract publishes bounded escrow limits through
+/// [`RustAcademyContract::get_escrow_operation_limits`]. The current supported
+/// envelopes are:
+/// - deposit token transfers: 1
+/// - deposit arbiters: up to 10
+/// - deposit fee recipients: 0
+/// - withdraw token transfers: 1
+/// - withdraw fee recipients: up to 3
+/// - deposit/withdraw salt bytes: up to 512 for predictable execution
+///
+/// Requests outside those bounds fail with explicit contract errors instead of
+/// consuming unbounded Soroban resources.
 ///
 /// ## Escrow State Machine
 ///
@@ -450,6 +469,42 @@ impl RustAcademyContract {
         )
     }
 
+    /// Create a multi-signature (M-of-N) arbitration escrow.
+    ///
+    /// Like `deposit`, but accepts a list of arbiters and a threshold: `threshold`
+    /// of the `arbiters` must vote to resolve any dispute.
+    ///
+    /// # Arguments
+    /// * `token` - Token contract address
+    /// * `amount` - Amount to escrow (must be > 0)
+    /// * `owner` - Depositor address (must authorize)
+    /// * `salt` - Uniqueness salt (max 1024 bytes)
+    /// * `timeout_secs` - Seconds until expiry; 0 = no expiry
+    /// * `arbiters` - Non-empty list of arbiter addresses (max 10, no duplicates)
+    /// * `threshold` - Number of arbiter votes required to resolve (1 ≤ threshold ≤ len(arbiters))
+    ///
+    /// # Errors
+    /// * `InvalidAmount` - Amount is zero or negative
+    /// * `InvalidSalt` - Salt exceeds 1024 bytes
+    /// * `InvalidThreshold` - Threshold is 0, exceeds arbiter count, or arbiters is empty
+    /// * `DuplicateArbiter` - The arbiters list contains duplicate addresses
+    /// * `TooManyArbiters` - More than 10 arbiters provided
+    /// * `CommitmentAlreadyExists` - An escrow with the same commitment already exists
+    #[allow(clippy::too_many_arguments)]
+    pub fn deposit_with_arbiters(
+        env: Env,
+        token: Address,
+        amount: i128,
+        owner: Address,
+        salt: Bytes,
+        timeout_secs: u64,
+        arbiters: Vec<Address>,
+        threshold: u32,
+    ) -> Result<BytesN<32>, RustAcademyError> {
+        admin::guard_deposit(&env, PauseFlag::Deposit)?;
+        escrow::deposit_with_arbiters(&env, token, amount, owner, salt, timeout_secs, arbiters, threshold)
+    }
+
     /// Make a partial payment towards an existing escrow.
     ///
     /// Transfers `payment_amount` from `payer` to the contract and increments the
@@ -623,6 +678,65 @@ impl RustAcademyContract {
         escrow::resolve_dispute_multi_sig(&env, commitment, recipient)
     }
 
+    // -----------------------------------------------------------------------
+    // Dispute timeout / auto-resolution (Issue #49)
+    // -----------------------------------------------------------------------
+
+    /// Set the global dispute resolution timeout in seconds.
+    ///
+    /// Requires Admin or Operator role. Emits `DisputeTimeoutConfigSet`.
+    pub fn set_dispute_timeout(
+        env: Env,
+        caller: Address,
+        timeout_secs: u64,
+    ) -> Result<(), RustAcademyError> {
+        hook::assert_not_reentrant(&env)?;
+        dispute::set_timeout(&env, caller, timeout_secs)
+    }
+
+    /// Get the current global dispute resolution timeout in seconds.
+    pub fn get_dispute_timeout(env: Env) -> u64 {
+        storage::get_dispute_timeout(&env)
+    }
+
+    /// Set the global default action for expired disputes.
+    ///
+    /// Requires Admin or Operator role. Emits `DisputeExpiryActionSet`.
+    pub fn set_dispute_expiry_action(
+        env: Env,
+        caller: Address,
+        action: DisputeExpiryAction,
+    ) -> Result<(), RustAcademyError> {
+        hook::assert_not_reentrant(&env)?;
+        dispute::set_expiry_action(&env, caller, action)
+    }
+
+    /// Get the current global default action for expired disputes.
+    pub fn get_dispute_expiry_action(env: Env) -> DisputeExpiryAction {
+        storage::get_dispute_expiry_action(&env)
+    }
+
+    /// Get the dispute expiry metadata for an escrow, if any.
+    pub fn get_dispute_expiry(
+        env: Env,
+        commitment: BytesN<32>,
+    ) -> Option<crate::types::DisputeExpiry> {
+        let commitment_bytes: Bytes = commitment.into();
+        storage::get_dispute_expiry(&env, &commitment_bytes)
+    }
+
+    /// Resolve a disputed escrow that has passed its resolution timeout.
+    ///
+    /// Can be called by anyone once the timeout has elapsed. The outcome is
+    /// deterministic and based on the snapshotted expiry action.
+    pub fn resolve_expired_dispute(
+        env: Env,
+        commitment: BytesN<32>,
+    ) -> Result<(), RustAcademyError> {
+        hook::assert_not_reentrant(&env)?;
+        dispute::resolve_expired_dispute(&env, commitment)
+    }
+
     /// Initialize the contract with an admin address (one-time only).
     ///
     /// Sets the admin who can pause/unpause, transfer admin, and upgrade the contract.
@@ -657,12 +771,82 @@ impl RustAcademyContract {
     /// - `contract_id` — on-chain address of this contract instance, which binds
     ///   the metadata to a specific deployment and network.
     pub fn get_deployment_metadata(env: Env) -> DeploymentMetadata {
-        DeploymentMetadata {
-            contract_version: admin::get_version(&env),
-            event_schema_version: events::EVENT_SCHEMA_VERSION,
-            wasm_hash: storage::get_wasm_hash(&env),
-            contract_id: env.current_contract_address(),
-        }
+        metadata::deployment_metadata(&env)
+    }
+
+    /// Return a non-mutating health summary of the contract.
+    ///
+    /// The status is derived from pause, emergency, and upgrade flags.  It is
+    /// ordered from most to least severe: emergency > upgrading > paused > healthy.
+    pub fn get_contract_health(env: Env) -> ContractHealth {
+        metadata::contract_health(&env)
+    }
+
+    /// Return the feature flags supported by this contract build.
+    ///
+    /// Tooling can use these flags to detect whether optional flows (e.g. upgrade
+    /// gating, stealth escrows) are available before sending writes.
+    pub fn get_feature_flags(_env: Env) -> FeatureFlags {
+        metadata::feature_flags()
+    }
+
+    /// Return the state of the upgrade gating mechanism.
+    pub fn get_upgrade_state(env: Env) -> UpgradeState {
+        metadata::upgrade_state(&env)
+    }
+
+    /// Return the supported version ranges for this contract build.
+    pub fn get_supported_versions(env: Env) -> SupportedVersions {
+        metadata::supported_versions(&env)
+    }
+
+    /// Check whether a caller-supplied version pair is compatible with this deployment.
+    ///
+    /// The contract version is compatible when it equals the current stored version
+    /// (migrations are required to move between contract versions).  The event
+    /// schema version is compatible when it is one of the versions emitted by this
+    /// build.
+    pub fn check_schema_compatibility(
+        env: Env,
+        requested_contract_version: u32,
+        requested_event_schema_version: u32,
+    ) -> SchemaCompatibility {
+        metadata::check_schema_compatibility(
+            &env,
+            requested_contract_version,
+            requested_event_schema_version,
+        )
+    }
+
+    /// Return the current granular pause bitmask.
+    ///
+    /// See [`crate::storage::PauseFlag`] for the bit definitions.  A value of `0`
+    /// means no features are paused.
+    pub fn get_pause_flags(env: Env) -> u64 {
+        metadata::pause_flags(&env)
+    }
+
+    /// Return the supported escrow operation limits and published budget envelopes.
+    pub fn get_escrow_operation_limits(_env: Env) -> EscrowOperationLimits {
+        escrow::operation_limits()
+    }
+
+    /// Estimate the bounded resource envelope for a deposit-shaped payload.
+    pub fn estimate_deposit_resources(
+        _env: Env,
+        salt_bytes: u32,
+        arbiter_count: u32,
+    ) -> Result<EscrowOperationEstimate, RustAcademyError> {
+        escrow::estimate_deposit_resources_view(salt_bytes, arbiter_count)
+    }
+
+    /// Estimate the bounded resource envelope for a withdraw-shaped payload.
+    pub fn estimate_withdraw_resources(
+        env: Env,
+        token: Address,
+        salt_bytes: u32,
+    ) -> Result<EscrowOperationEstimate, RustAcademyError> {
+        escrow::estimate_withdraw_resources_view(&env, token, salt_bytes)
     }
 
     /// Run any pending data migrations for the current contract code (**Admin only**).
@@ -1066,6 +1250,8 @@ impl RustAcademyContract {
     ///
     /// # Errors
     /// * `Unauthorized` - Caller is not the admin, or admin not set
+    /// * `UpgradeNotInProgress` - no upgrade is currently in progress
+    /// * `UpgradeWindowNotActive` - upgrade window is not currently active
     ///
     /// # Security
     /// Updates the contract's executable code. Call [`migrate`]( RustAcademyContract::migrate)
@@ -1122,8 +1308,8 @@ impl RustAcademyContract {
     /// * `new_wasm_hash` - The target WASM hash
     ///
     /// # Errors
-    /// * `InvalidAmount` - (repurposed) upgrade window not active
-    /// * `ContractPaused` - (repurposed) upgrade already in progress
+    /// * `UpgradeWindowNotActive` - upgrade window is not currently active
+    /// * `UpgradeAlreadyInProgress` - an upgrade is already in progress
     pub fn start_upgrade(
         env: Env,
         caller: Address,
@@ -1152,7 +1338,8 @@ impl RustAcademyContract {
     /// The actual new contract version
     ///
     /// # Errors
-    /// * `InternalError` - no upgrade in progress, or post-upgrade invariants violated
+    /// * `UpgradeNotInProgress` - no upgrade is currently in progress
+    /// * `InternalError` - post-upgrade invariants violated
     pub fn complete_upgrade(
         env: Env,
         caller: Address,

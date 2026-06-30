@@ -63,15 +63,24 @@
 use soroban_sdk::{token, Address, Bytes, BytesN, Env, Vec};
 
 use crate::{
-    admin, commitment,
+    admin, commitment, dispute,
     errors:: RustAcademyError,
     escrow_id, events, fee_router, hook,
     storage::{
         count_dispute_votes, get_dispute_vote, get_escrow, get_escrow_id_mapping, has_dispute_vote,
         has_escrow, put_dispute_vote, put_escrow, put_escrow_id_mapping, remove_dispute_votes_for_escrow,
         remove_escrow, DataKey, LEDGER_THRESHOLD, SIX_MONTHS_IN_LEDGERS,
+        clear_dispute_state, count_dispute_votes, get_commitment_escrow_id, get_dispute_vote,
+        get_escrow, get_escrow_id_mapping, get_fee_config, get_oracle_fee_config,
+        get_per_asset_fee, get_platform_wallet, has_dispute_vote, has_escrow,
+        put_commitment_escrow_id, put_dispute_vote, put_escrow, put_escrow_id_mapping,
+        remove_commitment_escrow_id, remove_dispute_vote, remove_escrow,
+        remove_escrow_id_mapping, LEDGER_THRESHOLD, SIX_MONTHS_IN_LEDGERS,
     },
-    types::{DisputeVote, EscrowEntry, EscrowStatus, HookEventKind, Role},
+    types::{
+        DisputeVote, EscrowEntry, EscrowOperationEstimate, EscrowOperationLimits, EscrowStatus,
+        HookEventKind, Role,
+    },
 };
 
 // ---------------------------------------------------------------------------
@@ -126,6 +135,171 @@ fn compute_expires_at(env: &Env, timeout_secs: u64) -> Result<u64,  RustAcademyE
     Ok(expires_at)
 }
 
+pub const MAX_OPERATION_SALT_BYTES: u32 = 512;
+pub const MAX_SUPPORTED_TOKEN_COUNT: u32 = 1;
+pub const MAX_DEPOSIT_FEE_RECIPIENTS: u32 = 0;
+pub const MAX_WITHDRAW_ARBITERS: u32 = 0;
+pub const MAX_WITHDRAW_FEE_RECIPIENTS: u32 = 3;
+
+const DEPOSIT_BASE_CPU_INSTRUCTIONS: u64 = 465_139;
+const DEPOSIT_BASE_MEMORY_BYTES: u64 = 72_430;
+const WITHDRAW_BASE_CPU_INSTRUCTIONS: u64 = 452_582;
+const WITHDRAW_BASE_MEMORY_BYTES: u64 = 68_096;
+const ESTIMATED_CPU_PER_SALT_BYTE: u64 = 32;
+const ESTIMATED_MEMORY_PER_SALT_BYTE: u64 = 8;
+const ESTIMATED_CPU_PER_DEPOSIT_ARBITER: u64 = 20_000;
+const ESTIMATED_MEMORY_PER_DEPOSIT_ARBITER: u64 = 4_096;
+const ESTIMATED_CPU_PER_WITHDRAW_FEE_RECIPIENT: u64 = 15_000;
+const ESTIMATED_MEMORY_PER_WITHDRAW_FEE_RECIPIENT: u64 = 4_096;
+const SUPPORTED_DEPOSIT_MAX_CPU_INSTRUCTIONS: u64 = 700_000;
+const SUPPORTED_DEPOSIT_MAX_MEMORY_BYTES: u64 = 120_000;
+const SUPPORTED_WITHDRAW_MAX_CPU_INSTRUCTIONS: u64 = 620_000;
+const SUPPORTED_WITHDRAW_MAX_MEMORY_BYTES: u64 = 96_000;
+
+pub fn operation_limits() -> EscrowOperationLimits {
+    EscrowOperationLimits {
+        max_salt_bytes: MAX_OPERATION_SALT_BYTES,
+        deposit_max_token_count: MAX_SUPPORTED_TOKEN_COUNT,
+        deposit_max_arbiter_count: MAX_ARBITERS,
+        deposit_max_fee_recips: MAX_DEPOSIT_FEE_RECIPIENTS,
+        deposit_max_cpu_instructions: SUPPORTED_DEPOSIT_MAX_CPU_INSTRUCTIONS,
+        deposit_max_memory_bytes: SUPPORTED_DEPOSIT_MAX_MEMORY_BYTES,
+        withdraw_max_token_count: MAX_SUPPORTED_TOKEN_COUNT,
+        withdraw_max_arbiter_count: MAX_WITHDRAW_ARBITERS,
+        withdraw_max_fee_recips: MAX_WITHDRAW_FEE_RECIPIENTS,
+        withdraw_max_cpu_instructions: SUPPORTED_WITHDRAW_MAX_CPU_INSTRUCTIONS,
+        withdraw_max_memory_bytes: SUPPORTED_WITHDRAW_MAX_MEMORY_BYTES,
+    }
+}
+
+pub fn estimate_deposit_resources_view(
+    salt_bytes: u32,
+    arbiter_count: u32,
+) -> Result<EscrowOperationEstimate, RustAcademyError> {
+    estimate_deposit_resources(salt_bytes, arbiter_count)
+}
+
+pub fn estimate_withdraw_resources_view(
+    env: &Env,
+    token: Address,
+    salt_bytes: u32,
+) -> Result<EscrowOperationEstimate, RustAcademyError> {
+    estimate_withdraw_resources(salt_bytes, withdraw_fee_recipient_count(env, &token))
+}
+
+fn estimate_deposit_resources(
+    salt_bytes: u32,
+    arbiter_count: u32,
+) -> Result<EscrowOperationEstimate, RustAcademyError> {
+    if salt_bytes > MAX_OPERATION_SALT_BYTES {
+        return Err(RustAcademyError::PayloadTooLarge);
+    }
+    if arbiter_count > MAX_ARBITERS {
+        return Err(RustAcademyError::TooManyArbiters);
+    }
+
+    Ok(EscrowOperationEstimate {
+        token_count: MAX_SUPPORTED_TOKEN_COUNT,
+        arbiter_count,
+        fee_recipient_count: MAX_DEPOSIT_FEE_RECIPIENTS,
+        salt_bytes,
+        estimated_cpu_instructions: DEPOSIT_BASE_CPU_INSTRUCTIONS
+            .saturating_add((salt_bytes as u64).saturating_mul(ESTIMATED_CPU_PER_SALT_BYTE))
+            .saturating_add(
+                (arbiter_count as u64).saturating_mul(ESTIMATED_CPU_PER_DEPOSIT_ARBITER),
+            ),
+        estimated_memory_bytes: DEPOSIT_BASE_MEMORY_BYTES
+            .saturating_add((salt_bytes as u64).saturating_mul(ESTIMATED_MEMORY_PER_SALT_BYTE))
+            .saturating_add(
+                (arbiter_count as u64).saturating_mul(ESTIMATED_MEMORY_PER_DEPOSIT_ARBITER),
+            ),
+    })
+}
+
+fn estimate_withdraw_resources(
+    salt_bytes: u32,
+    fee_recipient_count: u32,
+) -> Result<EscrowOperationEstimate, RustAcademyError> {
+    if salt_bytes > MAX_OPERATION_SALT_BYTES {
+        return Err(RustAcademyError::PayloadTooLarge);
+    }
+    if fee_recipient_count > MAX_WITHDRAW_FEE_RECIPIENTS {
+        return Err(RustAcademyError::TooManyFeeRecipients);
+    }
+
+    Ok(EscrowOperationEstimate {
+        token_count: MAX_SUPPORTED_TOKEN_COUNT,
+        arbiter_count: MAX_WITHDRAW_ARBITERS,
+        fee_recipient_count,
+        salt_bytes,
+        estimated_cpu_instructions: WITHDRAW_BASE_CPU_INSTRUCTIONS
+            .saturating_add((salt_bytes as u64).saturating_mul(ESTIMATED_CPU_PER_SALT_BYTE))
+            .saturating_add(
+                (fee_recipient_count as u64)
+                    .saturating_mul(ESTIMATED_CPU_PER_WITHDRAW_FEE_RECIPIENT),
+            ),
+        estimated_memory_bytes: WITHDRAW_BASE_MEMORY_BYTES
+            .saturating_add((salt_bytes as u64).saturating_mul(ESTIMATED_MEMORY_PER_SALT_BYTE))
+            .saturating_add(
+                (fee_recipient_count as u64)
+                    .saturating_mul(ESTIMATED_MEMORY_PER_WITHDRAW_FEE_RECIPIENT),
+            ),
+    })
+}
+
+fn validate_deposit_resources(salt: &Bytes, arbiter_count: u32) -> Result<(), RustAcademyError> {
+    let estimate = estimate_deposit_resources(salt.len(), arbiter_count)?;
+    if estimate.token_count > MAX_SUPPORTED_TOKEN_COUNT {
+        return Err(RustAcademyError::TooManyTokens);
+    }
+    if estimate.estimated_cpu_instructions > SUPPORTED_DEPOSIT_MAX_CPU_INSTRUCTIONS
+        || estimate.estimated_memory_bytes > SUPPORTED_DEPOSIT_MAX_MEMORY_BYTES
+    {
+        return Err(RustAcademyError::PayloadTooLarge);
+    }
+    Ok(())
+}
+
+fn withdraw_fee_recipient_count(env: &Env, token: &Address) -> u32 {
+    let mut recipient_count = 1u32;
+    let per_asset = get_per_asset_fee(env, token);
+    let has_fees = per_asset
+        .map(|config| config.fee_bps > 0)
+        .unwrap_or_else(|| {
+            get_fee_config(env).fee_bps > 0 || get_oracle_fee_config(env).is_some()
+        });
+
+    if !has_fees {
+        return recipient_count;
+    }
+
+    if get_platform_wallet(env).is_some() {
+        recipient_count = recipient_count.saturating_add(1);
+    }
+    if fee_router::active_collector(env).is_some() {
+        recipient_count = recipient_count.saturating_add(1);
+    }
+
+    recipient_count
+}
+
+fn validate_withdraw_resources(
+    env: &Env,
+    token: &Address,
+    salt: &Bytes,
+) -> Result<(), RustAcademyError> {
+    let estimate = estimate_withdraw_resources(salt.len(), withdraw_fee_recipient_count(env, token))?;
+    if estimate.token_count > MAX_SUPPORTED_TOKEN_COUNT {
+        return Err(RustAcademyError::TooManyTokens);
+    }
+    if estimate.estimated_cpu_instructions > SUPPORTED_WITHDRAW_MAX_CPU_INSTRUCTIONS
+        || estimate.estimated_memory_bytes > SUPPORTED_WITHDRAW_MAX_MEMORY_BYTES
+    {
+        return Err(RustAcademyError::PayloadTooLarge);
+    }
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------
 // deposit
 // ---------------------------------------------------------------------------
@@ -154,6 +328,7 @@ pub fn deposit(
     if amount <= 0 {
         return Err( RustAcademyError::InvalidAmount);
     }
+    validate_deposit_resources(&salt, 0)?;
 
     owner.require_auth();
 
@@ -231,6 +406,133 @@ pub fn deposit(
 }
 
 // ---------------------------------------------------------------------------
+// deposit_with_arbiters
+// ---------------------------------------------------------------------------
+
+/// Maximum number of arbiters allowed in a multi-sig escrow.
+pub const MAX_ARBITERS: u32 = 10;
+
+/// Create a multi-signature (M-of-N) escrow where `threshold` of `arbiters` must
+/// vote to resolve any dispute.
+///
+/// - Transfers `amount` from `owner` to the contract.
+/// - Sets `arbiters` and `arbiter_threshold` on the entry (multi-sig mode).
+/// - `arbiter` field is set to `None`; resolution goes through `vote_for_dispute`.
+///
+/// # Errors
+/// - [`InvalidAmount`] – amount ≤ 0.
+/// - [`InvalidSalt`] – salt > 1024 bytes.
+/// - [`InvalidThreshold`] – threshold is 0, empty arbiters list, or threshold > len(arbiters).
+/// - [`DuplicateArbiter`] – the arbiters list contains a duplicate address.
+/// - [`TooManyArbiters`] – the arbiters list exceeds [`MAX_ARBITERS`].
+/// - [`CommitmentAlreadyExists`] – a commitment with the same key already exists.
+#[allow(clippy::too_many_arguments)]
+pub fn deposit_with_arbiters(
+    env: &Env,
+    token: Address,
+    amount: i128,
+    owner: Address,
+    salt: Bytes,
+    timeout_secs: u64,
+    arbiters: Vec<Address>,
+    threshold: u32,
+) -> Result<BytesN<32>,  RustAcademyError> {
+    if amount <= 0 {
+        return Err( RustAcademyError::InvalidAmount);
+    }
+    validate_deposit_resources(&salt, arbiters.len())?;
+    if arbiters.is_empty() || threshold == 0 {
+        return Err( RustAcademyError::InvalidThreshold);
+    }
+    let arbiter_count = arbiters.len();
+    if threshold > arbiter_count {
+        return Err( RustAcademyError::InvalidThreshold);
+    }
+    if arbiter_count > MAX_ARBITERS {
+        return Err( RustAcademyError::TooManyArbiters);
+    }
+
+    // Reject duplicate arbiters (O(n²) is fine for small n ≤ MAX_ARBITERS).
+    for i in 0..arbiter_count {
+        for j in (i + 1)..arbiter_count {
+            if arbiters.get_unchecked(i) == arbiters.get_unchecked(j) {
+                return Err( RustAcademyError::DuplicateArbiter);
+            }
+        }
+    }
+
+    owner.require_auth();
+
+    let expires_at = compute_expires_at(env, timeout_secs)?;
+
+    // Use a sentinel None arbiter for escrow_id derivation — the arbiters vec
+    // is stored in the entry but not part of the dedup key (matching `deposit`).
+    let escrow_id =
+        escrow_id::derive_escrow_id(env, &token, amount, &owner, &salt, timeout_secs, &None)?;
+    if let Some(existing) = get_escrow_id_mapping(env, &escrow_id) {
+        return Ok(existing);
+    }
+
+    let (commitment, legacy_commitment) =
+        commitment::amount_commitment_hashes(env, &owner, amount, &salt)?;
+    let commitment_bytes: Bytes = commitment.clone().into();
+    if has_escrow(env, &commitment_bytes) {
+        return Err( RustAcademyError::CommitmentAlreadyExists);
+    }
+    if legacy_commitment != commitment {
+        let legacy_bytes: Bytes = legacy_commitment.into();
+        if has_escrow(env, &legacy_bytes) {
+            return Err( RustAcademyError::CommitmentAlreadyExists);
+        }
+    }
+
+    let now = env.ledger().timestamp();
+    let token_client = token::Client::new(env, &token);
+    let commitment_bytes_ref = commitment_bytes.clone();
+
+    let entry = EscrowEntry {
+        token, // moved
+        amount_due: amount,
+        amount_paid: amount,
+        owner: owner.clone(),
+        status: EscrowStatus::Pending,
+        created_at: now,
+        expires_at,
+        arbiter: None,
+        arbiters,
+        arbiter_threshold: threshold,
+    };
+
+    put_escrow(env, &commitment_bytes, &entry);
+    put_escrow_id_mapping(env, &escrow_id, &commitment);
+    put_commitment_escrow_id(env, &commitment_bytes_ref, &escrow_id);
+    token_client.transfer(&owner, env.current_contract_address(), &amount);
+
+    let token_addr = token_client.address.clone();
+    events::publish_escrow_deposited(
+        env,
+        commitment.clone(),
+        owner.clone(),
+        token_addr.clone(),
+        amount,
+        amount,
+        expires_at,
+    );
+
+    hook::invoke_hooks(
+        env,
+        HookEventKind::Create,
+        &commitment,
+        owner,
+        token_addr,
+        amount,
+        0,
+    );
+
+    Ok(commitment)
+}
+
+// ---------------------------------------------------------------------------
 // deposit_with_commitment
 // ---------------------------------------------------------------------------
 
@@ -256,6 +558,7 @@ pub fn deposit_with_commitment(
     if amount <= 0 {
         return Err( RustAcademyError::InvalidAmount);
     }
+    validate_deposit_resources(&Bytes::new(env), 0)?;
 
     from.require_auth();
 
@@ -346,17 +649,47 @@ pub fn deposit_partial(
     if amount_due <= 0 {
         return Err( RustAcademyError::InvalidAmount);
     }
+    validate_deposit_resources(&salt, 0)?;
 
     owner.require_auth();
 
     // INV-3: validated, overflow-safe expiry computation
     let expires_at = compute_expires_at(env, timeout_secs)?;
 
-    let commitment = commitment::create_amount_commitment(env, owner.clone(), amount_due, salt)?;
-    let now = env.ledger().timestamp();
+    // Derive a deterministic escrow_id that includes initial_payment so
+    // identical retries are detected and idempotently return the existing
+    // commitment without creating a duplicate entry.
+    let escrow_id = escrow_id::derive_partial_escrow_id(
+        env,
+        &token,
+        amount_due,
+        initial_payment,
+        &owner,
+        &salt,
+        timeout_secs,
+        &arbiter,
+    )?;
+    if let Some(existing) = get_escrow_id_mapping(env, &escrow_id) {
+        return Ok(existing);
+    }
 
-    let token_client = token::Client::new(env, &token);
+    let (commitment, legacy_commitment) =
+        commitment::amount_commitment_hashes(env, &owner, amount_due, &salt)?;
     let commitment_bytes: Bytes = commitment.clone().into();
+
+    // Reject duplicate commitment to prevent overwriting an existing escrow.
+    if has_escrow(env, &commitment_bytes) {
+        return Err( RustAcademyError::CommitmentAlreadyExists);
+    }
+    if legacy_commitment != commitment {
+        let legacy_bytes: Bytes = legacy_commitment.into();
+        if has_escrow(env, &legacy_bytes) {
+            return Err( RustAcademyError::CommitmentAlreadyExists);
+        }
+    }
+
+    let now = env.ledger().timestamp();
+    let token_client = token::Client::new(env, &token);
     let entry = EscrowEntry {
         token, // moved
         amount_due,
@@ -372,6 +705,12 @@ pub fn deposit_partial(
     };
 
     put_escrow(env, &commitment_bytes, &entry);
+    // Store forward (escrow_id → commitment) and reverse (commitment → escrow_id)
+    // mappings so the backend indexer can correlate partial escrow events with
+    // their stable IDs, and terminal cleanup can drop the dedup mapping.
+    put_escrow_id_mapping(env, &escrow_id, &commitment);
+    put_commitment_escrow_id(env, &commitment_bytes, &escrow_id);
+
     token_client.transfer(&owner, env.current_contract_address(), &initial_payment);
 
     let token_addr = token_client.address.clone();
@@ -545,6 +884,7 @@ pub fn withdraw(env: &Env, amount: i128, to: Address, salt: Bytes) -> Result<boo
     if entry.amount_paid < entry.amount_due {
         return Err( RustAcademyError::Overpayment);
     }
+    validate_withdraw_resources(env, &entry.token, &salt)?;
 
     // optimized: destructure what we need, move entry instead of cloning
     let token_ref = entry.token.clone();
@@ -712,6 +1052,10 @@ pub fn cleanup_escrow(env: &Env, commitment: BytesN<32>) -> Result<(),  RustAcad
             // Publish cleanup event for indexers
             events::publish_escrow_cleanup(env, commitment);
 
+            // Issue #49: reclaim dispute expiry metadata storage rent.
+            clear_dispute_state(env, &commitment_bytes, &entry.arbiters);
+
+            events::publish_aux_indices_cleaned(env, commitment, indices_removed);
             Ok(())
         }
         _ => Err( RustAcademyError::AlreadySpent), // Reuse error or add a more specific one if needed
@@ -750,7 +1094,10 @@ pub fn dispute(env: &Env, commitment: BytesN<32>) -> Result<(),  RustAcademyErro
     updated.status = EscrowStatus::Disputed;
     put_escrow(env, &commitment_bytes, &updated);
 
-    events::publish_escrow_disputed(env, commitment, arbiter.clone());
+    // Issue #49: snapshot timeout and default expiry action at dispute creation.
+    dispute::record_dispute_expiry(env, commitment.clone());
+
+    events::publish_escrow_disputed(env, commitment.clone(), arbiter.clone());
 
     Ok(())
 }
@@ -881,6 +1228,9 @@ pub fn resolve_dispute(
             fee_breakdown.total_fee,
         );
     }
+
+    // Issue #49: remove stale dispute votes and expiry metadata after resolution.
+    clear_dispute_state(env, &commitment_bytes, &entry.arbiters);
 
     Ok(())
 }
@@ -1124,6 +1474,9 @@ pub fn resolve_dispute_multi_sig(
             fee_breakdown.total_fee,
         );
     }
+
+    // Issue #49: remove stale dispute votes and expiry metadata after resolution.
+    clear_dispute_state(env, &commitment_bytes, &entry.arbiters);
 
     Ok(())
 }

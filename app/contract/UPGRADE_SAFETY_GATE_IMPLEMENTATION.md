@@ -25,7 +25,7 @@ Added contract-level safeguards and comprehensive invariant enforcement for safe
 - Function: `storage::is_upgrade_window_active(env)` checks ledger timestamp against `[start, end)`
 - Gating: `upgrade()` now requires `UpgradeInProgress` and active window.
 - Verification: `upgrade()` verifies the WASM hash matches the one stored in `start_upgrade()`.
-- Error: Returns `InvalidAmount` (repurposed as "upgrade window not active") or `InternalError` (not in progress).
+- Error: Returns `UpgradeWindowNotActive` when window is not active or `UpgradeAlreadyInProgress` when already started.
 
 **Test**: `upgrade_safety_gate_blocks_upgrade_outside_window`, `upgrade_safety_gate_blocks_direct_upgrade_without_start`
 
@@ -71,7 +71,7 @@ admin::upgrade(hash)
 
 ```rust
 pub fn complete_upgrade(env, caller, new_version) {
-    if !storage::is_upgrade_in_progress(env) { return Err(InternalError); }
+    if !storage::is_upgrade_in_progress(env) { return Err(UpgradeNotInProgress); }
     if new_version != storage::get_pending_upgrade_version(env) { return Err(InvalidContractVersion); }
     if storage::get_wasm_hash(env) != storage::get_pending_upgrade_wasm_hash(env) { return Err(InternalError); }
     // ... run migrate() ...
@@ -177,7 +177,7 @@ Step 1: Admin calls set_upgrade_window(start, end)
 Step 2: Admin calls start_upgrade(new_version)
         → Check: is_upgrade_window_active()
         → If yes: set UpgradeInProgress = true, emit UpgradeStarted
-        → If no: return Err(InvalidAmount)
+        → If no: return Err(UpgradeWindowNotActive)
 
 Step 3a: (Deploy) update_current_contract_wasm(new_wasm_hash)
          → Caller publishes new WASM; contract code swaps
@@ -191,9 +191,9 @@ Step 3b: Admin calls complete_upgrade(new_version)
 
 **Error Handling**:
 
-- `InvalidAmount`: Used to signal "upgrade window not active"
-- `ContractPaused`: Used to signal "upgrade already in progress" (repurposed)
-- `InternalError`: Used when post-upgrade invariants fail (repurposed)
+- `UpgradeWindowNotActive`: Used to signal "upgrade window not active"
+- `UpgradeAlreadyInProgress`: Used to signal "upgrade already in progress"
+- `InternalError`: Used when post-upgrade invariants fail
 
 ---
 

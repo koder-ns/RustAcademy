@@ -63,8 +63,25 @@ pub enum RustAcademyError {
     InsufficientVotes = 321,
     /// Fee ratios or denominators are invalid for the configured payout split.
     InvalidFeeConfiguration = 322,
+    /// Dispute resolution threshold is zero, exceeds arbiter count, or the
+    /// arbiters list is empty.
+    InvalidThreshold = 326,
+    /// The arbiters list contains a duplicate address.
+    DuplicateArbiter = 327,
+    /// The arbiters list exceeds the maximum allowed count.
+    TooManyArbiters = 328,
+    /// The request payload exceeds the supported bounded size for predictable execution.
+    PayloadTooLarge = 329,
+    /// The operation would fan out to more fee recipients than the supported limit.
+    TooManyFeeRecipients = 330,
+    /// The operation references more token transfer paths than the supported limit.
+    TooManyTokens = 331,
     /// The configured fee split exceeds the available fee budget.
     FeeSplitExceedsTotal = 323,
+    /// Dispute resolution timeout has not yet elapsed.
+    DisputeNotExpired = 324,
+    /// No dispute expiry metadata exists for this escrow.
+    NoDisputeExpiry = 325,
     // Stealth address errors (400-499)
     /// Derived stealth address does not match the provided one.
     StealthAddressMismatch = 400,
@@ -80,4 +97,11 @@ pub enum RustAcademyError {
     NonceAlreadyUsed = 500,
     /// The signature's valid_until timestamp has passed; signature expired.
     SignatureExpired = 501,
+    // Upgrade gating (502-504)
+    /// The upgrade window is not currently active; start_upgrade is blocked.
+    UpgradeWindowNotActive = 502,
+    /// An upgrade is already in progress; start_upgrade cannot be called again.
+    UpgradeAlreadyInProgress = 503,
+    /// No upgrade is currently in progress; upgrade or complete_upgrade cannot proceed.
+    UpgradeNotInProgress = 504,
 }

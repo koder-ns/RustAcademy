@@ -33,7 +33,7 @@
    assert!(result.is_err(), "start_upgrade must fail when no window is set");
    ```
 
-   - Expected: `InvalidAmount` ("upgrade window not active")
+   - Expected: `UpgradeWindowNotActive` ("upgrade window not active")
 
 2. **Before Window**
 
@@ -45,9 +45,9 @@
    assert!(result.is_err(), "start_upgrade must fail before window start");
    ```
 
-   - Expected: `InvalidAmount`
+    - Expected: `UpgradeWindowNotActive`
 
-3. **Within Window**
+ 3. **Within Window**
 
    ```rust
    gs.env.ledger().with_mut(|li| {
@@ -71,7 +71,7 @@
    assert!(result.is_err(), "start_upgrade must fail after window end");
    ```
 
-   - Expected: `InvalidAmount`
+    - Expected: `UpgradeWindowNotActive`
 
 **Acceptance Criterion**: ✅ AC1 – Upgrades are blocked outside the allowed window.
 
@@ -301,7 +301,7 @@ LIMIT 1;
    ```rust
    let result = client.try_start_upgrade(&gs.admin, &3u32);
    assert!(result.is_err(), "start_upgrade must fail when already in progress");
-   // → Expected: ContractPaused ("upgrade already in progress")
+    // → Expected: `UpgradeAlreadyInProgress` ("upgrade already in progress")
    ```
 
 3. **Complete & Retry**
