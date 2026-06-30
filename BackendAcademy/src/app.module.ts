@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { AuthModule } from './auth/auth.module';
 import { ChallengesModule } from './challenges/challenges.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { SecurityModule } from './security/security.module';
@@ -30,6 +31,7 @@ import { PaymentsModule } from './payments/payments.module';
       },
     ]),
     AppConfigModule,
+    AuthModule,
     ContractsModule,
     UserProfileModule,
     TutorProfileModule,
