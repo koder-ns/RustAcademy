@@ -25,6 +25,7 @@ import { LoggingModule } from './logging/logging.module';
 import { ProgressModule } from './courses/progress/progress.module';
 import { AppConfigModule } from './config/config.module';
 import { ContractsModule } from './contracts/contracts.module';
+import { AssetsModule } from './assets/assets.module';
 import { PathfindingModule } from './pathfinding/pathfinding.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
 import { SearchModule } from './search/search.module';
@@ -57,6 +58,7 @@ import { SessionsModule } from './sessions/sessions.module';
     OnboardingModule,
     LessonModule,
     TaskModule,
+    AssetsModule,
     JobsModule,
     LoggingModule,
     PathfindingModule,

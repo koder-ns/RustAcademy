@@ -19,6 +19,12 @@ import * as Joi from 'joi';
         AI_MODEL: Joi.string().optional(),
         AI_MAX_TOKENS: Joi.number().default(4096),
         AI_TEMPERATURE: Joi.number().default(0.7),
+
+        // Static / uploaded asset support
+        ASSETS_UPLOAD_DIR: Joi.string().optional(),
+        ASSETS_MAX_SIZE_MB: Joi.number().optional(),
+        ASSETS_BASE_URL: Joi.string().optional(),
+        ASSETS_STATIC_DIR: Joi.string().optional(),
       }),
     }),
   ],
