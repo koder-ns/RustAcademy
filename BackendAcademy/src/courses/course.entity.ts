@@ -12,6 +12,8 @@ export class CourseEntity {
   skills: string[];
   xpReward: number;
   isActive: boolean;
+  version: number;
+  latestRevisionId?: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -22,5 +24,7 @@ export class CourseEntity {
     this.isActive = this.isActive ?? true;
     this.prerequisites = this.prerequisites || [];
     this.skills = this.skills || [];
+    // Object.assign above already copies version; default to 1 when absent.
+    this.version ??= 1;
   }
 }
