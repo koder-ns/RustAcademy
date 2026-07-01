@@ -12,7 +12,6 @@ import { TutorProfileModule } from './users/tutor-profile.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { UserProfileModule } from './users/user-profile.module';
 import { AiModule } from './ai/ai.module';
-import { ContractsModule } from './contracts/contracts.module';
 import { LeaderboardModule } from './leaderboard/leaderboard.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { WalletModule } from './wallet/wallet.module';
@@ -20,11 +19,11 @@ import { SocialModule } from './social/social.module';
 import { OnboardingModule } from './onboarding/onboarding.module';
 import { LessonModule } from './lessons/lesson.module';
 import { TaskModule } from './tasks/task.module';
+import { CourseModule } from './courses';
 import { JobsModule } from './jobs/jobs.module';
 import { LoggingModule } from './logging/logging.module';
 import { ProgressModule } from './courses/progress/progress.module';
 import { AppConfigModule } from './config/config.module';
-import { ContractsModule } from './contracts/contracts.module';
 import { AssetsModule } from './assets/assets.module';
 import { PathfindingModule } from './pathfinding/pathfinding.module';
 import { MonitoringModule } from './monitoring/monitoring.module';
@@ -58,6 +57,7 @@ import { SessionsModule } from './sessions/sessions.module';
     OnboardingModule,
     LessonModule,
     TaskModule,
+    CourseModule,
     AssetsModule,
     JobsModule,
     LoggingModule,

@@ -101,6 +101,8 @@ export class CourseController {
       Number(version),
       dto.revisionAuthor,
     );
+  }
+
   @Post(':id/complete')
   async complete(@Param('id') id: string, @Body() dto: CompleteCourseDto) {
     return this.courseService.completeCourse(id, dto.userId);
