@@ -3,9 +3,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from "react";
 import {
@@ -14,6 +12,7 @@ import {
   sortNotifications,
   type StoredNotification,
 } from "@/lib/notifications";
+import { usePersistentState } from "@/hooks/usePersistentState";
 
 type NotificationCenterContextValue = {
   notifications: StoredNotification[];
@@ -53,51 +52,27 @@ function mergeStoredNotifications(
 
 export function NotificationCenterProvider({
   children,
+  userId,
 }: {
   children: ReactNode;
+  userId?: string;
 }) {
-  const [notifications, setNotifications] = useState<StoredNotification[]>(
+  const [notifications, setNotifications, hasHydrated] = usePersistentState<StoredNotification[]>(
+    NOTIFICATION_STORAGE_KEY,
     sortNotifications(INITIAL_NOTIFICATIONS),
+    {
+      userId,
+      deserialize: (str: string) => {
+        try {
+          const parsedValue = JSON.parse(str) as StoredNotification[];
+          return mergeStoredNotifications(parsedValue);
+        } catch (e) {
+          console.error("Unable to parse notifications", e);
+          return sortNotifications(INITIAL_NOTIFICATIONS);
+        }
+      },
+    }
   );
-  // hasHydrated starts false on both server and first client render so the
-  // initial HTML matches.  It is flipped to true in a useEffect (client-only),
-  // after which localStorage has been read and badge counts are accurate.
-  const [hasHydrated, setHasHydrated] = useState(false);
-
-  // Read persisted state from localStorage — client only.
-  useEffect(() => {
-    const isClient = typeof window !== "undefined";
-    if (!isClient) return;
-
-    try {
-      const storedValue = window.localStorage.getItem(NOTIFICATION_STORAGE_KEY);
-
-      if (storedValue) {
-        const parsedValue = JSON.parse(storedValue) as StoredNotification[];
-        setNotifications(mergeStoredNotifications(parsedValue));
-      }
-    } catch (error) {
-      console.error("Unable to restore notifications", error);
-    } finally {
-      setHasHydrated(true);
-    }
-  }, []);
-
-  // Persist to localStorage whenever notifications change after hydration.
-  useEffect(() => {
-    if (!hasHydrated) {
-      return;
-    }
-
-    try {
-      window.localStorage.setItem(
-        NOTIFICATION_STORAGE_KEY,
-        JSON.stringify(notifications),
-      );
-    } catch (error) {
-      console.error("Unable to persist notifications", error);
-    }
-  }, [hasHydrated, notifications]);
 
   const unreadCount = useMemo(
     () =>
@@ -140,7 +115,7 @@ export function NotificationCenterProvider({
         );
       },
     }),
-    [notifications, unreadCount, hasHydrated],
+    [notifications, unreadCount, hasHydrated, setNotifications],
   );
 
   return (

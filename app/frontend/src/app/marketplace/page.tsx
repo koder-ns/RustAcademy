@@ -486,7 +486,7 @@ function MarketplacePageContent() {
 
 export default function MarketplacePage() {
   return (
-    <WatchlistProvider>
+    <WatchlistProvider userId="demo_user">
       {/* Both API providers wrap the content so all children can use the hooks */}
       <MarketplaceApiProvider>
         <RealtimeApiProvider>
