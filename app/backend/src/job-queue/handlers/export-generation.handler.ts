@@ -106,9 +106,6 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
       // Other errors are transient (database errors, network errors, etc.)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       const attemptCount = job.attempts + 1;
-      const maxRetries = job.maxAttempts - 1;
-      const nextBackoffDelayMs = this.BACKOFF_DELAYS_MS[
-        Math.min(job.attempts, this.BACKOFF_DELAYS_MS.length - 1)
       ];
 
       this.logger.error(
@@ -245,14 +242,16 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
       lines.push(values.join(','));
     }
 
-    return lines.join('\n');
+    return lines.join('
+');
   }
 
   /**
    * Escape CSV value (handle quotes, commas, newlines)
    */
   private escapeCsvValue(value: string): string {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    if (value.includes(',') || value.includes('"') || value.includes('
+')) {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;
