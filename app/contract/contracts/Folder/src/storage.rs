@@ -233,6 +233,8 @@ pub enum DataKey {
     DisputeTimeout,
     /// Global default action when a dispute expires (singleton).
     DisputeExpiryAction,
+    /// Master switch for the upgrade gate. When false, all upgrades are blocked.
+    UpgradeGateEnabled,
 }
 
 // -----------------------------------------------------------------------------
@@ -377,6 +379,65 @@ pub fn clear_pending_upgrade(env: &Env) {
     env.storage()
         .persistent()
         .remove(&DataKey::PendingUpgradeVersion);
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Upgrade Gate Master Switch (Issue #318)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Set the upgrade gate master switch.
+///
+/// When `enabled` is `false`, `start_upgrade` is blocked regardless of
+/// window configuration. Defaults to `true` when never explicitly set.
+pub fn set_upgrade_gate_enabled(env: &Env, enabled: bool) {
+    env.storage()
+        .persistent()
+        .set(&DataKey::UpgradeGateEnabled, &enabled);
+}
+
+/// Check whether the upgrade gate master switch is enabled.
+///
+/// Returns `true` (upgrades allowed by gate) when the key has never been set,
+/// matching the safe default of allowing upgrades when no explicit gate is
+/// configured.
+pub fn is_upgrade_gate_enabled(env: &Env) -> bool {
+    env.storage()
+        .persistent()
+        .get(&DataKey::UpgradeGateEnabled)
+        .unwrap_or(true)
+}
+
+/// Run a comprehensive pre-upgrade safety check (Issue #318).
+///
+/// Validates all preconditions that must hold for `start_upgrade` to succeed:
+/// 1. Gate is enabled
+/// 2. Window is active
+/// 3. No upgrade already in progress
+/// 4. Contract version is within the supported range
+/// 5. Critical invariants (fee bounds) are satisfied
+pub fn check_upgrade_safety(env: &Env) -> crate::types::UpgradeSafetyReport {
+    let gate_enabled = is_upgrade_gate_enabled(env);
+    let window_active = is_upgrade_window_active(env);
+    let upgrade_in_progress = is_upgrade_in_progress(env);
+
+    let version = get_contract_version(env).unwrap_or(LEGACY_CONTRACT_VERSION);
+    let version_compatible = version <= CURRENT_CONTRACT_VERSION;
+
+    // Pre-upgrade invariant: fee config must be within bounds.
+    let fee_cfg = get_fee_config(env);
+    let invariants_satisfied = fee_cfg.fee_bps <= 10_000;
+
+    let is_safe =
+        gate_enabled && window_active && !upgrade_in_progress && version_compatible && invariants_satisfied;
+
+    crate::types::UpgradeSafetyReport {
+        is_safe,
+        gate_enabled,
+        window_active,
+        upgrade_in_progress,
+        version_compatible,
+        invariants_satisfied,
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────

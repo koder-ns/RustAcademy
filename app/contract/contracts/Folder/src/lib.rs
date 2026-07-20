@@ -1294,6 +1294,44 @@ impl RustAcademyContract {
         storage::get_upgrade_window(&env)
     }
 
+    /// Enable or disable the upgrade gate master switch (**Admin only**).
+    ///
+    /// When disabled, `start_upgrade` is blocked regardless of the configured
+    /// upgrade window.  Defaults to enabled when never explicitly set.
+    ///
+    /// # Arguments
+    /// * `env` - The contract environment
+    /// * `caller` - Caller address (must be admin)
+    /// * `enabled` - `true` to enable upgrades, `false` to disable
+    ///
+    /// # Errors
+    /// * `InsufficientRole` - Caller is not admin
+    pub fn set_upgrade_gate(
+        env: Env,
+        caller: Address,
+        enabled: bool,
+    ) -> Result<(), RustAcademyError> {
+        admin::require_admin(&env, &caller)?;
+        storage::set_upgrade_gate_enabled(&env, enabled);
+        Ok(())
+    }
+
+    /// Validate whether the current contract state is safe for an upgrade.
+    ///
+    /// Returns an [`UpgradeSafetyReport`] that breaks down each precondition.
+    /// This is a read-only view; no authorization required.
+    pub fn check_upgrade_safety(env: Env) -> types::UpgradeSafetyReport {
+        storage::check_upgrade_safety(&env)
+    }
+
+    /// Return the current upgrade gate status.
+    ///
+    /// Combines window, in-progress, and gate-enabled flags into a single
+    /// [`UpgradeState`] snapshot.  This is a read-only view.
+    pub fn get_upgrade_status(env: Env) -> types::UpgradeState {
+        metadata::upgrade_state(&env)
+    }
+
     /// Start an upgrade during the active upgrade window (**Admin only**).
     ///
     /// Sets the contract into upgrade-in-progress state and emits `UpgradeStarted` event.

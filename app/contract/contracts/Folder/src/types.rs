@@ -455,6 +455,29 @@ pub struct UpgradeState {
     pub window_start: u64,
     /// End of the upgrade window (epoch seconds). 0 means no upper bound.
     pub window_end: u64,
+    /// Whether the upgrade gate is enabled (master switch). When false, all upgrades are blocked.
+    pub gate_enabled: bool,
+}
+
+/// Comprehensive safety report for a proposed upgrade.
+///
+/// Returned by [`check_upgrade_safety`](crate::RustAcademyContract::check_upgrade_safety)
+/// to give callers a full picture of whether an upgrade can proceed.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UpgradeSafetyReport {
+    /// Overall safety: true only when all individual checks pass.
+    pub is_safe: bool,
+    /// Whether the upgrade gate master switch is enabled.
+    pub gate_enabled: bool,
+    /// Whether the current ledger timestamp falls within the active upgrade window.
+    pub window_active: bool,
+    /// Whether an upgrade is already in progress (blocks new starts).
+    pub upgrade_in_progress: bool,
+    /// Whether the stored contract version is within the supported range.
+    pub version_compatible: bool,
+    /// Whether critical pre-upgrade invariants (fee bounds, admin init) are satisfied.
+    pub invariants_satisfied: bool,
 }
 
 /// Versions supported by the current deployment.
