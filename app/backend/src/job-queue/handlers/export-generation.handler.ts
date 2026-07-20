@@ -248,8 +248,7 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
    * Escape CSV value (handle quotes, commas, newlines)
    */
   private escapeCsvValue(value: string): string {
-    if (value.includes(',') || value.includes('"') || value.includes('
-')) {
+    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;
