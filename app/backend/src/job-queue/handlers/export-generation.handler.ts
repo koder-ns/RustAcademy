@@ -241,8 +241,7 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
       lines.push(values.join(','));
     }
 
-    return lines.join('
-');
+    return lines.join('\n');
   }
 
   /**
