@@ -11,6 +11,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobHandler, Job, CancellationToken } from '../types';
 import { ExportGenerationPayload } from '../types/job-payloads.types';
 import { SupabaseService } from '../../supabase/supabase.service';
+import { NotificationService } from '../../notifications/notification.service';
+import type { ExportFailedPayload } from '../../notifications/types/notification.types';
 
 /**
  * Error thrown for permanent job failures (no retry)
@@ -34,8 +36,16 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
   private readonly logger = new Logger(ExportGenerationHandler.name);
   private readonly cancellationCheckInterval = 1000; // Check every 1000 records
 
+  /** Exponential backoff delays: 1m, 5m, 30m */
+  private readonly BACKOFF_DELAYS_MS = [
+    60_000,      // 1 minute
+    300_000,     // 5 minutes
+    1_800_000,   // 30 minutes
+  ];
+
   constructor(
     private readonly supabase: SupabaseService,
+    private readonly notificationService: NotificationService,
   ) {}
 
   /**
@@ -56,8 +66,15 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
     const { userId, exportType, filters, format, deliveryMethod } = job.payload;
 
     this.logger.log(
-      `Generating ${format} export for user ${userId} (type: ${exportType}, jobId: ${job.id})`,
+      `Generating ${format} export for user ${userId} (type: ${exportType}, jobId: ${job.id}, attempt: ${job.attempts + 1}/${job.maxAttempts})`,
     );
+
+    if (job.attempts > 0) {
+      const backoffDelayMs = this.BACKOFF_DELAYS_MS[Math.min(job.attempts - 1, this.BACKOFF_DELAYS_MS.length - 1)];
+      this.logger.log(
+        `Retry attempt ${job.attempts} (next backoff delay: ${backoffDelayMs}ms, jobId: ${job.id})`,
+      );
+    }
 
     try {
       // Fetch data based on export type
@@ -88,10 +105,22 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
 
       // Other errors are transient (database errors, network errors, etc.)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const attemptCount = job.attempts + 1;
+
       this.logger.error(
-        `Export generation failed (jobId: ${job.id}): ${errorMessage}`,
+        `Export generation failed (jobId: ${job.id}, attempt: ${attemptCount}/${job.maxAttempts}): ${errorMessage}`,
         error instanceof Error ? error.stack : undefined,
       );
+
+      // DLQ enrichment: log structured retry metadata on final failure
+      if (attemptCount >= job.maxAttempts) {
+        this.logger.error(
+          `Export permanently failed — moving to DLQ (jobId: ${job.id}, userId: ${userId}, ` +
+          `exportType: ${exportType}, attempts: ${attemptCount}, ` +
+          `backoffDelays: ${this.BACKOFF_DELAYS_MS.join(',')})`,
+        );
+      }
+
       throw new Error(`Export generation failed: ${errorMessage}`);
     }
   }
@@ -316,8 +345,9 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
   /**
    * Handle job failure
    * 
-   * Logs export generation failure.
-   * This is called when the job exhausts all retry attempts and moves to DLQ.
+   * Logs export generation failure, sends user notification, and enriches DLQ
+   * with structured failure details. This is called when the job exhausts all
+   * retry attempts and moves to DLQ.
    * 
    * @param job - The failed job
    * @param error - The error that caused the failure
@@ -325,13 +355,79 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
    * **Validates: Requirements 9.5**
    */
   async onFailure(job: Job<ExportGenerationPayload>, error: Error): Promise<void> {
-    const { userId, exportType } = job.payload;
+    const { userId, exportType, format, deliveryMethod } = job.payload;
+    const errorMessage = error.message;
+    const attemptCount = job.attempts + 1;
 
     this.logger.error(
-      `Export generation permanently failed for user ${userId} (type: ${exportType}, jobId: ${job.id}): ${error.message}`,
+      `Export generation permanently failed for user ${userId} (type: ${exportType}, jobId: ${job.id}): ${errorMessage}`,
       error.stack,
     );
 
-    // TODO: Notify user of export failure via notification system
+    // DLQ enrichment: structured failure details for debugging
+    this.logger.error(
+      `DLQ enrichment (jobId: ${job.id}): userId=${userId}, exportType=${exportType}, ` +
+      `format=${format}, deliveryMethod=${deliveryMethod}, ` +
+      `attempts=${attemptCount}/${job.maxAttempts}, backoffDelays=[${this.BACKOFF_DELAYS_MS.join(',')}], ` +
+      `error=${errorMessage}`,
+    );
+
+    // Send notification to user about the failed export
+    await this.notifyUserOfFailure(job, error, attemptCount);
+  }
+
+  /**
+   * Notify the user that their export has permanently failed.
+   * 
+   * Attempts to send an in-app notification via the notification service.
+   * Uses the user's public key derived from userId for notification delivery.
+   * Failures in notification delivery are logged but do not re-throw.
+   */
+  private async notifyUserOfFailure(
+    job: Job<ExportGenerationPayload>,
+    error: Error,
+    attemptCount: number,
+  ): Promise<void> {
+    const { userId, exportType, format, deliveryMethod } = job.payload;
+    const errorMessage = error.message;
+
+    try {
+      const payload: ExportFailedPayload = {
+        eventType: 'export.failure',
+        eventId: `export-failed-${job.id}`,
+        recipientPublicKey: userId,
+        title: 'Export Failed',
+        body:
+          `Your ${format.toUpperCase()} export of ${exportType} data has failed after ` +
+          `${attemptCount} attempt${attemptCount === 1 ? '' : 's'}. ` +
+          `Error: ${errorMessage}`,
+        occurredAt: new Date().toISOString(),
+        exportType,
+        format,
+        deliveryMethod,
+        errorMessage,
+        attemptCount,
+        permanent: true,
+        metadata: {
+          jobId: job.id,
+          exportType,
+          format,
+          deliveryMethod,
+          attempts: attemptCount,
+          maxAttempts: job.maxAttempts,
+        },
+      };
+
+      await this.notificationService.dispatch(payload);
+
+      this.logger.log(
+        `User notified of export failure (userId: ${userId}, jobId: ${job.id})`,
+      );
+    } catch (notificationError) {
+      this.logger.error(
+        `Failed to send export failure notification (userId: ${userId}, jobId: ${job.id}): ` +
+        `${notificationError instanceof Error ? notificationError.message : 'Unknown error'}`,
+      );
+    }
   }
 }

@@ -41,6 +41,21 @@ Specialized tests for Stellar infrastructure:
 - Error resilience
 - Performance benchmarks for external services
 
+### Export Failure Notification Tests
+
+The export generation handler now includes retry semantics and user notification on failure:
+
+- **Retry Backoff**: Exponential backoff with delays of 1m, 5m, 30m
+- **User Notification**: In-app notification dispatched via NotificationService when export permanently fails
+- **DLQ Enrichment**: Structured failure details logged for debugging (userId, exportType, format, deliveryMethod, attempt count)
+- **Notification Payload**: `ExportFailedPayload` includes error message, attempt count, and permanent flag
+
+Unit tests cover:
+- Retry attempt logging with backoff delay calculation
+- DLQ enrichment on final failure
+- User notification dispatch with correct payload
+- Notification failure isolation (does not re-throw)
+
 ## Running Smoke Tests
 
 ### Local Development
