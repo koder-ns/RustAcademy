@@ -373,6 +373,11 @@ pub fn start_upgrade(
 ) -> Result<(), RustAcademyError> {
     require_admin(env, caller)?;
 
+    // Check upgrade gate master switch (Issue #318)
+    if !storage::is_upgrade_gate_enabled(env) {
+        return Err(RustAcademyError::UpgradeWindowNotActive);
+    }
+
     // Check upgrade window is active (Issue #432 AC1)
     if !storage::is_upgrade_window_active(env) {
         return Err(RustAcademyError::UpgradeWindowNotActive);
