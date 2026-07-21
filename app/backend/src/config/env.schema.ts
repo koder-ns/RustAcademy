@@ -388,6 +388,38 @@ export const envSchema = Joi.object({
   FEATURES_DEVELOPER_ROUTES_ENABLED: Joi.boolean()
     .default(false)
     .description("Whether the developer routes/module is enabled"),
+
+  // ── Export Delivery Pipeline ──────────────────────────────────────────────
+  EXPORT_STORAGE_BUCKET: Joi.string()
+    .empty("")
+    .optional()
+    .description(
+      "Supabase Storage bucket for export files (used for download delivery)",
+    ),
+
+  EXPORT_LINK_EXPIRY_MS: Joi.number()
+    .integer()
+    .min(60_000)
+    .default(604_800_000)
+    .description(
+      "Signed URL expiry for download links in milliseconds (default: 7 days)",
+    ),
+
+  EXPORT_WEBHOOK_TIMEOUT_MS: Joi.number()
+    .integer()
+    .min(1_000)
+    .default(30_000)
+    .description(
+      "HTTP timeout for webhook export delivery in milliseconds",
+    ),
+
+  APP_BASE_URL: Joi.string()
+    .uri({ scheme: ["http", "https"] })
+    .empty("")
+    .optional()
+    .description(
+      "Base URL for constructing absolute download links (e.g. https://app. RustAcademy.to)",
+    ),
 })
   .custom((value, helpers) => {
     if (value.INGESTION_ENABLED && !value.RustAcademy_CONTRACT_ID) {
@@ -467,4 +499,8 @@ export interface EnvConfig {
   FEATURES_RECONCILIATION_ENABLED: boolean;
   FEATURES_NOTIFICATIONS_ENABLED: boolean;
   FEATURES_DEVELOPER_ROUTES_ENABLED: boolean;
+  EXPORT_STORAGE_BUCKET?: string;
+  EXPORT_LINK_EXPIRY_MS: number;
+  EXPORT_WEBHOOK_TIMEOUT_MS: number;
+  APP_BASE_URL?: string;
 }

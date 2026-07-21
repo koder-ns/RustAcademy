@@ -302,11 +302,39 @@ export class AppConfigService {
   }
 
   /**
-   * Whether the developer routes/module is enabled
-   */
+    * Whether the developer routes/module is enabled
+    */
   get developerRoutesEnabled(): boolean {
     return this.configService.get("FEATURES_DEVELOPER_ROUTES_ENABLED", {
       infer: true,
     });
+  }
+
+  /**
+   * Supabase Storage bucket for exported files
+   */
+  get exportStorageBucket(): string | undefined {
+    return this.configService.get("EXPORT_STORAGE_BUCKET", { infer: true });
+  }
+
+  /**
+   * Signed URL expiry for export download links (milliseconds)
+   */
+  get exportLinkExpiryMs(): number {
+    return this.configService.get("EXPORT_LINK_EXPIRY_MS", { infer: true });
+  }
+
+  /**
+   * HTTP timeout for webhook export delivery (milliseconds)
+   */
+  get exportWebhookTimeoutMs(): number {
+    return this.configService.get("EXPORT_WEBHOOK_TIMEOUT_MS", { infer: true });
+  }
+
+  /**
+   * Base URL for constructing absolute download links
+   */
+  get appBaseUrl(): string | undefined {
+    return this.configService.get("APP_BASE_URL", { infer: true });
   }
 }
