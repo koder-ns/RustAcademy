@@ -56,6 +56,26 @@ Unit tests cover:
 - User notification dispatch with correct payload
 - Notification failure isolation (does not re-throw)
 
+### Export Delivery Pipeline Tests
+
+The export generation handler now supports three delivery methods configured via environment variables:
+
+- **Webhook Delivery**: POSTs export data to a configured `webhookUrl`
+- **Email Delivery**: Sends export as a SendGrid attachment (requires `SENDGRID_API_KEY` + `SENDGRID_FROM_EMAIL`)
+- **Download Link**: Uploads export to Supabase Storage (`EXPORT_STORAGE_BUCKET`) and returns a signed URL (`EXPORT_LINK_EXPIRY_MS`)
+
+Configuration variables:
+- `EXPORT_STORAGE_BUCKET` — Supabase Storage bucket for export files
+- `EXPORT_LINK_EXPIRY_MS` — Signed URL expiry in milliseconds (default: 7 days)
+- `EXPORT_WEBHOOK_TIMEOUT_MS` — HTTP timeout for webhook delivery (default: 30s)
+- `APP_BASE_URL` — Base URL for constructing absolute download links
+
+Unit tests cover:
+- Webhook delivery adapter: 2xx success, non-2xx failure, missing webhook URL
+- Email delivery adapter: SendGrid success, missing config failure, missing recipient
+- Download link adapter: Upload + signed URL success, missing bucket failure
+- Handler integration: Correct adapter invocation, delivery notification dispatch
+
 ## Running Smoke Tests
 
 ### Local Development

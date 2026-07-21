@@ -12,7 +12,15 @@ import { JobHandler, Job, CancellationToken } from '../types';
 import { ExportGenerationPayload } from '../types/job-payloads.types';
 import { SupabaseService } from '../../supabase/supabase.service';
 import { NotificationService } from '../../notifications/notification.service';
-import type { ExportFailedPayload } from '../../notifications/types/notification.types';
+import {
+  WebhookDeliveryAdapter,
+  EmailDeliveryAdapter,
+  DownloadLinkAdapter,
+} from '../delivery';
+import type {
+  ExportFailedPayload,
+  ExportDeliveredPayload,
+} from '../../notifications/types/notification.types';
 
 /**
  * Error thrown for permanent job failures (no retry)
@@ -46,6 +54,9 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
   constructor(
     private readonly supabase: SupabaseService,
     private readonly notificationService: NotificationService,
+    private readonly webhookAdapter: WebhookDeliveryAdapter,
+    private readonly emailAdapter: EmailDeliveryAdapter,
+    private readonly downloadAdapter: DownloadLinkAdapter,
   ) {}
 
   /**
@@ -92,7 +103,7 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
       );
 
       // Deliver export via specified method
-      await this.deliverExport(userId, exportType, exportData, format, deliveryMethod, cancellationToken);
+      await this.deliverExport(job, exportData, format, deliveryMethod, cancellationToken);
 
       this.logger.log(
         `Export delivered successfully via ${deliveryMethod} (jobId: ${job.id})`,
@@ -267,37 +278,39 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
    * @param cancellationToken - Token to check for cancellation
    */
   private async deliverExport(
-    userId: string,
-    exportType: string,
+    job: Job<ExportGenerationPayload>,
     exportData: string,
-    format: string,
+    format: 'csv' | 'json',
     deliveryMethod: 'webhook' | 'email' | 'download',
     cancellationToken: CancellationToken,
   ): Promise<void> {
+    const { exportType } = job.payload;
     cancellationToken.throwIfCancelled();
 
+    let result;
     switch (deliveryMethod) {
       case 'webhook':
-        // TODO: Implement webhook delivery
-        // For now, just log
-        this.logger.log(`Webhook delivery not yet implemented for user ${userId}`);
+        result = await this.webhookAdapter.deliver(job.payload, exportData, format);
         break;
-
       case 'email':
-        // TODO: Implement email delivery
-        // For now, just log
-        this.logger.log(`Email delivery not yet implemented for user ${userId}`);
+        result = await this.emailAdapter.deliver(job.payload, exportData, format);
         break;
-
       case 'download':
-        // TODO: Implement download link generation (store in S3/Supabase Storage)
-        // For now, just log
-        this.logger.log(`Download link generation not yet implemented for user ${userId}`);
+        result = await this.downloadAdapter.deliver(job.payload, exportData, format);
         break;
-
       default:
         throw new PermanentJobError(`Unsupported delivery method: ${deliveryMethod}`);
     }
+
+    if (!result.success) {
+      throw new Error(result.error ?? 'Export delivery failed');
+    }
+
+    this.logger.log(
+      `Export delivered successfully via ${deliveryMethod} (url: ${result.deliveryUrl ?? 'n/a'}, jobId: ${job.id})`,
+    );
+
+    await this.notifyUserOfDelivery(job, exportType, format, deliveryMethod, result);
   }
 
   /**
@@ -331,6 +344,14 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
 
     if (!payload.deliveryMethod || !['webhook', 'email', 'download'].includes(payload.deliveryMethod)) {
       errors.push('deliveryMethod is required and must be one of: webhook, email, download');
+    }
+
+    if (payload.deliveryMethod === 'webhook' && !payload.webhookUrl) {
+      errors.push('webhookUrl is required when deliveryMethod is webhook');
+    }
+
+    if (payload.deliveryMethod === 'email' && !payload.email) {
+      errors.push('email is required when deliveryMethod is email');
     }
 
     if (!payload.filters || typeof payload.filters !== 'object') {
@@ -426,6 +447,57 @@ export class ExportGenerationHandler implements JobHandler<ExportGenerationPaylo
     } catch (notificationError) {
       this.logger.error(
         `Failed to send export failure notification (userId: ${userId}, jobId: ${job.id}): ` +
+        `${notificationError instanceof Error ? notificationError.message : 'Unknown error'}`,
+      );
+    }
+  }
+
+  /**
+   * Notify the user that their export has been delivered successfully.
+   */
+  private async notifyUserOfDelivery(
+    job: Job<ExportGenerationPayload>,
+    exportType: string,
+    format: string,
+    deliveryMethod: string,
+    result: { deliveryUrl?: string; metadata?: Record<string, unknown> },
+  ): Promise<void> {
+    const { userId } = job.payload;
+
+    try {
+      const payload: ExportDeliveredPayload = {
+        eventType: 'export.delivered',
+        eventId: `export-delivered-${job.id}`,
+        recipientPublicKey: userId,
+        title: 'Export Ready',
+        body:
+          `Your ${format.toUpperCase()} export of ${exportType} data is ready. ` +
+          `Delivered via ${deliveryMethod}.`,
+        occurredAt: new Date().toISOString(),
+        exportType,
+        format,
+        deliveryMethod,
+        deliveryUrl: result.deliveryUrl,
+        exportSizeBytes: result.metadata?.exportSizeBytes as number | undefined,
+        attemptCount: job.attempts + 1,
+        metadata: {
+          jobId: job.id,
+          exportType,
+          format,
+          deliveryMethod,
+          deliveryUrl: result.deliveryUrl,
+          ...result.metadata,
+        },
+      };
+
+      await this.notificationService.dispatch(payload);
+
+      this.logger.log(
+        `User notified of export delivery (userId: ${userId}, jobId: ${job.id})`,
+      );
+    } catch (notificationError) {
+      this.logger.error(
+        `Failed to send export delivery notification (userId: ${userId}, jobId: ${job.id}): ` +
         `${notificationError instanceof Error ? notificationError.message : 'Unknown error'}`,
       );
     }

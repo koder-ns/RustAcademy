@@ -11,11 +11,17 @@ import { Job, JobStatus, JobType, CancellationToken } from '../types';
 import { ExportGenerationPayload } from '../types/job-payloads.types';
 import { SupabaseService } from '../../supabase/supabase.service';
 import { NotificationService } from '../../notifications/notification.service';
+import { WebhookDeliveryAdapter } from '../delivery/webhook-delivery.adapter';
+import { EmailDeliveryAdapter } from '../delivery/email-delivery.adapter';
+import { DownloadLinkAdapter } from '../delivery/download-link.adapter';
 
 describe('ExportGenerationHandler', () => {
   let handler: ExportGenerationHandler;
   let supabaseService: jest.Mocked<SupabaseService>;
   let notificationService: jest.Mocked<NotificationService>;
+  let webhookAdapter: jest.Mocked<WebhookDeliveryAdapter>;
+  let emailAdapter: jest.Mocked<EmailDeliveryAdapter>;
+  let downloadAdapter: jest.Mocked<DownloadLinkAdapter>;
 
   const mockPayload: ExportGenerationPayload = {
     userId: 'user-123',
@@ -61,17 +67,35 @@ describe('ExportGenerationHandler', () => {
       dispatch: jest.fn().mockResolvedValue(undefined),
     };
 
+    const mockWebhookAdapter = {
+      deliver: jest.fn().mockResolvedValue({ success: true, deliveryUrl: 'https://example.com/webhook' }),
+    };
+
+    const mockEmailAdapter = {
+      deliver: jest.fn().mockResolvedValue({ success: true, metadata: { messageId: 'msg-123' } }),
+    };
+
+    const mockDownloadAdapter = {
+      deliver: jest.fn().mockResolvedValue({ success: true, deliveryUrl: 'https://example.com/download' }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ExportGenerationHandler,
         { provide: SupabaseService, useValue: mockSupabaseService },
         { provide: NotificationService, useValue: mockNotificationService },
+        { provide: WebhookDeliveryAdapter, useValue: mockWebhookAdapter },
+        { provide: EmailDeliveryAdapter, useValue: mockEmailAdapter },
+        { provide: DownloadLinkAdapter, useValue: mockDownloadAdapter },
       ],
     }).compile();
 
     handler = module.get<ExportGenerationHandler>(ExportGenerationHandler);
     supabaseService = module.get(SupabaseService) as jest.Mocked<SupabaseService>;
     notificationService = module.get(NotificationService) as jest.Mocked<NotificationService>;
+    webhookAdapter = module.get(WebhookDeliveryAdapter) as jest.Mocked<WebhookDeliveryAdapter>;
+    emailAdapter = module.get(EmailDeliveryAdapter) as jest.Mocked<EmailDeliveryAdapter>;
+    downloadAdapter = module.get(DownloadLinkAdapter) as jest.Mocked<DownloadLinkAdapter>;
   });
 
   afterEach(() => {
@@ -261,6 +285,101 @@ describe('ExportGenerationHandler', () => {
 
       // Second attempt (attempts=1) should log backoff
       await handler.execute(createMockJob({ attempts: 1 }), mockCancellationToken);
+    });
+  });
+
+  describe('delivery adapters', () => {
+    it('should invoke download adapter when deliveryMethod is download', async () => {
+      const mockClient = {
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      (supabaseService.getClient as jest.Mock).mockReturnValue(mockClient);
+
+      await handler.execute(createMockJob(), mockCancellationToken);
+
+      expect(downloadAdapter.deliver).toHaveBeenCalledWith(
+        expect.objectContaining({ deliveryMethod: 'download' }),
+        expect.any(String),
+        'csv',
+      );
+      expect(webhookAdapter.deliver).not.toHaveBeenCalled();
+      expect(emailAdapter.deliver).not.toHaveBeenCalled();
+    });
+
+    it('should invoke webhook adapter when deliveryMethod is webhook', async () => {
+      const mockClient = {
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      (supabaseService.getClient as jest.Mock).mockReturnValue(mockClient);
+
+      await handler.execute(
+        createMockJob({ payload: { ...mockPayload, deliveryMethod: 'webhook', webhookUrl: 'https://example.com/hook' } }),
+        mockCancellationToken,
+      );
+
+      expect(webhookAdapter.deliver).toHaveBeenCalled();
+      expect(downloadAdapter.deliver).not.toHaveBeenCalled();
+    });
+
+    it('should invoke email adapter when deliveryMethod is email', async () => {
+      const mockClient = {
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      (supabaseService.getClient as jest.Mock).mockReturnValue(mockClient);
+
+      await handler.execute(
+        createMockJob({ payload: { ...mockPayload, deliveryMethod: 'email', email: 'user@example.com' } }),
+        mockCancellationToken,
+      );
+
+      expect(emailAdapter.deliver).toHaveBeenCalled();
+      expect(downloadAdapter.deliver).not.toHaveBeenCalled();
+    });
+
+    it('should notify user on successful delivery', async () => {
+      const mockClient = {
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      (supabaseService.getClient as jest.Mock).mockReturnValue(mockClient);
+
+      await handler.execute(createMockJob(), mockCancellationToken);
+
+      expect(notificationService.dispatch).toHaveBeenCalledTimes(1);
+      expect(notificationService.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: 'export.delivered',
+          recipientPublicKey: 'user-123',
+          exportType: 'transactions',
+          format: 'csv',
+          deliveryMethod: 'download',
+        }),
+      );
+    });
+
+    it('should throw when delivery adapter returns failure', async () => {
+      const mockClient = {
+        from: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      (supabaseService.getClient as jest.Mock).mockReturnValue(mockClient);
+
+      (downloadAdapter.deliver as jest.Mock).mockResolvedValueOnce({
+        success: false,
+        error: 'Storage upload failed',
+      });
+
+      await expect(handler.execute(createMockJob(), mockCancellationToken)).rejects.toThrow(
+        'Delivery failed',
+      );
     });
   });
 });
