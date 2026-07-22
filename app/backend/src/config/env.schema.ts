@@ -95,7 +95,10 @@ export const envSchema = Joi.object({
     .empty("")
     .optional()
     .custom((value, helpers) => {
-      if (process.env.NODE_ENV === "production" && (!value || value.trim() === "")) {
+      if (
+        process.env.NODE_ENV === "production" &&
+        (!value || value.trim() === "")
+      ) {
         return helpers.error("any.invalid", {
           message:
             "CORS_ALLOWED_ORIGINS is empty — in production, all cross-origin requests will be blocked unless a Vercel preview project is configured via CORS_VERCEL_PROJECT.",
@@ -205,7 +208,9 @@ export const envSchema = Joi.object({
     .optional()
     .description(
       "Comma-separated list of bcrypt-hashed API keys for trusted clients. " +
-        "Valid keys receive higher rate limits (120 req/min vs 20 req/min).",
+        "Used for API key authentication only — it has no effect on rate limits. " +
+        "Rate limits are applied per resolved group (public/authenticated/webhooks); " +
+        "see RATE_LIMIT_* variables and rate-limit.config.ts.",
     ),
 
   // Global HTTP rate-limiting profiles (all optional; defaults applied)
@@ -409,9 +414,7 @@ export const envSchema = Joi.object({
     .integer()
     .min(1_000)
     .default(30_000)
-    .description(
-      "HTTP timeout for webhook export delivery in milliseconds",
-    ),
+    .description("HTTP timeout for webhook export delivery in milliseconds"),
 
   APP_BASE_URL: Joi.string()
     .uri({ scheme: ["http", "https"] })
