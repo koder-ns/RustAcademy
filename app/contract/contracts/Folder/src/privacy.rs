@@ -35,7 +35,7 @@ pub use crate::legacy_privacy::{get_privacy, set_privacy};
 // ---------------------------------------------------------------------------
 
 /// Set privacy level for an account.
-pub fn set_privacy_level(env: &Env, account: &Address, level: u32) {
+pub fn set_privacy_level(env: &Env, account: &Address, level: u32) {    account.require_auth();
     let key = DataKey::PrivacyLevel(account.clone());
     env.storage().persistent().set(&key, &level);
     set_or_extend_ttl(env, &key, RecordType::Privacy);
